@@ -7,3 +7,4 @@ YYYYMMDD-<role>-<topic>.md
 ```
 
 <!-- include: ./note-template.md -->
+<!-- include: ./20260210-understander-greenfield-repo-state.md -->
