@@ -1,0 +1,25 @@
+PASS: HUD readout root is present and visible
+PASS: debug panel visible via ?debug=1
+PASS: player starts at depth 100 (y = -100) — depth=100
+PASS: player starts at x 1300 — x=1300
+PASS: tool readout shows the starter knife
+PASS: 3 s dive reaches depth 650–1000 (inertial, floor not yet hit) — depth=736.1
+PASS: O2 reads ~177 s after 3 s of dive — o2=178
+PASS: coast after release: depth rose by > 100 (inertia, not frictionless) — +184.2
+PASS: seabed blocks the player: depth saturates at 1330–1400 (floor ~1416, radius 30) — depth=1396.9
+PASS: debug teleport moves the player to x 2000, depth 150 — x=2000 depth=150
+PASS: swimming east crosses the central wall (x > 2700) — x=2877.8
+PASS: wall top blocks descent: depth saturates at 450–510 (top -520) — depth=490
+PASS: east floor reachable: depth saturates at 1390–1430 (flat floor -1450) — depth=1420
+PASS: player ended east of the wall (x > 2400) — x=2629.3
+PASS: body faces the mouse: aiming upper-left gives facing > 2.2 — x=2628.8 depth=1420 facing=2.34
+PASS: body follows the mouse back right: |facing| < 0.6 — x=2628.8 depth=1420 facing=0.39
+PASS: Digit2 selects the work light — tool=Work Light
+PASS: Digit1 selects the salvage knife — tool=Salvage Knife
+PASS: Esc shows the pause overlay
+PASS: paused simulation freezes the player — depth 1420 -> 1420
+PASS: second Esc hides the overlay (resumes)
+PASS: O2 fell across the whole dive (177 at 3 s, now lower) — o2=154 (was 178)
+PASS: health still 100 (no damage sources yet) — hp=100
+PASS: no page exceptions
+PASS: no console errors

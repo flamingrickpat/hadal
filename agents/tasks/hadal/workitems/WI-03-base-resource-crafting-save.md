@@ -86,3 +86,25 @@ Note the save schema version and the exact `localStorage` key in a project note;
 ## Fresh-Session Handoff
 
 Enter `item-implementer` mode for this exact work item. Read the task or story state from top to bottom, the project documentation, all passed gate artifacts, this work-item specification, and only then the listed source files.
+
+## Implementer Handoff (from WI-02, 2026-09-05)
+
+The core loop is live: `Game.update(FIXED_DT)` runs controller →
+collision → mesh sync → HUD. The player (`Player` state +
+`PlayerController` input/integrator/meters) starts at
+`PLAYER_START` (1300, −100) in a greybox world (`worldData.ts`
+`GREYBOX_WORLD`: seabed, wall at x 2350–2650 with top −520, east
+shelf), y = 0 surface, negative = deeper. O2 (180 s baseline) and
+health (100) refill within `SURFACE_REFILL_DEPTH` (100) of the
+surface; zero-O2 health drain exists; death/respawn is not yet
+wired. Starter gear and the `EquipmentDef`/`Capability` shapes live
+in `src/player/equipment.ts` (request §62); cargo is one number
+(`Player.cargo`, `CARGO_BASE_CAPACITY`). The minimal HUD
+(`src/ui/hud.ts`) and the hidden debug panel
+(`src/util/debug.ts`, `?debug=1` / backtick+F2, x+depth teleport,
+4 Hz readout) exist — extend the panel in place for the rest of
+request §33. The greybox chunk data is the refactor target for the
+full §17 chunk model; `worldBounds` feeds the camera clamp in
+`Renderer.follow`. See the project note
+`agents/projects/hadal/notes/20260905-implementer-wi02-world-seams.md`
+and `implementation/WI-02-implementation.md`.
