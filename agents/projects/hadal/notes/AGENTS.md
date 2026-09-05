@@ -11,3 +11,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260905-implementer-toolchain-boot-seam.md -->
 <!-- include: ./20260905-reviewer-wi01-browser-verification.md -->
 <!-- include: ./20260905-implementer-wi02-world-seams.md -->
+<!-- include: ./20260905-reviewer-wi02-probe-sim-clock.md -->

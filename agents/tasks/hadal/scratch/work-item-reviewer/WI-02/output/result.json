@@ -1,0 +1,449 @@
+{
+  "failures": [],
+  "report": {
+    "dev server ready on port 5196": {
+      "pass": true,
+      "detail": "\n> hadal@0.1.0 dev\n> vite --port 5196 --strictPort\n\n\n  \u001b[32m\u001b[1mVITE\u001b[22m v8.2.2\u001b[39m  \u001b[2mready in \u001b[0m\u001b[1m218\u001b[22m\u001b[2m\u001b[0m ms\u001b[22m\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5196\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b[2m to expose\u001b[22m\n"
+    },
+    "boot": {
+      "title": "HADAL",
+      "hasCanvas": true,
+      "hasWebGL2": true,
+      "panelDisplay": "block",
+      "o2Text": "O2  180s",
+      "hpText": "HP  100",
+      "depthText": "100m",
+      "toolText": "Salvage Knife",
+      "o2RowOpacity": "0.25",
+      "hpRowOpacity": "0.25",
+      "readout": {
+        "raw": "x 1300.0  depth 100.0  o2 180s  hp 100  facing 3.06  aim 0.0 0.0",
+        "x": 1300,
+        "depth": 100,
+        "o2": 180,
+        "hp": 100,
+        "facing": 3.06,
+        "aimX": 0,
+        "aimY": 0
+      }
+    },
+    "A title is HADAL": {
+      "pass": true,
+      "detail": "HADAL"
+    },
+    "A canvas + WebGL2 present": {
+      "pass": true,
+      "detail": "{\"title\":\"HADAL\",\"hasCanvas\":true,\"hasWebGL2\":true,\"panelDisplay\":\"block\",\"o2Text\":\"O2  180s\",\"hpText\":\"HP  100\",\"depthText\":\"100m\",\"toolText\":\"Salvage Knife\",\"o2RowOpacity\":\"0.25\",\"hpRowOpacity\":\"0.25\",\"readout\":{\"raw\":\"x 1300.0  depth 100.0  o2 180s  hp 100  facing 3.06  aim 0.0 0.0\",\"x\":1300,\"depth\":100,\"o2\":180,\"hp\":100,\"facing\":3.06,\"aimX\":0,\"aimY\":0}}"
+    },
+    "A ?debug=1 shows the debug panel": {
+      "pass": true,
+      "detail": "block"
+    },
+    "A HUD shows O2 180s at start": {
+      "pass": true,
+      "detail": "O2  180s"
+    },
+    "A HUD shows HP 100 at start": {
+      "pass": true,
+      "detail": "HP  100"
+    },
+    "A HUD depth is 100m at start (player starts at depth 100)": {
+      "pass": true,
+      "detail": "100m"
+    },
+    "A HUD tool is the starter knife": {
+      "pass": true,
+      "detail": "Salvage Knife"
+    },
+    "A full O2 row fades (opacity 0.25)": {
+      "pass": true,
+      "detail": "0.25"
+    },
+    "A full HP row fades (opacity 0.25)": {
+      "pass": true,
+      "detail": "0.25"
+    },
+    "A readout starts at x 1300 depth 100": {
+      "pass": true,
+      "detail": "x 1300.0  depth 100.0  o2 180s  hp 100  facing 3.06  aim 0.0 0.0"
+    },
+    "inertial": {
+      "r1": {
+        "raw": "x 1300.0  depth 745.3  o2 178s  hp 100  facing -2.14  aim 0.0 0.0",
+        "x": 1300,
+        "depth": 745.3,
+        "o2": 178,
+        "hp": 100,
+        "facing": -2.14,
+        "aimX": 0,
+        "aimY": 0
+      },
+      "rMid": {
+        "raw": "x 1300.0  depth 921.0  o2 176s  hp 100  facing 2.69  aim 0.0 0.0",
+        "x": 1300,
+        "depth": 921,
+        "o2": 176,
+        "hp": 100,
+        "facing": 2.69,
+        "aimX": 0,
+        "aimY": 0
+      },
+      "rEnd": {
+        "raw": "x 1300.0  depth 930.6  o2 173s  hp 100  facing 2.52  aim 0.0 0.0",
+        "x": 1300,
+        "depth": 930.6,
+        "o2": 173,
+        "hp": 100,
+        "facing": 2.52,
+        "aimX": 0,
+        "aimY": 0
+      },
+      "W": 5,
+      "d1": 645.3,
+      "driftMid": 175.70000000000005,
+      "driftLate": 9.600000000000023,
+      "driftTotal": 185.30000000000007
+    },
+    "B 3 s S-dive reaches depth 400-850 (not 100, not unbounded)": {
+      "pass": true,
+      "detail": "depth=745.3"
+    },
+    "B coast window covered >= 5 sim seconds (O2 clock)": {
+      "pass": true,
+      "detail": "W=5s"
+    },
+    "B release: player keeps drifting 60-200 units (inertial; frictionless would be ~275*W)": {
+      "pass": true,
+      "detail": "drift=185.3 over W=5s"
+    },
+    "B drift is decaying across the coast (2nd half < first half), i.e. NOT frictionless": {
+      "pass": true,
+      "detail": "first=175.7 second=9.6"
+    },
+    "B O2 depleted below surface": {
+      "pass": true,
+      "detail": "o2=173"
+    },
+    "B O2 row no longer faded after depletion": {
+      "pass": true,
+      "detail": "opacity"
+    },
+    "B HUD depth text tracks the readout (<=5 m while moving)": {
+      "pass": true,
+      "detail": "931m"
+    },
+    "seabed": {
+      "r3": {
+        "raw": "x 1161.9  depth 1405.9  o2 165s  hp 100  facing 2.40  aim 0.0 0.0",
+        "x": 1161.9,
+        "depth": 1405.9,
+        "o2": 165,
+        "hp": 100,
+        "facing": 2.4,
+        "aimX": 0,
+        "aimY": 0
+      },
+      "r4": {
+        "raw": "x 1150.7  depth 1406.7  o2 164s  hp 100  facing 2.28  aim 0.0 0.0",
+        "x": 1150.7,
+        "depth": 1406.7,
+        "o2": 164,
+        "hp": 100,
+        "facing": 2.28,
+        "aimX": 0,
+        "aimY": 0
+      }
+    },
+    "C seabed saturation: depth = local floor - 30 (one radius)": {
+      "pass": true,
+      "detail": "depth=1405.9 x=1161.9 expected=1405.8"
+    },
+    "C still blocked after 1 s of extra hold (|delta| < 5)": {
+      "pass": true,
+      "detail": "r3=1405.9 r4=1406.7"
+    },
+    "C slide is westward along the slope or none (no eastward push, no horizontal input)": {
+      "pass": true,
+      "detail": "x=1161.9"
+    },
+    "C r4 also sits on the local floor (slide follows the terrain)": {
+      "pass": true,
+      "detail": "depth=1406.7 x=1150.7 expected=1406.8"
+    },
+    "wall": {
+      "r5": {
+        "raw": "x 2340.0  depth 700.0  o2 159s  hp 100  facing -1.86  aim 2036.0 -1558.5",
+        "x": 2340,
+        "depth": 700,
+        "o2": 159,
+        "hp": 100,
+        "facing": -1.86,
+        "aimX": 2036,
+        "aimY": -1558.5
+      },
+      "r6": {
+        "raw": "x 2340.0  depth 700.0  o2 158s  hp 100  facing -1.91  aim 2036.0 -1558.5",
+        "x": 2340,
+        "depth": 700,
+        "o2": 158,
+        "hp": 100,
+        "facing": -1.91,
+        "aimX": 2036,
+        "aimY": -1558.5
+      }
+    },
+    "D wall face blocks: x saturates at 2340 (wall face 2370, radius 30)": {
+      "pass": true,
+      "detail": "x=2340"
+    },
+    "D still blocked after 1 s (|delta| < 5)": {
+      "pass": true,
+      "detail": "r5=2340 r6=2340"
+    },
+    "D HUD depth text exact at rest: 700m": {
+      "pass": true,
+      "detail": "700m"
+    },
+    "westWall": {
+      "r7": {
+        "raw": "x -2466.0  depth 1000.0  o2 153s  hp 100  facing -0.04  aim 3177.5 -1201.0",
+        "x": -2466,
+        "depth": 1000,
+        "o2": 153,
+        "hp": 100,
+        "facing": -0.04,
+        "aimX": 3177.5,
+        "aimY": -1201
+      }
+    },
+    "E west wall face blocks: x saturates at -2466 (face -2496, radius 30)": {
+      "pass": true,
+      "detail": "x=-2466"
+    },
+    "endToEnd": {
+      "r8": {
+        "raw": "x 5570.0  depth 300.0  o2 120s  hp 100  facing -2.96  aim -1176.0 -1501.0",
+        "x": 5570,
+        "depth": 300,
+        "o2": 120,
+        "hp": 100,
+        "facing": -2.96,
+        "aimX": -1176,
+        "aimY": -1501
+      }
+    },
+    "F east end face blocks: x saturates at 5570 (end 5600, radius 30) after full crossing": {
+      "pass": true,
+      "detail": "x=5570"
+    },
+    "zeroO2": {
+      "r9": {
+        "raw": "x 1300.0  depth 150.0  o2 0s  hp 100  facing -0.22  aim 5431.3 -1063.5",
+        "x": 1300,
+        "depth": 150,
+        "o2": 0,
+        "hp": 100,
+        "facing": -0.22,
+        "aimX": 5431.3,
+        "aimY": -1063.5
+      },
+      "hpAtZero": 100,
+      "r10": {
+        "raw": "x 1300.0  depth 150.0  o2 0s  hp 50  facing -0.22  aim 5431.3 -1063.5",
+        "x": 1300,
+        "depth": 150,
+        "o2": 0,
+        "hp": 50,
+        "facing": -0.22,
+        "aimX": 5431.3,
+        "aimY": -1063.5
+      },
+      "waitMs": 128958
+    },
+    "G O2 reaches 0s while resting at depth 150": {
+      "pass": true,
+      "detail": "o2=0"
+    },
+    "G HP was still positive when O2 hit 0 (drain not pre-empted)": {
+      "pass": true,
+      "detail": "hp=100"
+    },
+    "G HP keeps draining at ~5/s (drop 30-62 over 10 s)": {
+      "pass": true,
+      "detail": "hp 100 -> 50"
+    },
+    "G O2 stays at 0 (no spurious refill at depth 150)": {
+      "pass": true,
+      "detail": "o2=0"
+    },
+    "G HUD HP text matches readout": {
+      "pass": true,
+      "detail": "HP  50"
+    },
+    "surface": {
+      "o0": {
+        "raw": "x 1300.0  depth 50.0  o2 3s  hp 51  facing -0.65  aim 2158.3 -1063.5",
+        "x": 1300,
+        "depth": 50,
+        "o2": 3,
+        "hp": 51,
+        "facing": -0.65,
+        "aimX": 2158.3,
+        "aimY": -1063.5
+      },
+      "o1": {
+        "raw": "x 1300.0  depth 50.0  o2 63s  hp 91  facing -0.87  aim 2158.3 -1063.5",
+        "x": 1300,
+        "depth": 50,
+        "o2": 63,
+        "hp": 91,
+        "facing": -0.87,
+        "aimX": 2158.3,
+        "aimY": -1063.5
+      },
+      "o2Rate": 12,
+      "r11": {
+        "raw": "x 1300.0  depth 50.0  o2 87s  hp 100  facing -0.87  aim 2158.3 -1063.5",
+        "x": 1300,
+        "depth": 50,
+        "o2": 87,
+        "hp": 100,
+        "facing": -0.87,
+        "aimX": 2158.3,
+        "aimY": -1063.5
+      },
+      "waitMs": 2015
+    },
+    "H O2 starts near 0 at depth 50": {
+      "pass": true,
+      "detail": "o2=3"
+    },
+    "H O2 refills near the surface at ~12/s (rate 8-16)": {
+      "pass": true,
+      "detail": "rate=12.0/s (3 -> 63)"
+    },
+    "H HP heals back to 100 near the surface": {
+      "pass": true,
+      "detail": "hp=100"
+    },
+    "tools": {
+      "tool2": "Work Light",
+      "tool3": "Simple Harpoon",
+      "tool4": "Simple Harpoon"
+    },
+    "I Digit2 selects Work Light": {
+      "pass": true,
+      "detail": "Work Light"
+    },
+    "I Digit3 selects Simple Harpoon": {
+      "pass": true,
+      "detail": "Simple Harpoon"
+    },
+    "I Digit4 out of range: selection unchanged (slot 4 empty)": {
+      "pass": true,
+      "detail": "Simple Harpoon"
+    },
+    "aim": {
+      "r12": {
+        "raw": "x 1300.0  depth 50.0  o2 117s  hp 100  facing -3.08  aim 404.2 -104.2",
+        "x": 1300,
+        "depth": 50,
+        "o2": 117,
+        "hp": 100,
+        "facing": -3.08,
+        "aimX": 404.2,
+        "aimY": -104.2
+      },
+      "tgt12": -3.0811617467235055,
+      "r13": {
+        "raw": "x 1300.0  depth 50.0  o2 135s  hp 100  facing -0.83  aim 2195.8 -1020.8",
+        "x": 1300,
+        "depth": 50,
+        "o2": 135,
+        "hp": 100,
+        "facing": -0.83,
+        "aimX": 2195.8,
+        "aimY": -1020.8
+      },
+      "tgt13": -0.8255565681054531
+    },
+    "I facing tracks mouse aim (top-left)": {
+      "pass": true,
+      "detail": "facing=-3.08 target=-3.08"
+    },
+    "I facing tracks mouse aim (bottom-right)": {
+      "pass": true,
+      "detail": "facing=-0.83 target=-0.83"
+    },
+    "pause": {
+      "pausedDisplay": "block",
+      "r14": {
+        "raw": "x 1300.0  depth 50.0  o2 136s  hp 100  facing -0.83  aim 2195.8 -1020.8",
+        "x": 1300,
+        "depth": 50,
+        "o2": 136,
+        "hp": 100,
+        "facing": -0.83,
+        "aimX": 2195.8,
+        "aimY": -1020.8
+      },
+      "r15": {
+        "raw": "x 1300.0  depth 50.0  o2 136s  hp 100  facing -0.83  aim 2195.8 -1020.8",
+        "x": 1300,
+        "depth": 50,
+        "o2": 136,
+        "hp": 100,
+        "facing": -0.83,
+        "aimX": 2195.8,
+        "aimY": -1020.8
+      },
+      "r16": {
+        "raw": "x 1300.0  depth 50.0  o2 164s  hp 100  facing -0.83  aim 2195.8 -1020.8",
+        "x": 1300,
+        "depth": 50,
+        "o2": 164,
+        "hp": 100,
+        "facing": -0.83,
+        "aimX": 2195.8,
+        "aimY": -1020.8
+      },
+      "resumedDisplay": "none"
+    },
+    "I Esc shows the pause overlay": {
+      "pass": true,
+      "detail": "block"
+    },
+    "I sim frozen while paused (readout identical after 2.1 s)": {
+      "pass": true,
+      "detail": "x 1300.0  depth 50.0  o2 136s  hp 100  facing -0.83  aim 2195.8 -1020.8 | x 1300.0  depth 50.0  o2 136s  hp 100  facing -0.83  aim 2195.8 -1020.8"
+    },
+    "I resume clears overlay and sim continues (O2 refilled +15 or more)": {
+      "pass": true,
+      "detail": "display=none o2 136 -> 164"
+    },
+    "keyToggle": {
+      "hidden": "none",
+      "shown": "block"
+    },
+    "I backtick+F2 hides the panel": {
+      "pass": true,
+      "detail": "none"
+    },
+    "I backtick+F2 again shows it": {
+      "pass": true,
+      "detail": "block"
+    },
+    "console": {
+      "errors": [],
+      "pageErrors": []
+    },
+    "J no page exceptions": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "J no console errors": {
+      "pass": true,
+      "detail": "[]"
+    }
+  }
+}
