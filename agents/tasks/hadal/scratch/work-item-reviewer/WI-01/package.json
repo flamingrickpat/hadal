@@ -1,0 +1,8 @@
+{
+  "name": "wi01-reviewer-probe",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

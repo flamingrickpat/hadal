@@ -1,0 +1,10 @@
+# Review Reports
+
+One report per reviewed work item, written by the `work-item-reviewer`
+role:
+
+- `WI-01-scaffold-project-review.md` — review of the Vite+TS+Three.js
+  scaffold and fixed-step boot loop (pass, 2026-09-05).
+
+Whole-task review (`task-review.md`) and independent testing
+(`../testing/task-test.md`) arrive with their respective roles.

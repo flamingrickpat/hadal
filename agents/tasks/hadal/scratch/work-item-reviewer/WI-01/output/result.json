@@ -1,0 +1,187 @@
+{
+  "failures": [],
+  "report": {
+    "phases": {
+      "A": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "a0": {
+          "ok": true,
+          "centroidY": 553.5042564953013,
+          "brightPixels": 9045,
+          "lumRange": 124.99999999999999,
+          "buffer": {
+            "w": 1920,
+            "h": 1080
+          }
+        },
+        "a1": {
+          "ok": true,
+          "centroidY": 565.0042548426828,
+          "brightPixels": 8931,
+          "lumRange": 124.99999999999999,
+          "buffer": {
+            "w": 1920,
+            "h": 1080
+          }
+        },
+        "markerDeltaY": 11.499998347381506,
+        "rafDeliveredWindow": 380,
+        "rafTotal": 507,
+        "pageErrors": [],
+        "consoleErrors": [],
+        "consoleWarnings": [
+          {
+            "type": "debug",
+            "text": "[vite] connecting..."
+          },
+          {
+            "type": "debug",
+            "text": "[vite] connected."
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x4c9c001da000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x4c9c001da000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+          }
+        ],
+        "localStorageFresh": 0
+      },
+      "B": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "b0": {
+          "ok": true,
+          "centroidY": 553.0085106382978,
+          "brightPixels": 8930,
+          "lumRange": 124.99999999999999,
+          "buffer": {
+            "w": 1920,
+            "h": 1080
+          }
+        },
+        "b1": {
+          "ok": true,
+          "centroidY": 565.0042548426828,
+          "brightPixels": 8931,
+          "lumRange": 124.99999999999999,
+          "buffer": {
+            "w": 1920,
+            "h": 1080
+          }
+        },
+        "markerDeltaY": 11.995744204385005,
+        "rafDeliveredWindow": 111,
+        "pageErrors": [],
+        "consoleErrors": []
+      },
+      "C": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "c0": {
+          "ok": true,
+          "centroidY": 567,
+          "brightPixels": 8932,
+          "lumRange": 124.99999999999999,
+          "buffer": {
+            "w": 1920,
+            "h": 1080
+          }
+        },
+        "pageErrors": [],
+        "consoleErrors": [],
+        "consoleWarnings": []
+      }
+    },
+    "dev server ready on port 5210": {
+      "pass": true,
+      "detail": "\n> hadal@0.1.0 dev\n> vite --port 5210 --strictPort\n\n\n  \u001b[32m\u001b[1mVITE\u001b[22m v8.2.2\u001b[39m  \u001b[2mready in \u001b[0m\u001b[1m225\u001b[22m\u001b[2m\u001b[0m ms\u001b[22m\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5210\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b[2m to expose\u001b[22m\n"
+    },
+    "preview server ready on port 5211": {
+      "pass": true,
+      "detail": "\n> hadal@0.1.0 preview\n> vite preview --port 5211 --strictPort\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5211\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b[2m to expose\u001b[22m\n"
+    },
+    "A title is HADAL": {
+      "pass": true,
+      "detail": "HADAL"
+    },
+    "A canvas present (dev)": {
+      "pass": true,
+      "detail": "true"
+    },
+    "A WebGL2 context (dev)": {
+      "pass": true,
+      "detail": "{\"ok\":true,\"centroidY\":553.5042564953013,\"brightPixels\":9045,\"lumRange\":124.99999999999999,\"buffer\":{\"w\":1920,\"h\":1080}}"
+    },
+    "A drawing buffer 1920x1080 (dev, dpr 1)": {
+      "pass": true,
+      "detail": "{\"w\":1920,\"h\":1080}"
+    },
+    "A frame non-blank (luminance range > 10)": {
+      "pass": true,
+      "detail": "124.99999999999999"
+    },
+    "A fresh profile (empty localStorage)": {
+      "pass": true,
+      "detail": "0"
+    },
+    "A no page exceptions": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "A no console errors": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "B no page exceptions": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "B no console errors": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "C title is HADAL (production build)": {
+      "pass": true,
+      "detail": "HADAL"
+    },
+    "C canvas present (production build)": {
+      "pass": true,
+      "detail": "true"
+    },
+    "C WebGL2 context (production build)": {
+      "pass": true,
+      "detail": "{\"ok\":true,\"centroidY\":567,\"brightPixels\":8932,\"lumRange\":124.99999999999999,\"buffer\":{\"w\":1920,\"h\":1080}}"
+    },
+    "C frame non-blank (production build)": {
+      "pass": true,
+      "detail": "124.99999999999999"
+    },
+    "C no page exceptions (production build)": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "C no console errors (production build)": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "A marker moves (|deltaY| > 4 px over 3 s)": {
+      "pass": true,
+      "detail": "11.499998347381506"
+    },
+    "B throttle was effective (delivered rAF < 60% of A)": {
+      "pass": true,
+      "detail": "A=380 B=111"
+    },
+    "B simulation cadence independent of rAF timing (deltaY within 35% of A)": {
+      "pass": true,
+      "detail": "A=11.499998347381506 B=11.995744204385005"
+    }
+  }
+}
