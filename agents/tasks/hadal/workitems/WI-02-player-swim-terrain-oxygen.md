@@ -84,3 +84,18 @@ Note the movement model and the terrain collision approach in a project note if 
 ## Fresh-Session Handoff
 
 Enter `item-implementer` mode for this exact work item. Read the task or story state from top to bottom, the project documentation, all passed gate artifacts, this work-item specification, and only then the listed source files.
+
+## Implementer Handoff (from WI-01, 2026-09-05)
+
+The scaffold is in place: `index.html` → `src/main.ts` → `Renderer`
+(WebGLRenderer + Scene + fixed-width ortho camera, 2000 world units)
+→ `Game.start()` running the fixed-1/60-s accumulator loop. Register
+the player and all motion into `Game.update(FIXED_DT)` — it is the
+single simulation seam; do not add a second tick. Replace the boot
+marker box in `Game` when the player lands. Reuse
+`src/game/constants.ts` for tuning numbers (import, never inline) and
+`src/util/rng.ts` (mulberry32, known-vector pinned) for ambient
+randomness only — never for critical gates, resources, or reveals
+(request §61). Toolchain is locked (three 0.185, vite 8.2, TS 7,
+vitest 5 — see BUILD.md); tests live under `src/**/*.test.ts` and run
+with `npx vitest run`.

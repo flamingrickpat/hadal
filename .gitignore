@@ -2,3 +2,13 @@
 # workflow runtime (added by deploy_coding.py)
 .codegraph/
 agents/tasks/*/state.md
+
+# node build artifacts
+node_modules/
+dist/
+
+# implementation scratch probes
+agents/tasks/*/scratch/**/node_modules/
+
+# private creative design pass (request §12) — keep out of commits/diffs
+design_private/

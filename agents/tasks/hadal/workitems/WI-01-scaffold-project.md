@@ -86,3 +86,12 @@ Record the chosen Node LTS version and the working `npm` build/dev/test commands
 ## Fresh-Session Handoff
 
 Enter `item-implementer` mode for this exact work item. Read the task or story state from top to bottom, the project documentation, all passed gate artifacts, this work-item specification, and only then the listed source files.
+
+## Implementation Result (item-implementer, 2026-09-05)
+
+Done: buildable Vite+TS+Three.js+Vitest scaffold with the fixed-1/60-s
+boot loop (`index.html` → `src/main.ts` → `Game`); `npx vitest run`
+4/4, `npm run build` exit 0, real-browser boot probe (headless Chromium
+at 1920×1080) exit 0 with a clean console; `design_private/`
+gitignored; Node 24 "Krypton" LTS and locked toolchain recorded in
+BUILD.md. Full evidence: `../implementation/WI-01-implementation.md`.

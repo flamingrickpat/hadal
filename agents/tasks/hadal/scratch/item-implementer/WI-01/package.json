@@ -1,0 +1,8 @@
+{
+  "name": "hadal-wi01-boot-probe",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

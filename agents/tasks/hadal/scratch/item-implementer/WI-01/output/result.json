@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "page title is HADAL": true,
+    "canvas present": true,
+    "WebGL2 context on canvas": true,
+    "drawing buffer is 1920x1080 (dpr 1)": true,
+    "frame is not blank (pixel luminance range > 10)": true,
+    "no page exceptions": true,
+    "no console errors": true
+  },
+  "state": {
+    "title": "HADAL",
+    "hasCanvas": true,
+    "hasWebGL2": true,
+    "px": {
+      "min": 6.666666666666667,
+      "max": 131.66666666666666,
+      "range": 124.99999999999999,
+      "w": 1920,
+      "h": 1080
+    },
+    "canvasCss": {
+      "w": 1920,
+      "h": 1080
+    }
+  },
+  "pageErrors": [],
+  "consoleMsgs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x5f9c001d7400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    }
+  ]
+}

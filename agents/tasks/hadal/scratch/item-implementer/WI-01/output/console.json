@@ -1,0 +1,17 @@
+{
+  "consoleMsgs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x5f9c001d7400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    }
+  ],
+  "pageErrors": []
+}

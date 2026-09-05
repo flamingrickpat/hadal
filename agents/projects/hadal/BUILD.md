@@ -62,3 +62,24 @@ browser); audio silent until first input (by design, request §27).
   save, ending) must be verified manually in a real desktop browser.
   In-engine debug panel (request §33) and telemetry (request §71) are
   the development-only measurement channels.
+
+## Toolchain Resolved (WI-01, 2026-09-05)
+
+The target commands above are now real, verified with exit 0:
+
+- Node: 24 "Krypton" is the current LTS line (confirmed via
+  nodejs.org/dist/index.json); verification runtime on this machine:
+  Node v24.15.0 / npm 11.12.1 (Windows).
+- Locked by `package.json` + committed `package-lock.json`:
+  `three` 0.185.1, `vite` 8.2.2, `typescript` 7.0.2, `vitest` 5.0.0,
+  `@types/three` 0.185.4.
+- `npm run build` = `tsc --noEmit && vite build` (type-check, then
+  bundle); dev server on port 5173 by default, accepts `--port`.
+- Three.js 0.185 `WebGLRenderer` uses WebGL2 by default; a headless
+  Chromium with software GL (SwiftShader) boots and renders it, so the
+  WI-01 boot probe ran without a GPU.
+- TypeScript 7.0 (the native compiler) is the current stable `tsc` on
+  the registry and is used as-is; `tsconfig.json` is a standard Vite TS
+  config (`moduleResolution: bundler`, `noEmit`). The 514 kB bundle
+  chunk-size notice from Vite is informational (three.js), not an
+  error.
