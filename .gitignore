@@ -1,0 +1,4 @@
+
+# workflow runtime (added by deploy_coding.py)
+.codegraph/
+agents/tasks/*/state.md

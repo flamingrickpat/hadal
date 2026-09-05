@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="architecture-inspector-version" content="2">
+  <title>Architecture Inspector</title>
+  <!-- Mermaid is vendored next to this file (./mermaid.min.js) so the inspector
+       renders offline and the deterministic render check tests exactly what the
+       user sees. Do NOT change this back to a CDN URL. -->
+  <!-- When you replace the diagram sources below, write the JavaScript template
+       literals with RAW backticks (`) and ${...}. NEVER escape them as \` or
+       \${ — an escaped backtick is a SyntaxError that kills the whole script
+       and the page renders nothing. Run inspector_verify until it reports ok. -->
+  <script src="./mermaid.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #d8e1ed;
+      --accent: #2563eb;
+      --accent-soft: #e8f0ff;
+      --accepted: #e5f6ef;
+      --accepted-line: #14805c;
+      --source: #e8f2ff;
+      --source-line: #3977bd;
+      --write: #fff1df;
+      --write-line: #c66a1b;
+      --risk: #fdecef;
+      --risk-line: #c03d55;
+      --stop: #f2ebff;
+      --stop-line: #7650b5;
+      --forward: #2563eb;
+      --return: #d97706;
+      --shadow: 0 14px 36px rgba(38, 55, 77, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #0b111b;
+      --panel: #111a27;
+      --panel-soft: #0d1520;
+      --ink: #e7edf6;
+      --muted: #98a7bb;
+      --line: #2a394d;
+      --accent: #75a8ff;
+      --accent-soft: #172d4e;
+      --shadow: 0 18px 45px rgba(0, 0, 0, .28);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--page); font: 14px/1.5 var(--font, inherit); }
+    button { font: inherit; cursor: pointer; }
+    code, pre { font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+    code { padding: 1px 4px; border-radius: 4px; background: var(--panel-soft); }
+    .page-header {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      padding: 14px max(20px, calc((100vw - 1560px) / 2));
+      border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+    .page-header h1 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+    .page-header p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .status { padding: 4px 9px; border-radius: 999px; color: #087052; background: #dcf5ea; border: 1px solid #aee1ce; font-size: 11px; font-weight: 800; }
+    .theme-toggle, .view-button {
+      border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px;
+      color: var(--ink); background: var(--panel);
+    }
+    .shell { width: min(1560px, calc(100% - 28px)); margin: 14px auto 30px; }
+    .review-grid { display: grid; grid-template-columns: minmax(360px, .95fr) minmax(430px, 1.05fr); gap: 14px; align-items: stretch; }
+    .panel { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: var(--shadow); }
+    .panel h2 { margin: 0 0 12px; color: var(--accent); font-size: 16px; }
+    .panel h3 { margin: 16px 0 7px; font-size: 13px; }
+    .panel p { margin: 0 0 10px; }
+    .panel ul, .panel ol { margin: 7px 0; padding-left: 21px; }
+    .panel li { margin: 4px 0; }
+    .decision-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
+    .decision-card { padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-soft); }
+    .decision-card strong { display: block; margin-bottom: 4px; font-size: 12px; }
+    .decision-card span { color: var(--muted); font-size: 12px; }
+    .risk-list { display: grid; gap: 7px; }
+    .risk-item { padding: 8px 10px; border-left: 3px solid var(--risk-line); border-radius: 0 7px 7px 0; background: var(--risk); color: #74283a; }
+    html[data-theme="dark"] .risk-item { color: #ffc4cf; background: #341923; }
+    .diff-block { overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-soft); white-space: pre; font-size: 12px; line-height: 1.58; }
+    .diff-add { color: #087052; font-weight: 750; }
+    .diff-change { color: #9a5a0a; font-weight: 750; }
+    .diff-remove, .diff-risk { color: #b4233c; font-weight: 750; }
+    html[data-theme="dark"] .diff-add { color: #63d7ad; }
+    html[data-theme="dark"] .diff-change { color: #f4bf72; }
+    html[data-theme="dark"] .diff-remove, html[data-theme="dark"] .diff-risk { color: #ff91a2; }
+    .workspace { margin-top: 14px; padding: 0; overflow: hidden; }
+    .workspace-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 17px 18px 0; }
+    .workspace-head h2 { margin-bottom: 3px; }
+    .workspace-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 18px 11px; }
+    .view-button.active { color: #fff; border-color: var(--accent); background: var(--accent); }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px 18px; padding: 10px 18px;
+      border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      color: var(--muted); background: var(--panel-soft); font-size: 11px;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .node-swatch { width: 17px; height: 12px; border: 1.5px solid; background: #fff; }
+    .node-swatch.accepted { border-color: var(--accepted-line); background: var(--accepted); border-radius: 3px; }
+    .node-swatch.source { border-color: var(--source-line); background: var(--source); border-radius: 50%; }
+    .node-swatch.write { border-color: var(--write-line); background: var(--write); }
+    .node-swatch.risk { border-color: var(--risk-line); background: var(--risk); transform: skew(-14deg); }
+    .node-swatch.stop { border: 2px solid var(--stop-line); background: var(--stop); }
+    .edge-swatch { width: 28px; height: 0; border-top: 2px solid; }
+    .edge-swatch.forward { border-color: var(--forward); }
+    .edge-swatch.return { border-color: var(--return); border-top-style: dashed; }
+    .edge-swatch.read { border-color: var(--source-line); border-top-style: dashed; }
+    .edge-swatch.write { border: 0; border-top: 4px double var(--write-line); }
+    .edge-swatch.reject { border-color: var(--risk-line); border-top-style: dotted; }
+    #graph {
+      min-height: 660px; max-height: 82vh; overflow: auto; display: grid; place-items: center;
+      padding: 22px; background: #fff;
+    }
+    #graph svg { max-width: none !important; height: auto; }
+    .graph-error { place-items: start !important; color: #a51d34; white-space: pre-wrap; font-family: Consolas, monospace; }
+    @media (max-width: 900px) {
+      .review-grid { grid-template-columns: 1fr; }
+      .decision-grid { grid-template-columns: 1fr; }
+      #graph { min-height: 500px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <h1>DSK-XXXX Architecture Review</h1>
+      <p>Architecture review pending. Source of truth remains review.md, c4-model.dsl, and the planned diffs.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status">PASS</span>
+      <button class="theme-toggle" id="themeToggle" type="button">Dark mode</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="review-grid">
+      <article class="panel" id="review-narrative" data-inspector-section="narrative">
+        <h2>Review Narrative</h2>
+        <h3>System Overview</h3>
+        <p>Describe the requested outcome, the real entry point, the accepted owner, and the observable result.</p>
+
+        <h3>C4 Summary</h3>
+        <ul>
+          <li><strong>Context:</strong> User or system actor reaches the real product boundary.</li>
+          <li><strong>Container:</strong> Existing application or new root owns the planned behavior.</li>
+          <li><strong>Components:</strong> Existing owner delegates to the smallest coherent planned unit.</li>
+        </ul>
+
+        <div class="decision-grid">
+          <div class="decision-card"><strong>Accepted integration seam</strong><span>Name the real file, module, interface, route, command, process, or event seam.</span></div>
+          <div class="decision-card"><strong>First implementation move</strong><span>Name the first meaningful edit and why it proves the intended architecture.</span></div>
+        </div>
+
+        <h3>Key Risks and Review Stops</h3>
+        <div class="risk-list">
+          <div class="risk-item">Name the most attractive substitute-success path and the evidence that rejects it.</div>
+          <div class="risk-item">Name any live, external, persistence, timing, or visual proof that tests cannot substitute.</div>
+        </div>
+      </article>
+
+      <article class="panel" id="planned-diff" data-inspector-section="planned-diff">
+        <h2>Planned File Tree and Unit Diff</h2>
+        <h3>File-Tree Context</h3>
+        <pre class="diff-block"><span class="diff-change">~ existing/root/current_owner.ext</span>
+<span class="diff-add">+ existing/root/new_unit.ext</span>
+<span class="diff-risk">! adjacent/demo/wrong_owner.ext</span></pre>
+
+        <h3>Semantic Unit Diff</h3>
+        <pre class="diff-block"><span class="diff-add">+ unit path.to.NewUnit</span>
+  purpose: one coherent responsibility
+  owns: state, decision, or behavior
+  plugs into: real existing seam
+  reviewer watchpoint: plausible local shortcut to reject
+
+<span class="diff-change">~ unit path.to.ExistingOwner</span>
+  change: responsibility delegated or narrowed
+  reason: preserves the central architecture
+
+<span class="diff-risk">! forbidden placement path.to.Shortcut</span>
+  why wrong: could pass tests while violating user vision</pre>
+      </article>
+    </section>
+
+    <section class="panel workspace">
+      <div class="workspace-head">
+        <div>
+          <h2>Architecture Graph Workspace</h2>
+          <p>Use whichever Mermaid graph type best communicates each task-specific concern.</p>
+        </div>
+      </div>
+      <div class="controls" aria-label="Architecture graph views">
+        <button class="view-button active" type="button" data-view="overview">Typed Blueprint</button>
+        <button class="view-button" type="button" data-view="execution">Execution</button>
+        <button class="view-button" type="button" data-view="data">Data</button>
+        <button class="view-button" type="button" data-view="risks">Risks</button>
+      </div>
+      <div class="legend" aria-label="Node and edge legend">
+        <span class="legend-item"><i class="node-swatch accepted"></i>accepted/existing unit</span>
+        <span class="legend-item"><i class="node-swatch source"></i>source/read</span>
+        <span class="legend-item"><i class="node-swatch write"></i>write/output</span>
+        <span class="legend-item"><i class="node-swatch risk"></i>risk/rejected path</span>
+        <span class="legend-item"><i class="node-swatch stop"></i>stop/gate</span>
+        <span class="legend-item"><i class="edge-swatch forward"></i>forward/request</span>
+        <span class="legend-item"><i class="edge-swatch return"></i>return/response</span>
+        <span class="legend-item"><i class="edge-swatch read"></i>data read</span>
+        <span class="legend-item"><i class="edge-swatch write"></i>data write</span>
+        <span class="legend-item"><i class="edge-swatch reject"></i>planning reject</span>
+      </div>
+      <div id="graph" data-render-status="idle" data-active-view="" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "loose",
+      theme: "base",
+      themeVariables: {
+        fontFamily: "Inter, Segoe UI, sans-serif",
+        primaryColor: "#e5f6ef",
+        primaryBorderColor: "#14805c",
+        primaryTextColor: "#172033",
+        lineColor: "#475569",
+        secondaryColor: "#e8f2ff",
+        tertiaryColor: "#fff1df",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#cbd5e1",
+        noteBkgColor: "#fff8d8",
+        noteBorderColor: "#c49421"
+      },
+      flowchart: { useMaxWidth: false, htmlLabels: true },
+      sequence: { useMaxWidth: false, wrap: true }
+    });
+
+    const diagrams = {
+      overview: `flowchart LR
+        Trigger["Real trigger"]:::accepted -->|"forward / request"| Owner["Existing owner"]:::accepted
+        Owner -->|"forward / delegate"| Unit["Planned unit"]:::accepted
+        Source[("Source of truth")]:::source -.->|"data read"| Unit
+        Unit ==>|"data write"| Output[("Observable output")]:::write
+        Shortcut{{"Rejected shortcut"}}:::risk -.->|"planning reject"| Stop[/"Review stop"/]:::stop
+        classDef accepted fill:#e5f6ef,stroke:#14805c,color:#172033;
+        classDef source fill:#e8f2ff,stroke:#3977bd,color:#172033;
+        classDef write fill:#fff1df,stroke:#c66a1b,color:#172033;
+        classDef risk fill:#fdecef,stroke:#c03d55,color:#172033;
+        classDef stop fill:#f2ebff,stroke:#7650b5,stroke-width:2px,color:#172033;
+        linkStyle 0,1 stroke:#2563eb,stroke-width:2px;
+        linkStyle 2 stroke:#3977bd,stroke-width:2px,stroke-dasharray:5 4;
+        linkStyle 3 stroke:#c66a1b,stroke-width:3px;
+        linkStyle 4 stroke:#c03d55,stroke-width:2px,stroke-dasharray:3 4;`,
+      execution: `sequenceDiagram
+        participant T as Real trigger
+        participant O as Existing owner
+        participant U as Planned unit
+        T->>O: forward / request
+        O->>U: forward / execute
+        U-->>O: return / result
+        O-->>T: return / observable outcome`,
+      data: `flowchart LR
+        Producer["True producer"]:::accepted -->|"forward / trigger"| Transform["Planned transform"]:::accepted
+        Source[("Source of truth")]:::source -.->|"data read"| Transform
+        Transform ==>|"data write"| Store[("Persisted state")]:::write
+        Store -.->|"data read"| Consumer["Real consumer"]:::accepted
+        Consumer -->|"forward / render or publish"| Output["User-visible output"]:::write
+        classDef accepted fill:#e5f6ef,stroke:#14805c,color:#172033;
+        classDef source fill:#e8f2ff,stroke:#3977bd,color:#172033;
+        classDef write fill:#fff1df,stroke:#c66a1b,color:#172033;
+        linkStyle 0,4 stroke:#2563eb,stroke-width:2px;
+        linkStyle 1,3 stroke:#3977bd,stroke-width:2px,stroke-dasharray:5 4;
+        linkStyle 2 stroke:#c66a1b,stroke-width:3px;`,
+      risks: `flowchart LR
+        Shortcut{{"Attractive wrong owner"}}:::risk -.->|"would create parallel path"| Stop[/"Fail review and re-plan"/]:::stop
+        Mock{{"Mock or default presented as proof"}}:::risk -.->|"cannot prove live behavior"| Live[/"Require live evidence"/]:::stop
+        Missing{{"Missing source, sink, or trigger"}}:::risk -.->|"architecture incomplete"| Stop
+        classDef risk fill:#fdecef,stroke:#c03d55,color:#172033;
+        classDef stop fill:#f2ebff,stroke:#7650b5,stroke-width:2px,color:#172033;
+        linkStyle 0,1,2 stroke:#c03d55,stroke-width:2px,stroke-dasharray:3 4;`
+    };
+
+    async function render(view) {
+      const graph = document.getElementById("graph");
+      graph.dataset.renderStatus = "rendering";
+      graph.dataset.activeView = view;
+      graph.className = "";
+      graph.replaceChildren();
+      try {
+        const result = await mermaid.render(`architecture-${view}-${Date.now()}`, diagrams[view]);
+        graph.innerHTML = result.svg;
+        graph.dataset.renderStatus = "rendered";
+      } catch (error) {
+        graph.className = "graph-error";
+        graph.textContent = `Mermaid render failed for ${view}: ${error.message || error}`;
+        graph.dataset.renderStatus = "error";
+      }
+    }
+
+    document.querySelectorAll("[data-view]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        document.querySelectorAll("[data-view]").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        await render(button.dataset.view);
+      });
+    });
+
+    const themeToggle = document.getElementById("themeToggle");
+    themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      themeToggle.textContent = next === "dark" ? "Light mode" : "Dark mode";
+    });
+
+    render("overview");
+  </script>
+</body>
+</html>
