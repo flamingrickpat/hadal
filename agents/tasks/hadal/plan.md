@@ -31,6 +31,16 @@
 - **Diff shape.** All product files are new (greenfield): `package.json`, `index.html`, `vite.config.ts`, `tsconfig.json`, `README.md`, the `src/` tree per §29, plus `design_private/` and a `.gitignore` edit (add `design_private/`). Nothing is deleted; nothing is refactored. This is expected and correct for a from-scratch build, not the "adds files, deletes nothing" red flag that applies to feature integrations.
 - **Domain concepts reused vs cloned.** No concepts exist yet; the spec defines the canonical ones that implementers must reuse and never clone: `EquipmentDef`/`Capability` (§62), `WorldChunkDef`/`ExitDef`/`ResourceSpawnDef`/`CreatureSpawnDef`/`PropDef`/`TriggerDef`/`AmbientDef` (§17), `CreatureDef`/`MovementDef`/`SenseDef`/`BehaviorDef`/`CombatDef`/`EcologyDef`/`CreatureAudioDef` (§19), `SaveGameV1` (§42), `WorldSignal` (§63), `CurrentField` (§64), `EncounterTrigger`/`TriggerCondition`/`TriggerAction` (§36), `ScanEntry` (§56). Gates query capabilities/depth rating, not hardcoded recipe IDs (§62).
 
+### Integration question taxonomy
+
+- **Data provenance.** All values are authored in-repository (world/recipe/resource/dialogue/hidden content); nothing is fetched across a boundary. The one load path that could silently return "empty" is authored-content ID resolution (recipe/creature/trigger/prop IDs), guarded by `validateWorld()` (request §32). Covered above.
+- **Seam vs silo.** One simulation seam (`Game.update(FIXED_DT)`, request §30) and one perception seam (the §63 world-signal bus) own all behavior; no parallel islands (the Case-D failure mode is explicitly forbidden by §28/§75). Covered above.
+- **Domain reuse.** The §62/§17/§19/§42/§63/§64/§36/§56 types are the canonical domain concepts; implementers reuse them and never clone them. Covered above.
+- **Cross-layer.** Does not apply: the whole game is client-side TypeScript running in the browser (request §28); there is no database, network, or native boundary to cross. The only persistence boundary is `localStorage`, owned by `src/game/save.ts` (§42).
+- **Concurrency and UI marshaling.** Does not apply: a single-threaded browser driven by one fixed 1/60 s step (request §30); there are no off-thread callbacks to marshal back. The UI is a small set of DOM nodes updated on the step (request §34).
+- **Persistence and versioning.** The save is a versioned `SaveGameV1` from the start (request §42); a schema change must keep migration trivial and a malformed save must reset or back up gracefully (request §70) — carried as a hard constraint.
+- **Localization.** Does not apply: no i18n. All in-game text is authored English content (request §22, §38, §57); display strings are plain authored strings.
+
 ## Approach
 
 Build in the nine phases of request §44, each as independently committable, independently reviewable work items, in dependency order:
