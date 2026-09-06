@@ -1,0 +1,53 @@
+{
+  "checks": {
+    "A scene is not a flat color field (stddev of luminance)": "PASS",
+    "B beam brightens the player region over a far corner (reveal, not a static sprite)": "FAIL",
+    "B2 beam is a directional cone (one side brighter than the other)": "FAIL",
+    "B4 beam lifts the background floor over a large region (reach ~ visibility, not a 2-px spot)": "FAIL"
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "samples": {
+    "A scene is not a flat color field (stddev of luminance)": "stddev=69.13",
+    "B beam brightens the player region over a far corner (reveal, not a static sprite)": "player=118.2 corner=114.6 right=116.1 left=111.3 player-corner=3.53",
+    "B2 beam is a directional cone (one side brighter than the other)": "right=116.1 left=111.3 diff=4.8",
+    "B3_radial_profile": {
+      "wu0": 115.2,
+      "wu100": 122,
+      "wu200": 122.3,
+      "wu400": 118.5,
+      "wu600": 122.8,
+      "wu900": 118.4,
+      "wu1200": null
+    },
+    "B4 beam lifts the background floor over a large region (reach ~ visibility, not a 2-px spot)": "centerMin=0 awayMin=0 diff=0.0",
+    "C_cols_x1300": [
+      {
+        "x": 1302,
+        "b": 118.31626948505563
+      },
+      {
+        "x": 1276,
+        "b": 118.27961824730346
+      },
+      {
+        "x": 1286,
+        "b": 118.27473310338245
+      }
+    ],
+    "C_cols_x2300": [
+      {
+        "x": 924,
+        "b": 119.04832031989099
+      },
+      {
+        "x": 926,
+        "b": 118.9700209090062
+      },
+      {
+        "x": 922,
+        "b": 118.93498058056662
+      }
+    ]
+  }
+}

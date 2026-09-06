@@ -19,6 +19,15 @@ findings are all resolved by the browser-fix commit; headless (9 files / 61
 tests), build, and the real browser harness all verified green; the
 `.debug-readout` showing in normal mode is a minor (non-blocking) observation
 for WI-15.
+- `WI-04-visual-language-review.md` — review of the visual-language render
+  stack (water gradient, pooled particles, flashlight, parallax terrain,
+  post-fx; commit `fc7770f`, 2026-09-06): **findings** — the water gradient,
+  pooled/no-alloc particles + per-band profile, terrain silhouette/parallax
+  (no collision, distinct rates), atmospheric scene (luminance stddev ~69),
+  build (exit 0), and headless suite (11 files / 72 tests) all pass, but the
+  **flashlight beam is a ~2 px `PlaneGeometry(2,2)` that is never scaled** and
+  is anchored to the camera center, so it does not reveal the scene (criterion
+  3 / request §15 fails; the implementer's note overstates it).
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.
