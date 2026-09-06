@@ -47,6 +47,19 @@ for WI-15.
   parameters change with depth, and the volume slider changes the actual
   `masterGain` node. One minor non-blocking observation: the `Game` L2
   `owns` list does not name the newly-owned `AudioSystem`.
+- `WI-06-sonar-signal-bus-review.md` — review of the `Q` sonar (expanding
+  ring, echo tagging, echo particles, resource signatures, larger/slower
+  pulses, noise side-effect) and the §63 world-signal bus (`noise`/`light`/
+  `sonar`/`injury`); commit `9e62246`, 2026-09-07: **findings** — all six
+  acceptance criteria met with real evidence (full suite 15 files / 103
+  tests, build exit 0, and an independent browser probe that crafts `sonar-1`
+  and fires `Q` with no runtime exception, screenshots showing the expanding
+  ring + echo particles); the signal bus is a genuine, allocation-free,
+  queryable perception seam (decay hand-checked). One low-severity render gap:
+  the echo/tag `PointsMaterial` size is fixed, so the "larger pulse from
+  massive objects" is only half rendered (the *slower* half via the scaled
+  echo life; the *larger* half — `SonarEcho.size` — is never expressed in the
+  pixels).
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.

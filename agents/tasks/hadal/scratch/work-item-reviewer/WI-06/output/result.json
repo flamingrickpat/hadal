@@ -1,0 +1,31 @@
+{
+  "pass": true,
+  "failures": 0,
+  "results": [
+    {
+      "ok": true,
+      "name": "boots with the sonar wired in and no console exceptions",
+      "detail": "clean"
+    },
+    {
+      "ok": true,
+      "name": "the base crafting menu lists the recipes",
+      "detail": "cards=3"
+    },
+    {
+      "ok": true,
+      "name": "the sonar-1 upgrade is crafted and the capability granted",
+      "detail": "before=Craft after=Crafted"
+    },
+    {
+      "ok": true,
+      "name": "the WebGL canvas is present",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "firing the sonar (Q) produces no runtime exceptions in the render path",
+      "detail": "clean"
+    }
+  ]
+}
