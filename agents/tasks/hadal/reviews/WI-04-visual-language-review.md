@@ -192,3 +192,94 @@ inside the beam and the lit radius shortens with depth.
   in the title — "water, particles, **flashlight**, parallax" — and is
   criterion 3). Its non-function is therefore a major finding rather than a
   polish item, even though the rest of the visual language renders well.
+
+## Re-review (2026-09-06) — after the flashlight fix (commit 07b68fb)
+
+Status: pass
+
+The single major finding from the first review (Finding 1: the flashlight beam
+was a ~2 px unscaled quad anchored to the camera center, so it did not reveal
+the scene) has been fixed by commit `07b68fb` and independently verified. This
+re-review confirms criterion 3 now passes and that the fix broke nothing else;
+all other criteria that passed in the first review are unchanged, because the
+fix touched only `src/render/lighting.ts` and the one `lighting.update` call in
+`src/game/Game.ts`.
+
+### Updated acceptance criteria
+
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| Water gradient + silhouettes + accents at 1080p (§14.1) | **pass** | unchanged; the fix did not touch the gradient. Re-confirmed by the depth-300/1400 screenshots: desaturated water field, near-black seabed silhouette, faint accent edge, brighter toward the surface. |
+| Pooled particles, no per-frame alloc, follow current, per-band profile (§34/§35/§64/§14.3) | **pass** | unchanged; `particles.test.ts` (4) + `band.test.ts` (7) pass in the 75-test headless suite; screenshots show particles revealed inside the beam and dimmer outside, with the per-band density change. |
+| Flashlight cone/radial mask reveals the scene; visibility shortens with depth; not pure black (§15) | **pass** | the beam is now a wide composited cone/radial mask scaled to `profile.visibility` and anchored to the player; verified in a real browser (probes below) — it reveals particles/terrain, is anchored to the diver (not the clamped camera center), its illuminated area shortens with depth, and the open water stays above pure black. |
+| Terrain silhouette + decorative edge + background parallax (no collision) at different rates (§17) | **pass** (code) / partial (visual prominence) | unchanged; the first review's code analysis and minor-observation notes still apply. |
+| Genuinely atmospheric moment in a real browser (§44 phase 2) | **pass** | unchanged and strengthened: the depth-1400 screenshot now shows the flashlight cone, drifting particles, grain, and chromatic split together — clearly atmospheric, not a flat field (luminance stddev 41.7). |
+| Smooth ~60 FPS at 1080p (§34) | **pass** (caveat) | unchanged; the independent probe holds ~27 FPS on SwiftShader (software); ~60 FPS is only verifiable on a real GPU; the scene load is modest and stable across depths. |
+
+### What the fix changed
+
+- `src/render/lighting.ts`: `Lighting.update` gained a `player: Vec2`
+  parameter; `beam.position` is now set to the player (was the camera center)
+  and `beam.scale` is set to `profile.visibility` (was never scaled, staying a
+  ~2 px `PlaneGeometry(2,2)`). The vertex shader's `vLocal = position.xy *
+  uReach` stays consistent with the mesh scale (no double-scaling): the unit
+  quad now spans ±`visibility` world units and the radial falloff runs across
+  it. The ambient water gradient stays camera-anchored. `beam`/`gradient` are
+  now `readonly` public so the render test can assert their scale/position (no
+  behavior change).
+- `src/game/Game.ts`: the one `lighting.update` call in `renderVisuals` now
+  passes `this.sim.player.position`.
+- New `src/render/lighting.test.ts` (3 tests): beam scaled to reach; beam
+  anchored to the player while the gradient stays camera-anchored; reach
+  shortens with depth.
+
+### Verified
+
+- Headless suite: `npx vitest run` → **12 files / 75 tests, exit 0** (was 11 /
+  72; +3 from `lighting.test.ts`).
+- Build: `npm run build` → **exit 0** (type-check + bundle; the >500 kB chunk
+  notice is the three.js bundle, informational per `BUILD.md`).
+- Tests are genuine regression tests: in a detached `git worktree` at the
+  pre-fix commit `7b48043` with the new test added, all 3 `lighting.test.ts`
+  tests **FAIL** (the pre-fix `update` takes 3 args, not 4, and never scales or
+  player-anchors the beam), so the "confirmed red then green" claim in the
+  implementation note holds. Worktree removed after the check; the product
+  working tree was not modified.
+- Independent browser probe
+  (`agents/tasks/hadal/scratch/work-item-reviewer/WI-04/probe-reverify.mjs`;
+  real dev page, SwiftShader Chromium, 1920×1080, corrected PNG decoder) — all
+  checks pass:
+  - not a flat color field (luminance stddev **41.7**);
+  - the bright cone base (coneBaseY=1052, centroidY=625) sits at the diver's
+    height (playerY=869) and is far closer to the diver than the clamped screen
+    center (camY=540; dPlayer=183 vs dCam=512) — **player-anchored**, resolving
+    Finding 1 and the first review's "beam mis-anchored once the camera clamps"
+    minor observation;
+  - the beam reveals a bright core (**253**) far above surrounding water
+    (**45**);
+  - the illuminated area shortens with depth (**63007** px at depth 300 →
+    **14417** px at depth 1400);
+  - the open water is never pure black (min luminance **18.7**);
+  - ~27 FPS, no page or console exceptions.
+  - Screenshots: `output/reverify-depth1400.png` (cone rising from the diver on
+    the seabed, revealing drifting particles) and `output/reverify-depth300.png`
+    (wide shallow beam). Both clearly show particles visible inside the beam and
+    dimmer outside.
+
+### Finding 1 — resolved
+
+The beam is now scaled to its reach and anchored to the player (the diver), so
+it reveals the scene, and the first review's minor observation (the beam
+mis-anchored once the camera clamped) is resolved by the same change. The
+implementer's `Attempt 2` note and the `20260906-implementer-wi04` project note
+describe the fix accurately (no over-claim).
+
+### Remaining non-blocking notes (carried from the first review)
+
+- ~60 FPS on a real GPU remains a manual observation (the probe runs on
+  SwiftShader software WebGL2).
+- The two background parallax layers are faint and co-located in the depth-1400
+  screenshot; the distinct-rates claim rests on the code (`updateParallax` sets
+  `center * (1 - factor)` at 0.4 and 0.65, verified in the first review). A
+  stronger tint/offset in the art pass (WI-07/WI-15) would make the layers read
+  more distinctly.

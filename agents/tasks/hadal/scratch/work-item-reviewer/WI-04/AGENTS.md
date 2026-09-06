@@ -31,3 +31,18 @@ not reveal the scene. Combined with the code (`src/render/lighting.ts:100`
 **findings**.
 
 Run: `npm install` then `node probe.mjs` from this directory.
+
+## Re-verify probe (attempt 2, commit `07b68fb`)
+
+- `probe-reverify.mjs` — re-review probe: boots the dev server (port 52341) at
+  1920×1080, teleports to depth 1400 (camera clamped, diver below the screen
+  center) and depth 300, decodes each screenshot with a corrected PNG decoder,
+  and verifies the flashlight beam is now a wide cone **anchored to the player**
+  (bright cone base y near the diver, not the screen center), reveals the scene
+  (bright core far above surrounding water), shortens with depth (smaller
+  illuminated area), and never pure black. All checks pass; ~27 FPS on
+  SwiftShader.
+- `output/` (attempt 2): `result-reverify.json`, `reverify-depth1400.png`,
+  `reverify-depth300.png`, `server-reverify.log`.
+
+Run: `node probe-reverify.mjs` from this directory.

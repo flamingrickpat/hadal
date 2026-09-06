@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "A scene is not a flat color field (luminance stddev)": "PASS",
+    "D1 bright cone base (beam origin) is at the DIVER height, closer to the diver than the screen center": "PASS",
+    "D2 bright region is concentrated at/below the diver, not at the screen center": "PASS",
+    "B beam reveals a bright core far above the surrounding water": "PASS",
+    "C illuminated area is smaller when deeper (visibility shortens)": "PASS",
+    "E open water is never pure black (ambient floor above zero)": "PASS"
+  },
+  "samples": {
+    "A scene is not a flat color field (luminance stddev)": "stddev(depth1400)=41.68",
+    "coneBaseY": 1052,
+    "centroidY": 625,
+    "D1 bright cone base (beam origin) is at the DIVER height, closer to the diver than the screen center": "coneBaseY=1052 centroidY=625.0 playerY=869 camY=540 dPlayer=183.2 dCam=512.0",
+    "D2 bright region is concentrated at/below the diver, not at the screen center": "centroidY=625.0 camY=540 playerY=869",
+    "B beam reveals a bright core far above the surrounding water": "coreLum=253.3 farWater=45.5",
+    "C illuminated area is smaller when deeper (visibility shortens)": "brightArea(shallow300)=63007 brightArea(deep1400)=14417",
+    "E open water is never pure black (ambient floor above zero)": "minOpenWater(depth1400)=18.7",
+    "fps": 27.2,
+    "playerScreen": {
+      "x": 960,
+      "y": 869
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}

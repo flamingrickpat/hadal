@@ -28,6 +28,13 @@ for WI-15.
   **flashlight beam is a ~2 px `PlaneGeometry(2,2)` that is never scaled** and
   is anchored to the camera center, so it does not reveal the scene (criterion
   3 / request §15 fails; the implementer's note overstates it).
+   **Re-reviewed at HEAD `07b68fb` (attempt 2, 2026-09-06): pass** — the
+   flashlight beam is now scaled to its reach and anchored to the player, so it
+   reveals the scene; independently verified in a real browser (player-anchored
+   cone, visibility shortens with depth, never pure black) and by a genuine
+   `lighting.test.ts` (confirmed failing pre-fix in a worktree). Headless suite
+   12 files / 75 tests, build exit 0. ~60 FPS on a real GPU and the
+   parallax-layer distinctness remain non-blocking observations.
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.
