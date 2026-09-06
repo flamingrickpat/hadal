@@ -13,7 +13,12 @@ role:
   simulation core, versioned save, crafting, base, debug panel, and the
   §30/§70 verification harness (findings, 2026-09-06: headless core passes,
   but the browser does not boot — `main.ts` reads `#app` while `index.html`
-  has `#game`; the frame accumulator was removed; `test:browser` is a build).
+  has `#game`; the frame accumulator was removed; `test:browser` is a build). Re-reviewed at HEAD `d611344` (attempt 3,
+2026-09-06): **pass** — the browser-boot, frame-cadence, and `test:browser`
+findings are all resolved by the browser-fix commit; headless (9 files / 61
+tests), build, and the real browser harness all verified green; the
+`.debug-readout` showing in normal mode is a minor (non-blocking) observation
+for WI-15.
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.

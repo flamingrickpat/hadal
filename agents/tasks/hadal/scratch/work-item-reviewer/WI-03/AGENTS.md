@@ -26,3 +26,18 @@ defines `<div id="game">`. No canvas/HUD/debug panel render. See
 
 Run: `npm install` then `node probe.mjs` from this directory (exits 0 only if
 the game boots with a canvas + HUD + debug panel and no page error).
+
+## Re-review probe (attempt 3, 2026-09-06)
+
+- `probe2.mjs` — independent re-verification after the browser-fix commit
+  `d611344`. Boot: (A) a normal page (no `?debug=1`) boots with a canvas and no
+  page exception; (B/C) the `.debug-panel` is hidden in normal mode; (D) the
+  normal UI text contains no hidden-lore / creature / secret tokens; (E) in
+  `?debug=1`, giving resources + one-click crafting `tank-1` raises the player's
+  oxygen capacity (readout o2Max 180 → 245) and the craft label flips to
+  "Crafted". Uses port 5312 (`PROBE_PORT`), resolves the newest installed
+  ms-playwright Chromium (`PROBE_BROWSER` overrides). Result: all required checks
+  green (PASS); the `.debug-readout` is visible in normal mode (noted as a
+  minor observation, not a failure). See
+  `../../../reviews/WI-03-base-resource-crafting-save-review.md` (Re-review,
+  attempt 3) — verdict **pass**.

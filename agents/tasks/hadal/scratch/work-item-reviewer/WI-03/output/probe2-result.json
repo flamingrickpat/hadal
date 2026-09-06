@@ -1,0 +1,16 @@
+{
+  "A_normal_boots": true,
+  "B_no_page_exception": true,
+  "C_panel_hidden_in_normal": true,
+  "D_no_secret_tokens_in_normal_ui": true,
+  "readout_visible_in_normal": true,
+  "normal_body_snippet": "\n    \n    \n  \n\nO2  180sHP  100DEPTH 100mTOOL Salvage KnifePAUSED — Esc to resumeWorkbenchTank Mk II+65 s oxygen capacity.6 salvageNeeds moreImpulse FinsStronger acceleration; unlocks boost.8 salvageNeeds moreTeleportseabedwest-wallwallridgesealTeleport to chunkGive resourcesReset savex 1300.0  depth",
+  "leaks": [],
+  "E_panel_visible_in_debug": true,
+  "E_o2max_before": 180,
+  "E_o2max_after": 245,
+  "E_craft_label_before": "Craft",
+  "E_craft_label_after": "Crafted",
+  "E_capability_changed": true,
+  "E_no_page_exception": true
+}

@@ -222,3 +222,71 @@ green, but the browser adapter crashes on boot (Finding 1), so the work item's
 stated Goal — "the player can dive, gather, surface, craft, and go farther" in
 the browser — is not met, and two moderate regressions (Findings 2 and 3) are
 present.
+
+## Re-review (attempt 3, 2026-09-06) — supersedes the verdicts above
+
+Status: pass
+
+The three findings above (attempts 1–2) are all resolved by the implementer's
+browser-fix commit `d611344` ("[game][browser] fix browser boot, restore
+fixed-step cadence, add browser harness"). This re-review re-verified the whole
+work item against the current state (HEAD `d611344`, clean tree) and ran the
+headless, build, and browser evidence independently. This section supersedes the
+"findings" verdict at the top of this file.
+
+### Prior findings — resolution
+
+- **Finding 1 (browser boot) — RESOLVED.** `src/main.ts:8` now reads
+  `document.getElementById('game')!`; `index.html:27` defines
+  `<div id="game">`. The browser boots: canvas + `#hud-root` + `.debug-panel`
+  present, no page exception (the implementer's `tests/browser/boot.test.mjs` and
+  my independent `probe2.mjs` both confirm).
+- **Finding 2 (frame cadence) — RESOLVED.** `src/game/frame.ts`
+  `stepCountSince` restores the §30 fixed-step accumulator; `main.ts` drains
+  real time into whole `FIXED_DT` steps. `frame.test.ts` (5 tests) pins
+  refresh-rate independence (30 steps for 0.5 s at 60 / 120 / 12 Hz).
+- **Finding 3 (`test:browser` is a build) — RESOLVED.** `test:browser` is now
+  `node tests/browser/boot.test.mjs`, a real headless-Chromium harness (4 tests:
+  boot + HUD + panel, keyboard moves the player, resize, save persists across a
+  reload), distinct from the headless `npm test` (Vitest).
+
+### Acceptance criteria (current state)
+
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| Tiny surface base + §5 stations, no large hub | pass | `worldData.ts BASE` (1300,0) radius 260 with all 5 stations; player spawns at (1300,-100) inside the base radius; the workbench is shown in the browser. |
+| Harvest (swim + `E`) + craft + capability change | pass | `coreLoop.test.ts` steps 2–3; `probe2.mjs` gives resources + one-click craft raises o2Max 180→245 in the browser. |
+| Return to base refills O2/health, saves, banks, story lines | pass | Headless `onBaseReturn` banks + autosave + story line; `tests/browser/boot.test.mjs` confirms the save persists across a real reload (`hadal.save.v1`, version 1, storyFlags). |
+| Craftable upgrade is a real `EquipmentDef` | pass | `content/recipes.ts` reuses `EquipmentDef` from `equipment.ts` (not cloned); `tank-1` `oxygenBonus` 65. |
+| Single cargo capacity; key objects do not consume cargo | pass | `CARGO_BASE_CAPACITY` 10; `Player.cargo.capacity`; banked + equipment excluded from cargo. |
+| Death respawns at base, keeps upgrades, loses a modest fraction | pass | `scenarios.test.ts` death scenario; `DEATH_RESOURCE_LOSS_FRACTION` 0.3. |
+| Versioned `SaveGameV1`; autosave; malformed save resets/backs up | pass | `save.test.ts` (11 tests); `SAVE_VERSION` 1, `SAVE_KEY` `hadal.save.v1`, backup `hadal.save.v1.bak`; `loadFromStorage` reset + backup on a malformed value. |
+| Debug panel (noclip / teleport-chunk / give resources / reset save); no secret text in normal UI | pass | `debug.ts` `DebugPanel` exposes all four + readout; `probe2.mjs` confirms the panel is hidden in normal mode and no secret/creature tokens appear in the normal UI. |
+| §30 simulation boundary (Node-importable, one sim, actions as data) | pass | `scenarios.test.ts` Node import; `Game.update` → `sim.step` (single seam, no second controller/collision); frame loop restored. |
+| §70 reusable scenario harness (steps / inputs / assertions / trace) | pass | `scenario.ts` input-only steering (no position assignment); `trace` carries seed / time / position / input / assertion. |
+| §70 9-step continuous core-loop | pass | `coreLoop.test.ts` steps 1–9 as one scenario; no teleport / noclip / free materials. |
+| Separate scenarios (death / insufficient / blocked) | pass | `scenarios.test.ts` (death, insufficient, blocked, depleted, failure-trace). |
+| Separate headless vs browser commands | pass | `npm test` = Vitest (9 files / 61 tests); `test:browser` = the real harness. |
+
+### Evidence I ran (this attempt)
+
+- `npx vitest run` → 9 files / 61 tests, exit 0 (includes the 5 new `frame` tests).
+- `npm run build` → exit 0 (type-check + bundle; the >500 kB chunk notice is three.js, informational).
+- `npm run test:browser` → BROWSER SUITE PASS (4/4 tests, exit 0).
+- Independent `probe2.mjs` → normal page boots, panel hidden in normal mode, no secret tokens; debug page gives resources + one-click craft raises o2Max 180→245; no page exception.
+- `codegraph_explore` (structural gate): confirmed `Game.update` → `sim.step` (no second sim/collision) and that `stepCountSince` is called only by `main.ts` and `frame.test.ts`.
+
+### Minor observation (non-blocking)
+
+The `.debug-readout` (x / depth / o2 / hp) is visible in normal (non-`?debug=1`)
+mode — `debug.ts` `tick()` shows it at 4 Hz regardless of the panel toggle
+(`readout_visible_in_normal: true` in `probe2.mjs`). It shows only internal
+state, so it does not violate any acceptance criterion, and the implementer's
+note documents this deliberately. Worth gating behind the debug toggle in the
+later UI pass (WI-15) for a cleaner normal-mode HUD. Not raised as a finding.
+
+### Verdict
+
+**pass.** The work item's goal — the player can dive, gather, surface, craft,
+and go farther, in the browser — is met; all acceptance criteria and the §30/§70
+addendum criteria pass; the three prior findings are resolved.
