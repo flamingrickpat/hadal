@@ -1,0 +1,101 @@
+.crafting-menu {
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  width: 240px;
+  padding: 12px;
+  background: rgba(6, 12, 18, 0.82);
+  border: 1px solid rgba(120, 200, 220, 0.35);
+  border-radius: 8px;
+  color: #cfeaf2;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  z-index: 20;
+}
+
+.crafting-title {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  color: #eaf6fb;
+}
+
+.recipe-card {
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(120, 200, 220, 0.2);
+  border-radius: 6px;
+}
+
+.recipe-name {
+  font-weight: 600;
+  color: #eaf6fb;
+}
+
+.recipe-effect {
+  color: #9fc6d4;
+  margin: 2px 0;
+}
+
+.recipe-cost {
+  color: #7fb0c2;
+  font-size: 12px;
+}
+
+.recipe-craft {
+  margin-top: 6px;
+  padding: 4px 12px;
+  background: rgba(40, 90, 110, 0.7);
+  color: #eaf6fb;
+  border: 1px solid rgba(120, 200, 220, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.recipe-craft:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.radio-message {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  max-width: 640px;
+  padding: 10px 16px;
+  background: rgba(6, 12, 18, 0.82);
+  border: 1px solid rgba(120, 200, 220, 0.35);
+  border-radius: 6px;
+  color: #cfeaf2;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  z-index: 20;
+}
+
+.debug-panel {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  padding: 12px;
+  background: rgba(6, 12, 18, 0.9);
+  border: 1px solid rgba(120, 200, 220, 0.4);
+  border-radius: 6px;
+  color: #cfeaf2;
+  font-family: system-ui, monospace;
+  font-size: 12px;
+  z-index: 30;
+}
+
+.debug-readout {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  padding: 4px 8px;
+  background: rgba(6, 12, 18, 0.7);
+  color: #9fd8e8;
+  font-family: system-ui, monospace;
+  font-size: 12px;
+  z-index: 30;
+}

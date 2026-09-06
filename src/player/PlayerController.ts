@@ -49,6 +49,11 @@ export interface PlayerInput {
   altTool: boolean;
   interact: boolean;
   sonar: boolean;
+  // One-shot actions (consumed and reset on the step that processes them,
+  // so a browser frame with several simulation steps consumes each once —
+  // request §30): the tool-slot select (1–4) and the workbench craft request.
+  toolSelect: number | null;
+  craftRequest: string | null;
 }
 
 export class PlayerController {
@@ -61,6 +66,8 @@ export class PlayerController {
     altTool: false,
     interact: false,
     sonar: false,
+    toolSelect: null,
+    craftRequest: null,
   };
 
   constructor(private readonly player: Player) {}
@@ -69,7 +76,7 @@ export class PlayerController {
     const p = this.player;
     const inp = this.input;
     const boosting = inp.boost && p.capabilities.has('boost');
-    const accelMult = boosting ? BOOST_ACCEL_MULT : 1;
+    const accelMult = p.speedMult * (boosting ? BOOST_ACCEL_MULT : 1);
     const dragRate = PLAYER_DRAG_RATE * (boosting ? BOOST_DRAG_MULT : 1);
     p.velocity.x += PLAYER_ACCEL_H * accelMult * inp.thrustX * dt;
     p.velocity.y += PLAYER_ACCEL_V * accelMult * inp.thrustY * dt;
@@ -151,10 +158,10 @@ export class PlayerController {
       this.input.interact = keys.has('KeyE');
       this.input.sonar = keys.has('KeyQ');
       if (!e.repeat) {
-        if (e.code === 'Digit1') this.setToolIndex(0);
-        else if (e.code === 'Digit2') this.setToolIndex(1);
-        else if (e.code === 'Digit3') this.setToolIndex(2);
-        else if (e.code === 'Digit4') this.setToolIndex(3);
+        if (e.code === 'Digit1') this.input.toolSelect = 0;
+        else if (e.code === 'Digit2') this.input.toolSelect = 1;
+        else if (e.code === 'Digit3') this.input.toolSelect = 2;
+        else if (e.code === 'Digit4') this.input.toolSelect = 3;
       }
     };
     const onKeyUp = (e: KeyboardEvent): void => {

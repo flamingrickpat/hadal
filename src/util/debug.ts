@@ -1,103 +1,117 @@
 /**
- * enables — the hidden debug panel: teleport to an arbitrary position/depth (request §33).
+ * problem — developers need to break the normal loop (noclip, teleport,
+ *   give resources, reset save) without touching product code (request §33);
+ *   solution — a hidden panel toggled by backtick/F2 or `?debug=1` that
+ *   drives those actions through a small host interface and shows a 4 Hz
+ *   state readout.
  *
- * archetype: service-provider
- * owns: the `?debug=1` / backtick+F2 gating and the small panel DOM
- *   (x and depth inputs, apply button, live readout line). The rest
- *   of the request §33 feature set (noclip, tiers, resources,
- *   creature state) grows in this same file in WI-03+.
- * not own: game state — the teleport and readout callbacks are
- *   provided by the caller (Game).
- * invariant: the panel is hidden until enabled by the URL flag or the
- *   key combo (an F2 within 2 s of a Backquote press); the readout
- *   refreshes at 4 Hz while visible.
- * fails when: the inputs parse to NaN — apply is ignored.
+ * archetype: controller
+ * trigger: backtick, `F2`, or `?debug=1` in the query string.
+ * owns: the panel DOM and the 4 Hz state readout; the readout shows only
+ *   internal state (position, O2, health, depth) and internal IDs.
+ * coordinates: the `DebugPanelHost` (the game) for player state and the
+ *   developer actions (noclip, teleport, give resources, reset save).
+ * invariant: the panel is built only once and never shown until toggled.
+ * fails when: none — it reads live host state and never throws on a
+ *   missing chunk (the teleport is a no-op for an unknown ID).
  */
-export interface DebugHost {
-  teleport(x: number, depth: number): void;
-  readout(): string;
+import type { Vec2 } from './math';
+
+export interface DebugPanelHost {
+  player: { position: Vec2; o2: number; o2Max: number; health: number; depth: number };
+  chunks: readonly { id: string }[];
+  setNoclip(noclip: boolean): void;
+  teleportTo(x: number, depth: number): void;
+  teleportToChunk(id: string): void;
+  giveResources(): void;
+  resetSave(): void;
 }
 
-export function enableDebugPanel(root: HTMLElement, host: DebugHost): void {
-  const panel = document.createElement('div');
-  panel.id = 'debug-panel';
-
-  const xInput = document.createElement('input');
-  xInput.id = 'debug-x';
-  xInput.type = 'number';
-  xInput.step = '10';
-  const depthInput = document.createElement('input');
-  depthInput.id = 'debug-depth';
-  depthInput.type = 'number';
-  depthInput.step = '10';
-  const applyButton = document.createElement('button');
-  applyButton.id = 'debug-apply';
-  applyButton.textContent = 'Apply';
-  const readout = document.createElement('div');
-  readout.id = 'debug-readout';
-
-  const apply = (): void => {
-    const x = Number(xInput.value);
-    const depth = Number(depthInput.value);
-    if (!Number.isNaN(x) && !Number.isNaN(depth)) {
-      host.teleport(x, depth);
-      refreshReadout();
+export class DebugPanel {
+  private readonly host: DebugPanelHost;
+  private readonly panel: HTMLElement;
+  private readonly readout: HTMLElement;
+  private readonly panelOpen = new URLSearchParams(window.location.search).has('debug');
+  private readonly panelToggle = (e: KeyboardEvent): void => {
+    // Toggled by backtick, F2, or the ?debug=1 query param (request §33).
+    const isDebugUrl = this.panelOpen;
+    if (isDebugUrl || e.key === '`' || e.code === 'F2') {
+      e.preventDefault();
+      this.toggle();
     }
   };
-  applyButton.addEventListener('click', apply);
-  panel.append(
-    'DEBUG',
-    ' x ',
-    xInput,
-    ' depth ',
-    depthInput,
-    applyButton,
-    readout,
-  );
+  private lastReadout = 0;
 
-  const style = document.createElement('style');
-  style.textContent = `
-    #debug-panel {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      font: 12px/1.6 ui-monospace, Consolas, monospace;
-      color: #9fc3dd;
-      background: rgba(8, 16, 24, 0.85);
-      border: 1px solid #2f4a66;
-      padding: 8px 10px;
-      display: none;
-    }
-    #debug-panel input {
-      width: 90px;
-      font: inherit;
-      color: #d7e8f5;
-      background: #0c141d;
-      border: 1px solid #2f4a66;
-    }
-  `;
-  document.head.append(style);
+  constructor(host: DebugPanelHost) {
+    this.host = host;
+    this.panel = document.createElement('div');
+    this.panel.className = 'debug-panel';
+    this.panel.style.display = 'none';
+    document.body.appendChild(this.panel);
+    this.readout = document.createElement('div');
+    this.readout.className = 'debug-readout';
+    this.readout.style.display = 'none';
+    document.body.appendChild(this.readout);
+    this.build();
+    window.addEventListener('keydown', this.panelToggle);
+    if (this.panelOpen) this.toggle();
+  }
 
-  let visible = new URLSearchParams(window.location.search).has('debug');
-  let lastBackquote = -Infinity;
-  const refreshReadout = (): void => {
-    readout.textContent = host.readout();
-  };
-  const refresh = (): void => {
-    panel.style.display = visible ? 'block' : 'none';
-    if (visible) refreshReadout();
-  };
-  window.addEventListener('keydown', (e) => {
-    if (e.code === 'Backquote') {
-      lastBackquote = performance.now();
-    } else if (e.code === 'F2' && performance.now() - lastBackquote < 2000) {
-      visible = !visible;
-      refresh();
+  private build(): void {
+    const x = this.numberInput('Teleport X');
+    const y = this.numberInput('Teleport depth');
+    const go = this.button('Teleport', () => {
+      this.host.teleportTo(Number(x.value), Number(y.value));
+    });
+    const chunkSelect = document.createElement('select');
+    chunkSelect.className = 'debug-chunk-select';
+    for (const chunk of this.host.chunks) {
+      const option = document.createElement('option');
+      option.value = chunk.id;
+      option.textContent = chunk.id;
+      chunkSelect.appendChild(option);
     }
-  });
-  window.setInterval(() => {
-    if (visible) refreshReadout();
-  }, 250);
-  root.append(panel);
-  refresh();
+    const teleportChunk = this.button('Teleport to chunk', () => {
+      this.host.teleportToChunk(chunkSelect.value);
+    });
+    const noclip = document.createElement('input');
+    noclip.type = 'checkbox';
+    noclip.className = 'debug-noclip';
+    noclip.addEventListener('change', () => this.host.setNoclip(noclip.checked));
+    const giveResources = this.button('Give resources', () => this.host.giveResources());
+    const resetSave = this.button('Reset save', () => this.host.resetSave());
+
+    this.panel.replaceChildren(x, y, go, chunkSelect, teleportChunk, noclip, giveResources, resetSave);
+  }
+
+  private numberInput(label: string): HTMLInputElement {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = `debug-${label.replace(/\s+/g, '-').toLowerCase()}`;
+    input.placeholder = label;
+    return input;
+  }
+
+  private button(label: string, onClick: () => void): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.className = `debug-${label.replace(/\s+/g, '-').toLowerCase()}`;
+    button.textContent = label;
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
+  private toggle(): void {
+    this.panel.style.display = this.panel.style.display === 'none' ? 'block' : 'none';
+  }
+
+  /** Show the 4 Hz state readout (always on); toggle the panel otherwise. */
+  tick(now: number): void {
+    const p = this.host.player.position;
+    const m = this.host.player;
+    if (now - this.lastReadout >= 250) {
+      this.lastReadout = now;
+      this.readout.style.display = 'block';
+      this.readout.textContent = `x ${p.x.toFixed(1)}  depth ${m.depth.toFixed(1)}  o2 ${m.o2.toFixed(0)}/${m.o2Max.toFixed(0)}  hp ${m.health.toFixed(0)}`;
+    }
+  }
 }

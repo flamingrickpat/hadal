@@ -1,157 +1,127 @@
 /**
- * coordinates — game frame lifecycle across player/world/creatures/systems.
+ * problem — the browser needs to run and render the headless game
+ *   simulation on a fixed step (request §30); solution — a `Game` browser
+ *   adapter that owns a `Simulation`, feeds it player actions from a thin
+ *   input adapter, renders the resulting state with Three.js, and writes
+ *   autosaves through the storage adapter.
  *
- * archetype: coordinator
- * participants: `Renderer` (drawing), `GameState` (simulation clock),
- *   `PlayerController` (motion + meters, request §6/§7),
- *   `CollisionSystem` (terrain resolution, request §31), `Hud`
- *   (readouts, request §26), and the `World` scene content (request §29).
- * ordering: per display frame, `update(FIXED_DT)` runs in fixed-step
- *   increments drained from an accumulator, then exactly one
- *   `render(alpha)` — the simulation cadence is independent of
- *   `requestAnimationFrame` timing (request §30). Inside a step:
- *   state → controller → collision → mesh sync → hud.
- * owns: the `requestAnimationFrame` loop and its accumulator, the
- *   player mesh (replacing the WI-01 boot marker), the Esc pause
- *   toggle (request §6), and the debug teleport/readout hooks
- *   (request §33).
- * fails when: a frame gap exceeds `MAX_FRAME_DT` (tab stall) — the
- *   excess is discarded rather than simulated (no spiral of death).
- * invariant: `update` is always called with exactly `FIXED_DT`; a
- *   leftover frame fraction (< 1 step) is never simulated; while
- *   paused no simulation step runs at all.
+ * archetype: controller; also: browser adapter around the simulation core
+ * owns: the browser glue — the `Simulation`, the Three.js scene/world/mesh,
+ *   the HUD, the crafting menu, and the `localStorage` autosave adapter —
+ *   driven on the fixed step.
+ * coordinates: the `Simulation` (all gameplay rules live there), the
+ *   `Renderer` (visuals), the `PlayerController.bindToWindow` (thin input
+ *   adapter, request §30), and the `save` module (storage adapter).
+ * invariant: `update(FIXED_DT)` delegates to `sim.step` so the browser runs
+ *   the same simulation the headless scenarios do; no second movement or
+ *   collision path exists here.
+ * fails when: none — a malformed `localStorage` save resets gracefully
+ *   (request §25) via the storage adapter before the simulation is built.
  */
 import * as THREE from 'three';
 import { Renderer } from '../render/Renderer';
-import { Player } from '../player/Player';
-import { PlayerController } from '../player/PlayerController';
-import { applyStarterGear } from '../player/equipment';
-import { CollisionSystem } from '../systems/CollisionSystem';
 import { World } from '../world/World';
-import { GREYBOX_WORLD, PLAYER_START } from '../world/worldData';
 import { Hud } from '../ui/hud';
-import { FIXED_DT, MAX_FRAME_DT } from './constants';
-import { GameState } from './GameState';
+import { CraftingMenu } from '../ui/menu';
+import { createSimulation, makeSimWorld, type Simulation } from '../sim/Simulation';
+import { loadFromStorage, resetSave, saveToStorage } from './save';
+import type { Vec2 } from '../util/math';
+import type { DebugPanelHost } from '../util/debug';
 
-export class Game {
-  readonly state = new GameState();
-  readonly player: Player;
+const GAME_SEED = 1;
 
+export class Game implements DebugPanelHost {
   private readonly renderer: Renderer;
-  private readonly world: World;
-  private readonly controller: PlayerController;
-  private readonly collision: CollisionSystem;
+  private readonly sim: Simulation;
   private readonly hud: Hud;
+  private readonly menu: CraftingMenu;
+  private readonly world: World;
   private readonly playerMesh: THREE.Group;
-  private accumulator = 0;
-  private lastNow: number | null = null;
-  private running = false;
+  private readonly radio: HTMLElement;
+  private lastShownLine: string | null = null;
   private paused = false;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
-    this.world = new World(renderer.scene, GREYBOX_WORLD);
+    this.sim = createSimulation(makeSimWorld(), GAME_SEED);
+    // Browser storage adapter: a malformed save resets gracefully (request §25).
+    this.sim.loadFromSave(loadFromStorage(window.localStorage).save);
+    this.world = new World(renderer.scene, this.sim.chunks);
     renderer.setWorldBounds(this.world.bounds);
-    this.player = new Player(PLAYER_START);
-    applyStarterGear(this.player);
-    this.controller = new PlayerController(this.player);
-    this.collision = new CollisionSystem(this.player, this.world.terrain);
-    this.hud = new Hud(document.body);
     this.playerMesh = this.buildPlayerMesh();
     renderer.scene.add(this.playerMesh);
-    this.controller.bindToWindow(renderer);
+    this.hud = new Hud(document.body);
+    this.menu = new CraftingMenu(document.body, this.sim);
+    this.radio = document.createElement('div');
+    this.radio.className = 'radio-message';
+    document.body.appendChild(this.radio);
+    this.sim.controller.bindToWindow(renderer);
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') this.togglePause();
     });
   }
 
-  start(): void {
-    if (this.running) return;
-    this.running = true;
-    this.lastNow = null;
-    requestAnimationFrame((now) => this.frame(now));
-  }
-
-  stop(): void {
-    this.running = false;
-  }
-
-  togglePause(): void {
-    this.paused = !this.paused;
-    this.hud.setPaused(this.paused);
-  }
-
-  // Single simulation seam (request §30): always called with FIXED_DT.
   update(dt: number): void {
     if (this.paused) return;
-    this.state.tick(dt);
-    this.controller.update(dt);
-    this.collision.update();
+    this.sim.step(this.sim.controller.input, dt);
     this.syncPlayerMesh();
-    this.hud.update(this.player);
+    this.hud.update(this.sim.player);
+    this.menu.update();
+    this.updateRadio();
+    if (this.sim.consumeAutosave()) saveToStorage(window.localStorage, this.sim.toSave());
   }
 
-  render(alpha: number): void {
-    // alpha is the leftover frame fraction (accumulator / FIXED_DT),
-    // consumed once the camera rig (request §16) needs interpolation.
-    this.renderer.follow(this.player.position);
-    this.renderer.render();
+  private syncPlayerMesh(): void {
+    const p = this.sim.player.position;
+    this.playerMesh.position.set(p.x, p.y, 0);
+    this.playerMesh.rotation.z = this.sim.player.facing;
   }
 
-  debugTeleport(x: number, depth: number): void {
-    this.player.position.x = x;
-    this.player.position.y = -depth;
-    this.player.velocity.x = 0;
-    this.player.velocity.y = 0;
-    this.hud.update(this.player);
-  }
-
-  debugReadout(): string {
-    const p = this.player;
-    const a = this.controller.input.aimPoint;
-    let f = (p.facing + Math.PI) % (2 * Math.PI);
-    if (f < 0) f += 2 * Math.PI;
-    f -= Math.PI;
-    return `x ${p.position.x.toFixed(1)}  depth ${p.depth.toFixed(1)}  o2 ${Math.ceil(p.o2)}s  hp ${Math.ceil(p.health)}  facing ${f.toFixed(2)}  aim ${a.x.toFixed(1)} ${a.y.toFixed(1)}`;
+  private updateRadio(): void {
+    if (this.sim.lastStoryLine !== this.lastShownLine) {
+      this.lastShownLine = this.sim.lastStoryLine;
+      this.radio.textContent = this.lastShownLine ?? '';
+    }
   }
 
   private buildPlayerMesh(): THREE.Group {
     const group = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(14, 22, 6, 12),
-      new THREE.MeshBasicMaterial({ color: 0xcfd8e3 }),
-    );
-    body.rotation.z = Math.PI / 2; // capsule axis along x: facing 0 points right
+    const body = new THREE.Mesh(new THREE.BoxGeometry(40, 30, 24), new THREE.MeshBasicMaterial({ color: 0x2f6d86 }));
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(18, 12, 6), new THREE.MeshBasicMaterial({ color: 0x9fd8e8 }));
+    visor.position.set(16, 4, 0);
     group.add(body);
-    const aim = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(20, 0, 0),
-        new THREE.Vector3(130, 0, 0),
-      ]),
-      new THREE.LineBasicMaterial({ color: 0x7fb2d9, transparent: true, opacity: 0.6 }),
-    );
-    group.add(aim);
-    group.position.set(PLAYER_START.x, PLAYER_START.y, 10);
+    group.add(visor);
     return group;
   }
 
-  private syncPlayerMesh(): void {
-    const p = this.player;
-    this.playerMesh.position.set(p.position.x, p.position.y, 10);
-    this.playerMesh.rotation.z = p.facing;
+  togglePause(): void {
+    this.paused = !this.paused;
   }
 
-  private frame(now: number): void {
-    if (!this.running) return;
-    if (this.lastNow !== null) {
-      this.accumulator += Math.min((now - this.lastNow) / 1000, MAX_FRAME_DT);
-    }
-    this.lastNow = now;
-    while (this.accumulator >= FIXED_DT) {
-      this.update(FIXED_DT);
-      this.accumulator -= FIXED_DT;
-    }
-    this.render(this.accumulator / FIXED_DT);
-    requestAnimationFrame((n) => this.frame(n));
+  // Debug host (request §33): drive the simulation and storage from the panel.
+  get player() {
+    return this.sim.player;
+  }
+  get chunks() {
+    return this.sim.chunks;
+  }
+  setNoclip(noclip: boolean): void {
+    this.sim.noclip = noclip;
+  }
+  teleportTo(x: number, depth: number): void {
+    this.sim.teleportTo(x, depth);
+  }
+  teleportToChunk(id: string): void {
+    const chunk = this.sim.chunks.find((c) => c.id === id);
+    if (chunk === undefined) return;
+    const { x, y, w, h } = chunk.bounds;
+    this.sim.teleportTo(x + w / 2, -(y + h / 2));
+  }
+  giveResources(): void {
+    this.sim.giveResources('salvage', 4);
+  }
+  resetSave(): void {
+    resetSave(window.localStorage);
+    window.location.reload();
   }
 }

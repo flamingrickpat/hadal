@@ -1,32 +1,47 @@
 /**
- * holds — the greybox world chunk data: seabed, west wall, central wall, east ridge (request §17).
+ * holds — the greybox world data: seabed, west wall, central wall, east ridge,
+ *   the surface base, and the first resource nodes (request §5, §8, §17).
  *
  * archetype: information-holder
  * owns: the small swimmable greybox map — surface at y = 0, an
  *   undulating seabed, two walls, and a ridge — as `WorldChunkDef`
- *   entries of closed terrain polylines, plus the player start
- *   position and the derived world bounds. The seabed shape is the
- *   whole water column (closed at y = 0), so the surface line is a
- *   solid ceiling and "surfacing" means reaching it (oxygen/health
- *   refill there, request §5).
+ *   entries of closed terrain polylines, plus the player start position,
+ *   the derived world bounds, the tiny surface base (`BASE`), the first
+ *   `salvage` resource nodes (request §8), and one sealed pocket (`seal`)
+ *   holding a node unreachable from the start (request §32 blocked route).
  * not own: chunk streaming, resources, creatures, or triggers — the
  *   full authored chunk model (request §17) grows this same file in
  *   WI-07.
- * invariant: the map is swimmable end to end — the water column is
- *   always deeper than the player diameter and every wall/ridge top
- *   is reachable from above; collision slabs are one player diameter
- *   wide with their bottom edge riding the floor line, and the wider
- *   `visual` polylines may differ (request §31).
- * fails when: an edit strands the player inside a solid — verified by
- *   the swim probe, not by data checks.
+ * invariant: the map is swimmable end to end; the base is reachable from
+ *   the start; the first `salvage` nodes are reachable by normal swimming;
+ *   and the `seal` pocket is sealed (its node unreachable from the start).
+ * fails when: an edit strands the player inside a solid — verified by the
+ *   core-loop scenario, not by data checks.
  */
 import { vec2, type Rect, type Vec2 } from '../util/math';
 import type { TerrainShapeDef } from './terrain';
+
+export type StationId = 'workbench' | 'storage' | 'dive-terminal' | 'radio' | 'launch-edge';
+
+export interface ResourceNodeDef {
+  id: string;
+  material: string;
+  position: Vec2;
+  amount: number;
+}
+
+export interface BaseDef {
+  id: string;
+  position: Vec2;
+  radius: number;
+  stations: readonly StationId[];
+}
 
 export interface WorldChunkDef {
   id: string;
   bounds: Rect;
   terrain: readonly TerrainShapeDef[];
+  resourceNodes?: readonly ResourceNodeDef[];
 }
 
 export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
@@ -74,6 +89,15 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
           vec2(-3000, -1620),
         ],
       },
+    ],
+    resourceNodes: [
+      // First `salvage` nodes (request §8): reachable by normal swimming
+      // from the start; enough for the first upgrades (request §40).
+      { id: 'salvage-1', material: 'salvage', position: vec2(1600, -900), amount: 4 },
+      { id: 'salvage-2', material: 'salvage', position: vec2(1300, -1300), amount: 4 },
+      { id: 'salvage-3', material: 'salvage', position: vec2(1900, -1300), amount: 4 },
+      { id: 'salvage-4', material: 'salvage', position: vec2(700, -1300), amount: 4 },
+      { id: 'salvage-5', material: 'salvage', position: vec2(300, -1200), amount: 4 },
     ],
   },
   {
@@ -144,9 +168,39 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
       },
     ],
   },
+  {
+    id: 'seal',
+    bounds: { x: -1260, y: -1600, w: 120, h: 1600 },
+    terrain: [
+      {
+        id: 'seal-slab',
+        closed: true,
+        // A full-column wall: it spans the surface to below the seabed, so
+        // the pocket west of it is sealed and its node is unreachable from
+        // the start (request §32 blocked route).
+        points: [
+          vec2(-1260, 0),
+          vec2(-1260, -1600),
+          vec2(-1140, -1600),
+          vec2(-1140, 0),
+        ],
+      },
+    ],
+    resourceNodes: [
+      // A `salvage` node sealed behind the wall: the blocked-route target.
+      { id: 'salvage-sealed', material: 'salvage', position: vec2(-1500, -900), amount: 4 },
+    ],
+  },
 ];
 
 export const PLAYER_START: Vec2 = vec2(1300, -100);
+
+export const BASE: BaseDef = {
+  id: 'surface-base',
+  position: vec2(1300, 0),
+  radius: 260,
+  stations: ['workbench', 'storage', 'dive-terminal', 'radio', 'launch-edge'],
+};
 
 export function worldBounds(chunks: readonly WorldChunkDef[]): Rect {
   let minX = Infinity;

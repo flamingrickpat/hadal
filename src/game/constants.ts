@@ -1,11 +1,13 @@
 /**
- * holds — tuning constants (timestep, camera, world scale).
+ * holds — tuning constants (timestep, camera, world scale, base/harvest/death).
  *
  * archetype: information-holder
  * owns: the single canonical tuning numbers every later system reads:
  *   the fixed timestep, the design screen size, the camera framing, the
- *   world extent, and the player movement / meter / camera-lag values
- *   (request §6, §7, §16).
+ *   world extent, the player movement / meter / camera-lag values
+ *   (request §6, §7, §16), the harvesting/base-interact radius, the
+ *   surface-base region radius, and the death resource-loss fraction
+ *   (request §5, §8, §25).
  * not own: any state or behavior — pure data.
  * invariant: all values are immutable `const` numbers; a shared tuning
  *   value lives here and is inlined nowhere else.
@@ -46,3 +48,12 @@ export const CARGO_BASE_CAPACITY = 10; // request §7: single capacity number
 
 // Camera (request §16): smooth follow with 0.12–0.2 s lag.
 export const CAMERA_LAG_SEC = 0.15;
+
+// Base + harvesting (request §5, §8): tiny surface platform the player
+// returns to; one core material harvested by swimming near a node + E.
+export const INTERACT_RADIUS = 70; // harvest / interact distance (player radius 30 + margin)
+export const BASE_RADIUS = 260; // surface-base region radius (request §5)
+
+// Death / respawn (request §25): at most a modest fraction of unbanked
+// resources is lost; permanent upgrades and banked resources are kept.
+export const DEATH_RESOURCE_LOSS_FRACTION = 0.3;
