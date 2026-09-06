@@ -7,7 +7,8 @@ role:
   scaffold and fixed-step boot loop (pass, 2026-09-05; re-verified at the
   accepted revision, 2026-09-06).
 - `WI-02-player-swim-terrain-oxygen-review.md` — review of inertial swim,
-  terrain collision, meters, HUD, and debug teleport (pass, 2026-09-05).
+  terrain collision, meters, HUD, and debug teleport (pass, 2026-09-05;
+  re-verified at the accepted revision `81eb9fa`, 2026 re-dispatch).
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.

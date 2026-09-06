@@ -151,3 +151,121 @@ final run is fully green — no implementation defect surfaced.
 - The 4 Hz debug readout lag (≤250 ms) was treated as probe noise, not as
   sim behavior, since the readout is a debug facility outside the work
   item's contract.
+
+---
+
+## Re-review — 2026 re-dispatch at accepted revision `81eb9fa` (work-item-reviewer)
+
+Status: pass
+
+Re-confirmed on the current baseline; no product code changed since `6a21844`,
+which is an ancestor of the accepted revision `81eb9fa`.
+
+### Codegraph gate (this session)
+
+First structural lookup: `codegraph_explore("PlayerController update
+updateMeters resolveCircle buildTerrain GREYBOX_WORLD debugTeleport Game update
+bindToWindow updateFacing", projectPath C:\Temp\hadal)`. The index on disk
+was **stale/empty for product symbols** (the same condition PROJECT.md's
+Reconnaissance section and the WI-01 reviewer note already document); the
+first query returned "No relevant code found". I rebuilt it in-session
+(`codegraph index .` → 29 files, 489 nodes, 1,103 edges) and re-ran the query,
+which then returned verbatim source for `PlayerController.ts`, `Game.ts`, and
+`terrain.ts`. All structural facts below come from that refreshed index plus
+direct reads.
+
+### What was re-verified independently
+
+- **Source (all 7 criteria).** Read, via the refreshed codegraph index +
+  direct reads: `PlayerController.update` (criterion 1: separate
+  `PLAYER_ACCEL_H=600` / `PLAYER_ACCEL_V=560`, `velocity *= Math.exp(-2·dt)`,
+  `position += velocity·dt` — the exact §6 model, clearly inertial not
+  frictionless), `PlayerController.updateMeters` (criterion 4: O2 1/s ×1.75
+  boost ×1.5 injured, zero-O2 → HP 5/s [7.5/s injured], surface refill,
+  clamp [0,100], `depth = max(0,−y)`), `terrain.ts buildTerrain/resolveCircle`
+  (criterion 2: closest-point projection, push-out to one radius, inward
+  velocity removed, d=0 interior push via centroid), `CollisionSystem.update`
+  (runs `resolveCircle` after the controller each step), `worldData.ts
+  GREYBOX_WORLD` (criterion 3: seabed + west wall + central wall + east ridge,
+  closed water column — not one flat floor), `World.ts` (renders silhouettes +
+  collision terrain from the same chunk data), `hud.ts` (criterion 5: O2/HP/
+  DEPTH/TOOL readouts, few DOM nodes, rows fade to 0.25 when full, pause
+  overlay), `PlayerController.bindToWindow` + `updateFacing` (criterion 6:
+  WASD / mouse aim / LMB / RMB / E / Q / Digit1–4, Esc pause, body rotates
+  toward aim + slight velocity blend capped at 0.65), `debug.ts` +
+  `Game.debugTeleport` (criterion 7: `?debug=1` via `URLSearchParams.has('debug')`,
+  backtick+F2 within 2 s, x/depth inputs + apply → exact position/depth),
+  `constants.ts` (all tuning values match §6/§7), `equipment.ts
+  applyStarterGear` (starter gear, no boost/sonar capability), `main.ts`
+  (wires the debug host to the game's teleport/readout hooks).
+- **Tests.** `npx vitest run` → 4 files / **31 tests pass** (terrain 7,
+  PlayerController 10, PlayerMeters 10, rng 4). Re-read all three WI-02 test
+  files: they are genuine behavioral tests (pinned recurrence + a
+  frictionless-6000 bound; O2/HP drain/refill/clamp math; circle-vs-segment
+  push-out/velocity/interior/multi-shape), not stubs or assertions-that-crash.
+- **Build.** `npm run build` (`tsc --noEmit && vite build`) → **exit 0**
+  (only the expected >500 kB three.js chunk warning).
+- **Fresh independent browser probe** —
+  `scratch/work-item-reviewer/WI-02/independent/probe.mjs` (a new probe written
+  for this review, not a rerun of the implementer's or the prior reviewer's).
+  Real `npm run dev` on port 5211 + local ms-playwright Chromium (SwiftShader
+  WebGL2), fresh 1920×1080 context at `?debug=1`, real keyboard/mouse events.
+  `output/result.json`. All load-bearing checks green:
+  - boot: title HADAL, canvas + WebGL2, `?debug=1` panel visible, HUD O2 180s /
+    HP 100 / DEPTH 100m / TOOL "Salvage Knife", both full-meter rows faded to
+    opacity 0.25, readout starts at x 1300 / depth 100.
+  - 2-axis inertia: hold D+S → x 1300→1844.7 and depth 100→608.4 (both axes
+    move); release → still drifting (dx +192.9, dy +180 over a 6 s O2-clock
+    window), clearly bounded (a frictionless model would coast ~1,600 units).
+  - terrain: seabed rests at depth 1401.6 (floor ~1432 − 30), stable; central
+    wall west face saturates **exactly** at x 2340 (face 2370 − 30) with depth
+    held at 700; wall top blocks a descent at depth 490.2 (top −520 + 30).
+  - O2/HP/depth: dive 100→1323 with O2 depleting; at rest O2 reaches 0 with HP
+    still 100, then HP falls 100→40 over ~12 s (5/s) with O2 held at 0; at
+    depth 50 O2 refills at exactly 12/s and HP heals.
+  - keyboard + pause: W lifts (300→29.8), A moves left (1300→847.5), Digit1 →
+    "Salvage Knife", Esc shows the pause overlay and freezes the sim (identical
+    4 Hz readout), second Esc resumes.
+  - debug teleport: apply (500, 800) → readout x 500.0 / depth 800.0 exactly.
+  - no page exceptions, no console errors.
+- **Impact check.** Refreshed-index blast radius on the changed symbols:
+  `Game`'s only external consumer is `main.ts` (construction, `start`, debug
+  panel callbacks); `Renderer.follow`/`screenToWorld`/`setWorldBounds` are
+  called only by `Game` / `PlayerController.bindToWindow`; `buildTerrain` →
+  `World`, `resolveCircle` → `CollisionSystem`; `constants.ts` was appended
+  (no existing constant renamed/removed, so the WI-01 surface is untouched).
+  No second simulation entry point, no parallel input/state path, no scope
+  drift into later-WI systems. `Game.update(FIXED_DT)` remains the single
+  simulation seam (frame → update → controller → collision → mesh/HUD).
+
+### My probe's two non-passing assertions (probe noise, not product defects)
+
+- "F dive: O2 fell by 30–120" failed with O2 180 → 176. The dive started at
+  depth 100 (the `SURFACE_REFILL_DEPTH` boundary), so O2 first refilled to
+  180, then the ~5 s dive spent most of its time below the surface → ~1/s
+  drain → ~4 lost. O2 **did** deplete at the correct rate; my range was simply
+  miscalibrated for a short dive from the refill boundary.
+- "F HUD depth text tracks the readout (≤5 m)" failed with the HUD showing
+  1341m vs the readout 1323 (18 units apart). The HUD and the 4 Hz debug
+  readout update independently, so at top speed (~280 units/s) they can race by
+  up to ~250 ms ≈ 70 world units — the exact condition the prior reviewer's
+  note (`20260905-reviewer-wi02-probe-sim-clock.md`) documents. The HUD depth
+  itself is correct (it matches at rest); only my 5-unit tolerance was too tight.
+
+### Re-confirmed non-defect observations (from the prior review)
+
+1. Pre-input aim defaults to the world origin (0,0), so the body briefly rotates
+   toward it on boot until the first mouse move. Cosmetic only.
+2. `debugTeleport` sets position without resolving against terrain, so
+   teleporting into a wall slab interior leaves the player inside the solid
+   until they swim out. Normal play cannot tunnel (max step is far smaller
+   than 2×radius); the criterion only requires moving to an arbitrary
+   position/depth, which works exactly. Debug-only edge case.
+
+### Note on `state.md`
+
+`state.md`'s history ends at `WI-02 … implement_indexed` and omits the
+implement/review steps that the git history and this review artifact contain.
+That is a stale controller record, not a repository defect — the repository is
+the source of truth and shows WI-02 complete and passing. Recorded here so a
+later role does not mistake it for a missing review.
