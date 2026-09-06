@@ -197,6 +197,10 @@ inside the beam and the lit radius shortens with depth.
 
 Status: pass
 
+(This is the current, final status for this work item; it supersedes the
+attempt-1 `findings` status recorded above, which is retained for the
+record.)
+
 The single major finding from the first review (Finding 1: the flashlight beam
 was a ~2 px unscaled quad anchored to the camera center, so it did not reveal
 the scene) has been fixed by commit `07b68fb` and independently verified. This
