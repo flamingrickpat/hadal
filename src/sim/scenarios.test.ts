@@ -4,6 +4,11 @@ import { createSimulation, createSimulationFromSave, emptyInput, makeSimWorld } 
 import { BASE, PLAYER_START } from '../world/worldData';
 import { DEATH_RESOURCE_LOSS_FRACTION, FIXED_DT, HP_MAX, INTERACT_RADIUS, O2_MAX } from '../game/constants';
 import type { Vec2 } from '../util/math';
+import type { Percept, WorldSignal } from '../creatures/senses';
+
+function freshPercept(): Percept {
+  return { noise: 0, light: 0, sonar: 0, injury: 0 };
+}
 
 function harvestTwoNodes(s: Scenario, idA: string, idB: string): void {
   const harvestInput = emptyInput();
@@ -134,5 +139,59 @@ describe('separate headless scenarios (request §70)', () => {
     const fresh = createSimulationFromSave(sim.toSave());
     s.assert(fresh.player.equipmentIds.includes('tank-1'), 'upgrade persists after save/load');
     s.assert(fresh.player.o2Max === O2_MAX + 65, 'capability persists after save/load');
+  });
+
+  it('sonar: the Q pulse is inert without the upgrade and emits a world signal after it (request §18, §63)', () => {
+    const s = new Scenario(9);
+    const sim = s.sim;
+    const query: WorldSignal[] = new Array(8).fill(undefined) as WorldSignal[];
+    // Without the sonar capability, pressing Q does not emit a sonar signal.
+    s.assert(!sim.player.capabilities.has('sonar'), 'starter gear grants no sonar');
+    const q1 = emptyInput();
+    q1.sonar = true;
+    s.step(q1);
+    s.step(emptyInput()); // release Q so the next press is a fresh edge
+    const before = sim.signals.queryNear(
+      sim.player.position.x,
+      sim.player.position.y,
+      3000,
+      sim.state.timeSec,
+      query,
+    );
+    s.assert(
+      !query.slice(0, before).some((q) => q !== undefined && q.type === 'sonar'),
+      'no sonar signal before the sonar upgrade is crafted',
+    );
+    // Craft the sonar upgrade (the tier-1 `sonar` capability, request §9).
+    sim.giveResources('salvage', 5);
+    const craftInput = emptyInput();
+    craftInput.craftRequest = 'sonar-1';
+    s.assert(sim.handleCraft(craftInput).crafted, 'crafted the sonar upgrade');
+    s.assert(sim.player.capabilities.has('sonar'), 'the sonar capability is granted');
+    // Press Q (a fresh edge): the sonar fires and a sonar signal is queryable nearby.
+    const q2 = emptyInput();
+    q2.sonar = true;
+    s.step(q2);
+    const found = sim.signals.queryNear(
+      sim.player.position.x,
+      sim.player.position.y,
+      3000,
+      sim.state.timeSec,
+      query,
+    );
+    s.assert(found > 0, 'a signal is queryable nearby after the Q pulse');
+    s.assert(
+      query.slice(0, found).some((q) => q !== undefined && q.type === 'sonar'),
+      'the queryable signal includes the sonar type',
+    );
+    // A fixture creature near the player perceives the sonar signal (request §19).
+    const percept = freshPercept();
+    sim.signals.perceive(
+      sim.player.position.x + 150,
+      sim.player.position.y,
+      sim.state.timeSec,
+      percept,
+    );
+    s.assert(percept.sonar > 0.2, `a nearby creature perceives the sonar signal (sonar=${percept.sonar.toFixed(2)})`);
   });
 });

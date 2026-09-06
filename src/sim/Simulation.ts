@@ -23,10 +23,13 @@
  */
 import {
   BASE_RADIUS,
+  BOOST_NOISE_STRENGTH,
+  BOOST_SIGNAL_INTERVAL,
   DEATH_RESOURCE_LOSS_FRACTION,
   HP_MAX,
   INTERACT_RADIUS,
   PLAYER_RADIUS,
+  TOOL_NOISE_STRENGTH,
 } from '../game/constants';
 import { GameState } from '../game/GameState';
 import type { SaveGameV1 } from '../game/save';
@@ -38,6 +41,8 @@ import { Player } from '../player/Player';
 import { PlayerController, type PlayerInput } from '../player/PlayerController';
 import { createCargo } from '../player/inventory';
 import { canCraft, applyEquipment, type CraftResult } from '../systems/CraftingSystem';
+import { WorldSignalBus } from '../creatures/senses';
+import { SonarSystem, type SonarObject } from '../systems/SonarSystem';
 import { vec2, type Vec2 } from '../util/math';
 import { buildTerrain, type Terrain } from '../world/terrain';
 import {
@@ -89,6 +94,8 @@ export class Simulation {
   readonly chunks: readonly WorldChunkDef[];
   readonly seed: number;
   readonly nodes: ResourceNode[];
+  readonly signals: WorldSignalBus;
+  readonly sonar: SonarSystem;
   discoveredChunks = new Set<string>();
   storyFlags: string[] = [];
   collectedUniqueIds = new Set<string>();
@@ -96,6 +103,9 @@ export class Simulation {
   autosaveRequested = false;
   noclip = false;
   private wasAtBase: boolean;
+  private wasSonar = false;
+  private wasTool = false;
+  private lastBoostSignal = -1;
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -107,6 +117,17 @@ export class Simulation {
     this.player = new Player(PLAYER_START);
     applyStarterGear(this.player);
     this.controller = new PlayerController(this.player);
+    // The world-signal bus (the §63 perception seam) and the sonar system
+    // (request §18), both owned by the simulation core (request §30).
+    this.signals = new WorldSignalBus();
+    const terrainPoints = world.chunks.flatMap((c) => c.terrain).flatMap((s) => s.points);
+    const objects: SonarObject[] = this.nodes.map((n) => ({
+      x: n.position.x,
+      y: n.position.y,
+      size: 1,
+      resource: true,
+    }));
+    this.sonar = new SonarSystem(this.signals, terrainPoints, objects);
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
   }
@@ -124,6 +145,12 @@ export class Simulation {
     c.input.altTool = input.altTool;
     this.state.tick(dt);
     c.update(dt);
+    this.emitPlayerSignals(input);
+    if (input.sonar && !this.wasSonar && this.player.capabilities.has('sonar')) {
+      this.sonar.fire(this.player.position, this.state.timeSec);
+    }
+    this.wasSonar = input.sonar;
+    this.sonar.update(dt, this.state.timeSec);
     if (input.toolSelect !== null) this.controller.setToolIndex(input.toolSelect);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
@@ -134,6 +161,28 @@ export class Simulation {
     // Consume one-shot actions so a reused input object does not re-apply them.
     input.craftRequest = null;
     input.toolSelect = null;
+  }
+
+  /**
+   * The player's noise signals onto the world-signal bus (request §63): a used
+   * tool makes a noise blip, and a sustained boost makes a throttled noise
+   * signal. Sonar emits its own sonar + noise signals (the `SonarSystem`).
+   */
+  private emitPlayerSignals(input: PlayerInput): void {
+    const t = this.state.timeSec;
+    const pos = this.player.position;
+    if (input.useTool && !this.wasTool) {
+      this.signals.emit({ type: 'noise', pos, strength: TOOL_NOISE_STRENGTH, tag: 'tool' }, t);
+    }
+    this.wasTool = input.useTool;
+    if (
+      input.boost &&
+      this.player.capabilities.has('boost') &&
+      t - this.lastBoostSignal >= BOOST_SIGNAL_INTERVAL
+    ) {
+      this.signals.emit({ type: 'noise', pos, strength: BOOST_NOISE_STRENGTH, tag: 'boost' }, t);
+      this.lastBoostSignal = t;
+    }
   }
 
   private handleHarvest(input: PlayerInput): void {

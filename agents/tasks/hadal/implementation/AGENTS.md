@@ -25,3 +25,11 @@ role:
   oscillator sweeps, low pulses, world-x pan, distance gain, ambient loops,
   sonar ping), and a master volume slider; the pure depth→audio, distance→gain
   and world-x→pan mappings are unit-tested.
+- `WI-06-implementation.md` — the sonar active-scan pulse (request §18) and the
+  §63 world-signal bus: a pooled bus of short-lived `noise`/`light`/`sonar`/
+  `injury` signals with spatial + temporal decay that creatures query via
+  `perceive`/`queryNear` (the single perception seam for WI-10), and the sonar
+  system (expanding ring, brief outline tags, transient resource signatures,
+  larger/slower pulses from massive objects, short-lived echo particles) that
+  emits the sonar + noise signals; the player emits tool/boost/sonar signals;
+  all pure and unit-tested, with a pooled browser render layer.

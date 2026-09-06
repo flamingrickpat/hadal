@@ -29,6 +29,7 @@ import { PLAYER_PLANE_Z } from './constants';
 import { Lighting } from '../render/lighting';
 import { ParticleField } from '../render/particles';
 import { PostFX } from '../render/postfx';
+import { SonarVisuals } from '../render/sonar';
 import { bandProfileAtDepth } from '../render/band';
 import { AudioSystem } from '../systems/AudioSystem';
 import type { Vec2 } from '../util/math';
@@ -45,6 +46,7 @@ export class Game implements DebugPanelHost {
   private readonly lighting: Lighting;
   private readonly particles: ParticleField;
   private readonly postfx: PostFX;
+  private readonly sonarVisuals: SonarVisuals;
   private readonly audio: AudioSystem;
   private readonly playerMesh: THREE.Group;
   private readonly radio: HTMLElement;
@@ -61,6 +63,7 @@ export class Game implements DebugPanelHost {
     renderer.setWorldBounds(this.world.bounds);
     this.lighting = new Lighting(renderer.scene);
     this.particles = new ParticleField(renderer.scene);
+    this.sonarVisuals = new SonarVisuals(renderer.scene, this.sim.sonar);
     const buffer = new THREE.Vector2();
     renderer.gl.getDrawingBufferSize(buffer);
     this.postfx = new PostFX(renderer.gl, Math.max(1, buffer.x), Math.max(1, buffer.y));
@@ -97,9 +100,10 @@ export class Game implements DebugPanelHost {
     this.syncPlayerMesh();
     this.hud.update(this.sim.player);
     this.menu.update();
-    // Fire the sonar ping once per Q press (request §6, §27).
+    // Fire the sonar ping once per Q press (request §6, §27), matching the
+    // sonar fire in the simulation (which also requires the sonar capability).
     const sonar = this.sim.controller.input.sonar;
-    if (sonar && !this.sonarHeld) this.audio.playSonarPing();
+    if (sonar && !this.sonarHeld && this.sim.player.capabilities.has('sonar')) this.audio.playSonarPing();
     this.sonarHeld = sonar;
     this.updateRadio();
     if (this.sim.consumeAutosave()) saveToStorage(window.localStorage, this.sim.toSave());
@@ -125,6 +129,7 @@ export class Game implements DebugPanelHost {
     this.lighting.setHalf(half);
     this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile);
     this.particles.update(frameDt, center, half, profile);
+    this.sonarVisuals.update(this.sim.state.timeSec);
     this.postfx.update(profile, frameDt);
     this.audio.update(this.sim.player);
   }

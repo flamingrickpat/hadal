@@ -5,7 +5,8 @@
  * archetype: information-holder
  * owns: the craftable permanent upgrades (`RECIPES`) — the tier-1 first
  *   upgrades the workbench offers. `tank-1` is the oxygen capacity
- *   upgrade; `fins-1` adds the `boost` capability.
+ *   upgrade; `fins-1` adds the `boost` capability; `sonar-1` adds the
+ *   `sonar` capability (request §9 tier 1, §18).
  * not own: the `EquipmentDef` / `Capability` types (`equipment.ts`) and
  *   the material families (`resources.ts`).
  * invariant: each recipe ID is unique and its cost references only
@@ -30,6 +31,13 @@ export const RECIPES: readonly EquipmentDef[] = [
     cost: { salvage: 8 },
     speedBonus: 1.3,
     capabilities: ['boost'],
+  },
+  {
+    id: 'sonar-1',
+    name: 'Simple Sonar',
+    description: 'Active scan pulse; marks resource signatures.',
+    cost: { salvage: 5 },
+    capabilities: ['sonar'],
   },
 ];
 

@@ -60,3 +60,18 @@ export const BASE_RADIUS = 260; // surface-base region radius (request §5)
 // Death / respawn (request §25): at most a modest fraction of unbanked
 // resources is lost; permanent upgrades and banked resources are kept.
 export const DEATH_RESOURCE_LOSS_FRACTION = 0.3;
+
+// Sonar (request §18): the Q active-scan pulse and its echo/signal behavior.
+export const SONAR_RANGE = 2200; // expanding-ring max radius (world units)
+export const SONAR_RING_SPEED = 900; // ring expansion speed (units / second)
+export const SONAR_ECHO_BAND = 150; // the ring band that triggers tags/echoes
+export const SONAR_ECHO_STEP = 150; // terrain point spacing for echo tagging
+export const TAG_FLASH_TIME = 1.0; // brief terrain outline flash (seconds)
+export const SIGNATURE_TIME = 6.0; // transient resource-signature mark (seconds)
+export const ECHO_LIFE = 1.6; // short-lived echo particle lifetime (seconds)
+export const MASSIVE_FLASH_SCALE = 0.6; // larger objects return larger/slower pulses
+export const SONAR_SIGNAL_STRENGTH = 1.0; // the emitted sonar world-signal strength
+export const SONAR_NOISE_STRENGTH = 0.8; // the sonar's noise side-effect (request §18)
+export const TOOL_NOISE_STRENGTH = 0.5; // a used tool's noise signal strength
+export const BOOST_NOISE_STRENGTH = 0.7; // the boost's noise signal strength
+export const BOOST_SIGNAL_INTERVAL = 0.3; // throttle for the continuous boost noise
