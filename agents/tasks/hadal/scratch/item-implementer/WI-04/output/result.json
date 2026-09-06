@@ -1,10 +1,69 @@
 {
   "fps": {
-    "depth-100": 27.7,
-    "depth-700": 28.7,
-    "depth-1400": 29
+    "depth-300": 26.4,
+    "depth-700": 26.4,
+    "depth-1400": 27.6
+  },
+  "checks": {
+    "A scene is not a flat color field (stddev of luminance)": "PASS",
+    "B beam reveals a bright region against the surrounding water": "PASS",
+    "B2 beam anchored to the player (bright core near the diver, not the camera center)": "PASS",
+    "C visibility shortens with depth (smaller bright beam area when deeper)": "PASS",
+    "D open water is never pure black (ambient floor above zero)": "PASS"
+  },
+  "perDepth": {
+    "depth-300": {
+      "playerScreen": {
+        "x": 960,
+        "y": 288
+      },
+      "core": {
+        "x": 1120,
+        "y": 200,
+        "lum": 253.5
+      },
+      "coreToPlayer": 182.6,
+      "mean": 96,
+      "max": 255,
+      "stddev": 40.78,
+      "brightArea": 26323,
+      "waterMin": 79.2
+    },
+    "depth-700": {
+      "playerScreen": {
+        "x": 960,
+        "y": 540
+      },
+      "core": {
+        "x": 1120,
+        "y": 340,
+        "lum": 253.4
+      },
+      "coreToPlayer": 256.1,
+      "mean": 90.5,
+      "max": 255,
+      "stddev": 44.42,
+      "brightArea": 30485,
+      "waterMin": 68.1
+    },
+    "depth-1400": {
+      "playerScreen": {
+        "x": 960,
+        "y": 868.8
+      },
+      "core": {
+        "x": 1020,
+        "y": 720,
+        "lum": 253.2
+      },
+      "coreToPlayer": 160.4,
+      "mean": 63.9,
+      "max": 255,
+      "stddev": 41.71,
+      "brightArea": 14351,
+      "waterMin": 26.4
+    }
   },
   "pageErrors": [],
-  "consoleErrors": [],
-  "canvasPresent": true
+  "consoleErrors": []
 }

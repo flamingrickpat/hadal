@@ -109,3 +109,20 @@ frame by `Game.renderVisuals(frameDt)`, called from `main.ts` before
 - `node agents/tasks/hadal/scratch/item-implementer/WI-04/probe.mjs` → boots
   the real dev page in headless Chromium (SwiftShader) at 1920×1080, teleports
   to three depths, measures FPS, and screenshots each (the visual evidence).
+
+## Attempt 2 (2026-09-07) — the flashlight beam is scaled and anchored to the player
+
+The attempt-1 beam was a `PlaneGeometry(2, 2)` quad that was never scaled (a ~2 px
+region on screen) and was anchored to the **camera center**, so it did not reveal
+the scene and sat above the diver once the camera clamped at depth. The fix:
+`Lighting.update` now takes the player position, anchors `beam.position` to the
+diver, and scales `beam.scale` to the per-band `visibility` (world units) — the
+vertex shader maps the unit quad to a beam of radius `uReach`, so the beam covers
+its reach. The ambient water gradient stays camera-anchored (it is the base, not
+the light). `beam`/`gradient` are exposed as `readonly` so the render test
+(`src/render/lighting.test.ts`) can assert the beam's scale and position.
+
+This is the flashlight-mask technique (request §15): a composited additive
+cone/radial mask, scaled to the reach and anchored to the player, that brightens
+(reveals) the terrain/particles around the diver, whose bright area shortens with
+depth, while the ambient floor keeps the frame above pure black.

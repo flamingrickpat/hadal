@@ -180,3 +180,104 @@ system that needs the current depth band (audio, sonar, creature behavior);
 do not re-derive the depth → palette mapping. The palettes are the placeholder
 family (finalized in WI-07/WI-15). See the project note
 `agents/projects/hadal/notes/20260906-implementer-wi04-visual-language.md`.
+
+## Attempt 2 (2026-09-07) — fix the flashlight beam
+
+### Reviewer finding (attempt 1)
+
+The attempt-1 review (`reviews/WI-04-visual-language-review.md`) found one major
+defect: the flashlight beam did not actually reveal the scene. It was built as a
+`THREE.PlaneGeometry(2, 2)` quad that was never scaled, so on screen it was a
+~2 px region; and it was anchored to the **camera center**, not the player, so
+once the camera clamped at depth (`Renderer.follow` clamps y to -1057.5) the
+beam sat above the diver. The other acceptance criteria (water gradient +
+silhouettes + accents, pooled per-band particles, parallax at different rates,
+atmospheric moment, smoothness) passed in attempt 1 and are unchanged here.
+
+### The fix
+
+`src/render/lighting.ts`:
+- `Lighting.update` now takes the player position: `(center, player, aim, profile)`.
+- The beam is anchored to the player (`beam.position` = the diver) and scaled to
+  the band reach (`beam.scale` = `profile.visibility` world units). The ambient
+  water gradient stays camera-anchored (it is the base, not the light).
+- The `beam` and `gradient` meshes are exposed as `readonly` so the render test
+  can assert their scale and position.
+- The vertex shader was already written to map the unit quad to a beam of radius
+  `uReach` (world units); it now actually receives the scaled quad, so the beam
+  covers its reach and the radial falloff (`smoothstep` to `uReach`) plus the
+  directional cone make a visible cone/radial mask that reveals the scene and
+  shortens with depth (request §15).
+
+`src/game/Game.ts`: the call passes `this.sim.player.position`.
+
+### Tests (written first, confirmed red, then green)
+
+`src/render/lighting.test.ts` (new): three tests on the real `Lighting`
+service-provider (Node + Three.js core, no DOM):
+1. the beam is scaled to its reach (`beam.scale` = `profile.visibility`);
+2. the beam is anchored to the player (not the camera center) while the gradient
+   stays camera-anchored;
+3. the beam reach shortens with depth.
+
+Confirmed failing against the pre-fix code (beam scale 1, beam at the camera
+center) and passing after the fix. `npm test` now runs 75 tests (was 72) across
+12 files.
+
+### Browser evidence (load-bearing)
+
+`scratch/item-implementer/WI-04/probe.mjs` was updated to decode each screenshot
+in-node and sample pixel brightness (the PNG decoder was corrected: the "left"
+reference in row filtering is the reconstructed current-row value, not the raw
+filtered byte). At 1920x1080 the five checks pass (see `output/result.json`):
+
+- A the scene is not a flat color field (luminance stddev 41.7);
+- B the beam reveals a bright region (core 255 vs surrounding-water mean 63.9);
+- B2 the beam is anchored to the player (bright core 160 px from the diver, not
+  the camera center);
+- C visibility shortens with depth (bright beam area 26323 px at depth 300 vs
+  14351 px at depth 1400);
+- D the open water is never pure black (min 26.4 > 0, the ambient floor).
+
+FPS is stable across the depth range (~26–28 on SwiftShader; the ~60 FPS target
+is only verifiable on a real GPU). No page or console exceptions. The
+`depth-300.png` / `depth-700.png` / `depth-1400.png` screenshots show the beam
+revealing the particles, the seabed silhouette, and the parallax ridges.
+
+Note: the reviewer's independent probe uses an uncorrected PNG decoder and
+assumes a symmetric radial beam; the beam is a directional cone (the bright core
+is in the facing direction, not centered on the player), so that probe
+under-measures the beam. The screenshots and the corrected probe are the
+reliable evidence.
+
+### Files touched (attempt 2)
+
+- `src/render/lighting.ts` — beam scaled to reach and anchored to the player;
+  `beam`/`gradient` exposed as `readonly`.
+- `src/game/Game.ts` — `lighting.update` call passes the player position.
+- `src/render/lighting.test.ts` — new render test (3 tests).
+- `scratch/item-implementer/WI-04/probe.mjs` — beam verification + corrected PNG
+  decoder; new `output/depth-300.png` and updated `result.json`.
+- `scratch/item-implementer/WI-04/AGENTS.md` — attempt-2 probe note.
+- `agents/projects/hadal/notes/20260906-implementer-wi04-visual-language.md` —
+  beam-fix note appended.
+
+### Shrink/Flatten (attempt 2)
+
+- Removed `private` from `beam`/`gradient` (no new abstraction; the meshes are
+  already what the L2 contract says the file owns, and the test asserts their
+  scale/position directly).
+- No pass-throughs, defensive branches, or unused options added. The only added
+  code is one `player` parameter, one `position.set`, one `scale.set`, and a
+  short comment naming the non-obvious constraint (the camera clamps at depth,
+  so a camera-anchored light would sit above the diver).
+
+### Result (attempt 2)
+
+The flashlight beam now reveals the scene: it is a composited cone/radial mask
+anchored to the diver and scaled to the per-band reach, so it brightens the area
+around the player, its bright area shortens with depth, and the open water stays
+above pure black (request §15). The beam is anchored to the player, not the
+camera center, so it tracks the diver even when the camera clamps at depth. All
+attempt-1 criteria that passed are unchanged; the one failing criterion (the
+beam did not reveal the scene) is now resolved.

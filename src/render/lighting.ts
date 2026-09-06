@@ -26,9 +26,9 @@ const BEAM_Z = 12; // in front of the player (z = 10)
 const CONE_HALF = 0.85; // radians; the starter work-light beam half-angle (request §15)
 
 export class Lighting {
-  private readonly gradient: THREE.Mesh;
+  readonly gradient: THREE.Mesh;
   private readonly gradientMat: THREE.ShaderMaterial;
-  private readonly beam: THREE.Mesh;
+  readonly beam: THREE.Mesh;
   private readonly beamMat: THREE.ShaderMaterial;
 
   constructor(scene: THREE.Scene) {
@@ -108,9 +108,12 @@ export class Lighting {
     this.gradient.scale.set(half.x, half.y, 1);
   }
 
-  update(center: Vec2, aim: number, profile: BandProfile): void {
+  update(center: Vec2, player: Vec2, aim: number, profile: BandProfile): void {
     this.gradient.position.set(center.x, center.y, GRADIENT_Z);
-    this.beam.position.set(center.x, center.y, BEAM_Z);
+    // Anchor to the diver, not the camera: at depth the camera clamps, so a
+    // camera-anchored light would sit above the diver and stop tracking them.
+    this.beam.position.set(player.x, player.y, BEAM_Z);
+    this.beam.scale.set(profile.visibility, profile.visibility, 1);
     this.beam.rotation.z = aim;
     this.gradientMat.uniforms.uTop!.value.setRGB(profile.waterTop[0], profile.waterTop[1], profile.waterTop[2]);
     this.gradientMat.uniforms.uBottom!.value.setRGB(profile.waterBottom[0], profile.waterBottom[1], profile.waterBottom[2]);

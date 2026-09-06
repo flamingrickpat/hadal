@@ -104,7 +104,7 @@ export class Game implements DebugPanelHost {
     this.world.updatePalette(profile);
     this.world.updateParallax(center);
     this.lighting.setHalf(half);
-    this.lighting.update(center, this.sim.player.facing, profile);
+    this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile);
     this.particles.update(frameDt, center, half, profile);
     this.postfx.update(profile, frameDt);
   }
