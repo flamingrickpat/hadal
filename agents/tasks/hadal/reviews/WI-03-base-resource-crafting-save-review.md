@@ -184,3 +184,41 @@ documented command should not be a plain build.)
   acceptable: it is a death/respawn-mechanic test, not a reachability claim
   (the core-loop reachability scenario does not use teleport). Request §70
   forbids teleport as *reachability* evidence, which this does not.
+
+## Re-verification (2026-09-06, reviewer attempt 2)
+
+This report was re-verified independently in a fresh session (retry attempt 2)
+after the prior attempt's result JSON was rejected for a missing `blocker`
+field. The verdict and all three findings are re-confirmed; nothing in this
+section changes a prior verdict.
+
+- **Finding 1 re-confirmed from source and live.** `src/main.ts:7` reads
+  `document.getElementById('app')!`; `index.html:27` defines only
+  `<div id="game">`; `Renderer`'s constructor (`src/render/Renderer.ts:40`)
+  calls `container.appendChild(...)`. Re-ran the independent headless-Chromium
+  probe (`scratch/work-item-reviewer/WI-03/probe.mjs`, real `npm run dev`,
+  SwiftShader, 1920×1080, `?debug=1`): all four checks fail and the page error
+  is exactly `TypeError: Cannot read properties of null (reading 'appendChild')`;
+  no canvas, `#hud-root`, or `#debug-panel`. `BUILD.md` "Delivery Verification
+  Capabilities" documents the ms-playwright Chromium binary that makes this boot
+  break catchable in this environment (the implementer's "no Playwright
+  harness installed" claim is inaccurate).
+- **Finding 2 re-confirmed from git.** `git diff 8939cb7 877ecd9` shows
+  `Game.start()/stop()/frame(now)` and the `accumulator`/`MAX_FRAME_DT`
+  machinery removed; `src/main.ts` now calls `game.update(FIXED_DT)` once per
+  `requestAnimationFrame`, tying sim cadence to display refresh. Not called out
+  in the implementer's "Deviations From Plan".
+- **Finding 3 re-confirmed from `package.json`.** `test` = `vitest run`;
+  `test:browser` = `vite build` (a build, not a page load).
+- **Headless evidence re-confirmed.** `npm test` = 8 files / 56 tests, exit 0
+  (`save` 11, `terrain` 7, `PlayerController` 10, `PlayerMeters` 10,
+  `CraftingSystem` 6, `coreLoop` 1, `rng` 4, `scenarios` 7). `coreLoop.test.ts`
+  is a genuine continuous 9-step scenario (no teleport/noclip); `scenario.ts`
+  `swimTo`/`steerToward` select inputs only and `trace` carries
+  seed/time/position/input/assertion.
+
+Verdict unchanged: **findings**. The headless verification core is solid and
+green, but the browser adapter crashes on boot (Finding 1), so the work item's
+stated Goal — "the player can dive, gather, surface, craft, and go farther" in
+the browser — is not met, and two moderate regressions (Findings 2 and 3) are
+present.
