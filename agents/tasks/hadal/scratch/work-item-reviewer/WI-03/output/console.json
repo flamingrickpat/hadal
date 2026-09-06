@@ -1,0 +1,15 @@
+{
+  "consoleMsgs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    }
+  ],
+  "pageErrors": [
+    "TypeError: Cannot read properties of null (reading 'appendChild')"
+  ]
+}
