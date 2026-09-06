@@ -30,6 +30,7 @@ import { Lighting } from '../render/lighting';
 import { ParticleField } from '../render/particles';
 import { PostFX } from '../render/postfx';
 import { bandProfileAtDepth } from '../render/band';
+import { AudioSystem } from '../systems/AudioSystem';
 import type { Vec2 } from '../util/math';
 import type { DebugPanelHost } from '../util/debug';
 
@@ -44,10 +45,12 @@ export class Game implements DebugPanelHost {
   private readonly lighting: Lighting;
   private readonly particles: ParticleField;
   private readonly postfx: PostFX;
+  private readonly audio: AudioSystem;
   private readonly playerMesh: THREE.Group;
   private readonly radio: HTMLElement;
   private lastShownLine: string | null = null;
   private paused = false;
+  private sonarHeld = false;
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -67,6 +70,18 @@ export class Game implements DebugPanelHost {
     renderer.scene.add(this.playerMesh);
     this.hud = new Hud(document.body);
     this.menu = new CraftingMenu(document.body, this.sim);
+    this.audio = new AudioSystem();
+    // Audio unlocks on the first user gesture so the browser autoplay rules are
+    // respected (request §27, §70); the AudioContext is created only here.
+    const unlockAudio = (): void => {
+      this.audio.unlock();
+    };
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true });
+    if (new URLSearchParams(window.location.search).has('debug')) {
+      (window as unknown as Record<string, unknown>).__HADAL_AUDIO__ = this.audio;
+    }
     this.radio = document.createElement('div');
     this.radio.className = 'radio-message';
     document.body.appendChild(this.radio);
@@ -82,6 +97,10 @@ export class Game implements DebugPanelHost {
     this.syncPlayerMesh();
     this.hud.update(this.sim.player);
     this.menu.update();
+    // Fire the sonar ping once per Q press (request §6, §27).
+    const sonar = this.sim.controller.input.sonar;
+    if (sonar && !this.sonarHeld) this.audio.playSonarPing();
+    this.sonarHeld = sonar;
     this.updateRadio();
     if (this.sim.consumeAutosave()) saveToStorage(window.localStorage, this.sim.toSave());
   }
@@ -107,6 +126,7 @@ export class Game implements DebugPanelHost {
     this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile);
     this.particles.update(frameDt, center, half, profile);
     this.postfx.update(profile, frameDt);
+    this.audio.update(this.sim.player);
   }
 
   private updateRadio(): void {

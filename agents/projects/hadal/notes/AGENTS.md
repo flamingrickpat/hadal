@@ -18,3 +18,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260906-reviewer-wi03-browser-boot-regression.md -->
 <!-- include: ./20260906-implementer-wi03-browser-fixes.md -->
 <!-- include: ./20260906-implementer-wi04-visual-language.md -->
+<!-- include: ./20260907-implementer-wi05-audio-system.md -->
