@@ -2,16 +2,26 @@
 
 ## Frameworks
 
-Target: Vitest for small deterministic logic tests (request §28) —
-world validation, critical-path simulation, recipe/gate consistency,
-seeded RNG. Not installed yet: this revision has no `package.json`.
+Vitest for small deterministic logic tests (request §28), configured in
+`vitest.config.ts` (node environment, `src/**/*.test.ts`). At 7aa2435
+there are 4 test files / 31 tests, all passing:
+
+- `src/util/rng.test.ts` — seeded-RNG determinism + known vector.
+- `src/world/terrain.test.ts` — circle-vs-segment resolution (request §31).
+- `src/player/PlayerController.test.ts` — inertial swim integrator +
+  facing + tool selection (request §6).
+- `src/player/PlayerMeters.test.ts` — O2/HP drain, refill, zero-O2,
+  depth (request §7).
+
+Logic tests that must be added as the corresponding feature lands:
+`validateWorld()` / `simulateCriticalPath()`, recipe/gate/creature/trigger
+ID resolution, collision edges, cargo capacity, save serialize/
+deserialize + migration + malformed-save reset (request §32, §42, §70).
 
 ## Full Test Command
 
-Target, once Vitest is configured:
-
 ```bash
-npx vitest run
+npx vitest run        # headless suite; `npm test` runs the same
 ```
 
 ## Focused Test Commands
@@ -23,8 +33,11 @@ npx vitest run -t <test name> # one test
 
 ## Integration And Live Tests
 
-The game itself has no unit-test surface; verification is in-browser.
-The request §70 checklist is the integration contract:
+Headless logic tests cover the deterministic rules above (movement,
+collision, meters, RNG). Browser integration and presentation are
+verified with scratch probes under `agents/tasks/hadal/scratch/`
+(Playwright Chromium driving a real `npm run dev` page at 1920×1080),
+and the request §70 checklist is the end-to-end contract:
 
 - Boot: fresh browser profile starts; audio after input; resize works;
   no console exceptions.
@@ -53,9 +66,11 @@ In-engine validators (request §32), reachable from the debug panel
 
 ## Fixtures
 
-None yet. Once created, keep them under the test files: deterministic
-seeded-RNG fixtures (request §61) and world-validation fixtures for the
-validators above.
+Test files carry inline fixtures (e.g. the `FLOOR` segment in
+`terrain.test.ts`, `makePlayer` in `PlayerMeters.test.ts`, the known RNG
+vector). World-validation fixtures for `validateWorld()` /
+`simulateCriticalPath()` (request §32) and save round-trip fixtures
+(request §42) are added as those features land.
 
 ## Manual End-User Verification
 
@@ -82,6 +97,8 @@ validators above.
   up gracefully (request §25, §42).
 - Visual assertion: largest encounter holds ~60 FPS at 1080p; depth
   bands are visually and aurally distinct (request §14.3, §34).
-- Tool used: no automation exists in this checkout — manual observation
-  in a real browser, supported by the in-engine debug panel (request
-  §33) and balance telemetry (request §71).
+- Tool used: headless scratch probes (Playwright Chromium driving a real
+  `npm run dev` page, `agents/tasks/hadal/scratch/`) for boot/movement;
+  manual observation in a real desktop browser for visuals/audio/
+  performance, supported by the in-engine debug panel (request §33) and
+  balance telemetry (request §71).

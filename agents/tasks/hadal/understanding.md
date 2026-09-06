@@ -9,9 +9,9 @@ five depth bands of a finite, authored world (~18,000–28,000 units
 wide, deepest point ~-9,000 to -12,000, request §4.1) and retrieves a
 high-value object from a lost deep installation. The hidden creative
 content — lore, creature roster, MacGuffin, final reveal, endings — is
-to be generated privately inside the repository and must never leak into
-chat, commit summaries, screenshots, or progress reports (request §0,
-§12, §68).
+generated privately inside the repository and must never leak into chat,
+commit summaries, screenshots, or progress reports (request §0, §12,
+§68).
 
 Explicit acceptance examples (request §45):
 
@@ -31,176 +31,190 @@ Explicit acceptance examples (request §45):
   request §34);
 - the user is not spoiled by development chatter (request §68).
 
+The task is decomposed into 17 work items (plan.md). The first two —
+WI-01 (scaffold) and WI-02 (player/terrain/meters/HUD/debug) — are
+implemented and reviewed, approved at 7aa2435.
+
 ## Product Area
 
-The entire repository: this is a from-scratch build. No existing
-product component is extended; every requested behavior (game loop,
-player movement, world/chunks, terrain, creatures/AI/sonar, crafting,
-audio, save system, hidden content pass, debug panel) is new. The
-planned public entry point is `index.html` -> `src/main.ts`
-(request §29, §69), which does not exist yet. Why: the only product
-authority in this repository is `agents/tasks/hadal/request.md`, and
-the repository contains no other product code to integrate with.
+The entire repository, now a from-scaffold extension rather than a
+from-scratch build. The buildable game already boots
+(`index.html` -> `src/main.ts`) and has the single simulation seam
+`Game.update(FIXED_DT)` (`src/game/Game.ts:85`), an inertial player with
+O2/HP/depth meters, 2D terrain collision against a small greybox world,
+a minimal HUD, and a hidden debug teleport panel. Every remaining
+requested behavior — save system, surface base + resource + crafting,
+death/respawn, visual/audio language, sonar + world-signal bus, the full
+5-band macro world, the creature framework and hidden roster, authored
+encounters, the MacGuffin/endings, the balance pass, and the
+spoiler-safe handoff — attaches to the existing seams (the `Game.update`
+tick, `EquipmentDef`/`Capability`, `Cargo`, the request §17 chunk
+model, the request §63 signal bus) rather than inventing parallel ones
+(plan "Existing Seam And Data Origins").
 
 ## Current Behavior
 
-This checkout does nothing as a product. It is a greenfield,
-workflow-controlled scaffold: 39 tracked files consisting of root agent
-docs (five byte-identical copies), `project.md`, `.mcp.json`
-(codegraph MCP), `.gitignore`, `.pi/search.json` (web-search backends),
-and the `agents/` scaffolding — project knowledge templates
-(`agents/projects/hadal/`), task templates (`agents/tasks/_template/`),
-the current task folder (`agents/tasks/hadal/` with `request.md` and
-the controller's `state.md`), and preview templates
-(`agents/templates/`). There is no `package.json`, no `index.html`, no
-`src/`, no test config, and no README. The codegraph index at
-`.codegraph/` contains no product symbols. `state.md` records phase
-`understand`, accepted revision 207a690, and two reverted
-understanding attempts (citation-format failures).
+At 7aa2435 the game boots and runs a fixed 1/60 s loop
+(`requestAnimationFrame` -> accumulator -> `update(FIXED_DT)`); the
+player swims inertially (WASD, Shift boost, mouse aim, request §6),
+collides with the greybox world (`GREYBOX_WORLD`: seabed, west wall,
+central wall, ridge) via circle-vs-segment resolution, and its O2/HP
+meters drain below 100 m of depth and refill near the surface
+(`PlayerController.updateMeters`, request §7). Depth is `max(0, -y)`;
+y = 0 is the surface (request §4.1). A minimal HUD shows
+O2/HP/depth/tool and fades full meters (request §26); Esc pauses. The
+hidden debug panel (`?debug=1` / Backquote+F2) teleports the player and
+shows a readout (request §33). Starter gear (tier 0: tank, work light,
+salvage knife, harpoon) is applied at boot via `applyStarterGear`
+(request §62/§9). Four Vitest suites (31 tests) pin the movement
+integrator, meter math, terrain resolution, and seeded RNG; `npm run
+build` exits 0. There is no save, no base, no resource, no crafting, no
+audio, no sonar, no creatures, and no full world yet.
 
 ## Requested Behavior
 
-Create the whole game per the 75-section request, in the nine
-implementation phases of request §44: (1) playable greybox skeleton
-(swim, collision, oxygen, base, one resource, one craft, save, debug
-teleport); (2) visual language (water, particles, flashlight, parallax,
-procedural creature renderer, audio, sonar); (3) progression backbone
-(material families, upgrades, pressure/current gates, macro world
-graph, critical-path validator); (4) the private creative design pass
-(`design_private/`, request §12); (5) creature framework (steering,
-senses, spine renderer, schools, predators, cross-species events) plus
-the hidden roster (18–24 organisms, request §11.1); (6) authored
-encounters (5+ spectacle beats, environmental story); (7) full art and
-audio pass; (8) balance pass toward 90–120 minutes using debug
-telemetry (request §71); (9) spoiler-safe handoff (request §68, §69).
+Complete the remaining ~15 work items of plan.md in the nine phases of
+request §44: (WI-03) surface base + one resource + crafting + versioned
+`localStorage` save + death/respawn + the rest of the debug panel;
+(WI-04) visual language (water, particles, flashlight, parallax,
+grain); (WI-05) procedural WebAudio; (WI-06) sonar + the request §63
+world-signal bus; (WI-07) the full macro world (5 depth bands, chunk
+streaming, currents, interiors, triggers) as a preparatory refactor of
+`GREYBOX_WORLD`; (WI-08) material families + upgrades + soft gates +
+`validateWorld()`/`simulateCriticalPath()`; (WI-09) the private
+creative design pass (`design_private/`); (WI-10/11) the creature
+framework and the selected 18–24-organism hidden roster; (WI-12)
+authored encounters + environmental story; (WI-13) the MacGuffin +
+endgame + ending variants; (WI-14) camera scale-reveals + effects +
+juice; (WI-15) UI/UX + accessibility; (WI-16) the balance pass toward
+90–120 min blind; (WI-17) the spoiler-safe handoff + real-user-path
+delivery verification.
 
-Ambiguities and their resolution (see Assumptions): the title may stay
-`HADAL`; all numeric tuning values are defaults, not sacred
-(request §4.1); hidden content decisions are delegated to the coding
-agent by request §75; the stack is fixed (request §28); desktop
-browser only, no gamepad/MVP-blocking scope (request §6, §72).
+Ambiguities and their resolution (see Assumptions): creative content is
+delegated to the implementer (request §75); the working title stays
+`HADAL`; numeric tuning values are defaults, not sacred (request §4.1);
+the simulation-boundary and headless-scenario-harness requirements
+(request §30, §70) govern how every gameplay feature is verified.
 
 ## Code Located
 
-No product code exists in this repository, so every requested behavior
-maps to the specification sections below (the only existing seams) and
-to target paths the implementer will create per request §29. All cited
-files exist at 207a690:
+- symbol: Game @ src/game/Game.ts:36 — the coordinator; owns the `requestAnimationFrame` loop, the single `update(FIXED_DT)` simulation seam, Esc pause, and the debug teleport/readout hooks every later system plugs into
+- symbol: Game.update @ src/game/Game.ts:85 — the single fixed-step tick (state -> controller -> collision -> mesh sync -> hud); the seam all remaining work items attach to
+- symbol: PlayerController @ src/player/PlayerController.ts:54 — request §6 inertial swim integrator, §7 O2/HP/depth meters, and §6 WASD/Shift/mouse/E/Q/1-4 input
+- symbol: buildTerrain @ src/world/terrain.ts:44 — request §31 circle-vs-segment collision core (`resolveCircle`); survives the WI-07 world refactor
+- symbol: GREYBOX_WORLD @ src/world/worldData.ts:32 — the current greybox map (seabed/west wall/central wall/ridge) + `PLAYER_START`/`worldBounds`; the WI-07 refactor target for the request §17 authored chunk model
+- symbol: EquipmentDef @ src/player/equipment.ts:28 — request §62 `EquipmentDef`/`Capability` shapes + tier-0 `STARTER_GEAR`/`applyStarterGear`; the type the crafting system (WI-03/08) consumes
+- symbol: createRng @ src/util/rng.ts:16 — request §61 seeded PRNG; the only source of randomness (never for gates/resources/reveals)
+- symbol: enableDebugPanel @ src/util/debug.ts:21 — request §33 hidden debug panel (teleport + readout); the rest of §33 grows in this file
+- symbol: Renderer @ src/render/Renderer.ts:23 — request §16 `WebGLRenderer` + fixed-width orthographic camera follow + `screenToWorld` mouse aim
 
-- symbol: project_id @ project.md:3 — stable project identity ("hadal"); selects `agents/projects/hadal/` as the knowledge folder for this repository
-- symbol: Request @ agents/tasks/hadal/request.md:1 — the full 75-section HADAL handoff; the sole product specification, and the seam every new behavior will attach to
-- symbol: TechStack @ agents/tasks/hadal/request.md:1215 — §28 mandates HTML5 + TypeScript + Vite + Three.js + native WebAudio + Vitest, and forbids React, general-purpose ECS, and heavy physics engines
-- symbol: RepoLayout @ agents/tasks/hadal/request.md:1239 — §29's recommended `src/` tree (`main.ts`, `game/`, `world/`, `creatures/`, `systems/`, `content/secret/`, `ui/`, `util/`, `design_private/`); none of these paths exist yet
-- symbol: WorldChunkDef @ agents/tasks/hadal/request.md:857 — §17's authored chunk data shape (bounds, terrain, exits, resource/creature spawns, props, triggers, ambient) that the world layer must implement
-- symbol: SaveGameV1 @ agents/tasks/hadal/request.md:1623 — §42's versioned `localStorage` save schema; no persistence code exists yet
-- symbol: MainLoop @ agents/tasks/hadal/request.md:1319 — §30's fixed 1/60 s timestep loop pseudo-code that the future `src/main.ts` boot must implement
-- symbol: mcpServers @ .mcp.json:2 — the only configured MCP server (codegraph, stdio `codegraph serve --mcp`); the structural lookup channel for this repository
-- symbol: WorkflowRules @ AGENTS.md:1 — repository session rules: codegraph for structural questions, task-folder artifact ownership, `state.md` read-only
-
-Nearest existing seams for behaviors with no file yet: the boot and
-fixed-step loop have no `src/main.ts` (target: `src/main.ts`, request
-§29/§30); persistence has no `src/game/save.ts` (target per request
-§42); the world/chunk layer has no `src/world/` (target per request
-§17/§29); creature rendering and the signal bus have no
-`src/creatures/` (target per request §13.2/§63); hidden content has no
-`src/content/secret/` or `design_private/` (target per request §12/§29,
-and `.gitignore` does not yet cover `design_private/`).
+Nearest existing seams for behaviors with no file yet: persistence has no
+`src/game/save.ts` (a new module; `GameState` deliberately does not own
+it); the world/chunk layer has no `src/world/chunks.ts`/`gates.ts`/
+`triggers.ts` (the request §17 model grows `worldData.ts`); there is no
+`src/creatures/`, no `src/systems/` beyond `CollisionSystem`, no
+`src/content/secret/`, and no `design_private/` (all target per plan).
 
 ## Project Knowledge Consulted
 
-- project-doc: agents/projects/hadal/PROJECT.md — established project_id "hadal", greenfield maturity at 207a690, the target entry points (`index.html` + `src/main.ts`), and the non-goals from request §73
-- project-doc: agents/projects/hadal/ARCHITECTURE.md — established the target component map (`src/game`, `src/world`, `src/creatures`, `src/systems`, `src/content/secret`), the main-loop and world-signal-bus seams, and that no code exists in this revision
-- project-doc: agents/projects/hadal/BUILD.md — established the target `npm install` / `npm run dev` / `npm run build` / `npm run preview` commands (request §69) and that none are runnable yet because no `package.json` exists
-- project-doc: agents/projects/hadal/TEST.md — established Vitest as the target logic-test framework, the request §70 in-browser integration checklist, and the `validateWorld()` / `simulateCriticalPath()` validators (request §32)
-- repo-doc: agents/tasks/hadal/request.md — the authoritative handoff: all 75 sections, the MVP acceptance criteria (§45), implementation phases (§44), scope-cut order (§72), and explicit non-goals (§73)
-- repo-doc: .mcp.json — codegraph is the only configured MCP server (stdio, `codegraph serve --mcp`)
-- repo-doc: .gitignore — ignores only `.codegraph/` and `agents/tasks/*/state.md`; `design_private/` (request §12) is not ignored yet
-- repo-doc: agents/tasks/hadal/state.md — controller run state: phase "understand", accepted revision 207a690, attempts 1–2 reverted for `Code Located` citation failures (gitignored, read-only)
+- project-doc: agents/projects/hadal/ARCHITECTURE.md — established the current component map (built vs. target per request §29), the single `Game.update(FIXED_DT)` seam, and the request §63 signal-bus / §62 capability / §42 save seams the remaining work items attach to
+- project-doc: agents/projects/hadal/PROJECT.md — established `project_id` "hadal", the skeleton + player-core maturity at 7aa2435 (WI-01/WI-02 approved), the entry points, and the request §73/§28 non-goals
+- project-doc: agents/projects/hadal/BUILD.md — established the resolved toolchain (three 0.185 / vite 8.2 / typescript 7 / vitest 5; `npm run build` = `tsc --noEmit && vite build`), and the headless Playwright-Chromium browser-probe capability
+- project-doc: agents/projects/hadal/TEST.md — established the 4-file / 31-test Vitest suite, the request §70 integration checklist, and the in-engine `validateWorld()`/`simulateCriticalPath()` validators
+- repo-doc: agents/tasks/hadal/request.md — the authoritative 75-section handoff: §45 MVP criteria, §44 phases, §30/§70 simulation + headless-scenario-harness verification, §72 scope-cut order, §73 non-goals
+- repo-doc: agents/tasks/hadal/plan.md — the 17-work-item decomposition (WI-01..17) with dependencies, the "Existing Seam And Data Origins" map, and the assumption ledger
+- repo-doc: agents/projects/hadal/notes/20260905-implementer-wi02-world-seams.md — the exact current code seams (simulation order, movement model, meters, terrain, greybox, camera, HUD, debug) and the test/build commands
+- repo-doc: src/game/Game.ts — confirmed by direct read: the single `update(FIXED_DT)` seam and frame accumulator (the codegraph index is stale for product symbols)
 
 ## Knowledge Cross-Check
 
-Confirmed by evidence: the greenfield state — `git ls-files` lists 39
-tracked files, all workflow scaffolding and docs; `git log` shows two
-init commits; the four project-knowledge files contained only blank
-template fields; codegraph explore over `C:\Temp\hadal` returned "No
-relevant code found" for both product and scaffolding queries.
-Refined: `CONTEXT.md`/`AGENTS.md` refer to a root `PROJECT.md`, but the
-tracked identity file is lowercase `project.md` — a case-only
-discrepancy that resolves identically on this Windows host; citations
-use the actual filename. The five root agent docs
-(`AGENTS.md`, `CLAUDE.md`, `CODEX.md`, `QWEN.md`, `CONTEXT.md`) are
-byte-identical copies of the same 1975-char workflow-rules text — no
-project-specific facts live there. Not covered: no human-facing
-documentation exists (no `README.md` yet; request §69 requires one at
-completion), and nothing in the repository describes the game's stack,
-architecture, or tests — all of that enters from `request.md`, which
-the project files now record as *target* facts. The codegraph index
-also does not surface markdown/JSON scaffolding symbols, so tree
-listing (`git ls-files`) was the fallback for scaffolding evidence.
+Confirmed by evidence: the skeleton + player-core state — `git log`
+shows WI-01 (184d348) and WI-02 (6a21844) implemented and reviewed
+(7aa2435); direct reads of the 17 `src/` files confirm the boot loop,
+`Game.update`, `PlayerController`, `buildTerrain`, `GREYBOX_WORLD`,
+`EquipmentDef`, `createRng`, `enableDebugPanel`, and `Renderer`;
+`npx vitest run` = 4 files / 31 tests (all passing) and `npm run build`
+exits 0, matching the implementer/reviewer notes. Refined: the four
+project files were stale (they described the 207a690 greenfield state as
+"no product code exists / not runnable yet / not installed yet"); this
+session updated them to document the 7aa2435 state, keeping the
+request-sourced target facts. The codegraph index at `.codegraph/`
+returns "No relevant code found" for product symbols (`Game`,
+`PlayerController`, `createRng`, `buildTerrain`), confirming the WI-01
+reviewer's finding that the index predates the product code — so
+structural facts rest on direct file reads, not codegraph. Not covered:
+the not-yet-built systems (save, base/crafting, audio, sonar, the full
+world, creatures, MacGuffin) have no code to cite; their target homes
+and the existing types they consume are recorded in plan.md and the
+`20260905-understander-post-wi02-seam-map.md` note.
 
 ## Open Questions And Risks
 
-- Node/npm version is unpinned (no `package.json`); the implementer
-  must choose a current LTS — low risk, but the choice should be
-  recorded in BUILD.md when scaffolding lands.
-- `.gitignore` does not cover `design_private/` (request §12 asks to
-  add it if commits/diffs reach the player); deciding and editing
-  `.gitignore` is implementer work, not understander work.
-- Spoiler containment is a cross-cutting risk for every later role:
-  artifacts, commit messages, screenshots, and progress reports must
-  avoid hidden-content vocabulary (request §0, §68).
-- Verification boundary: no browser-automation tool exists in this
-  checkout (see BUILD.md); every request §45/§70 acceptance criterion
-  is manual in a real desktop browser, and the 60 FPS performance claim
-  (request §34) needs real observation.
+- Verification boundary: headless Vitest covers deterministic rules
+  (movement, collision, meters, RNG); request §70 gameplay/progression
+  scenarios and the §34/§14.3 visual + performance assertions must be
+  observed in a real browser (scratch Playwright probes), then manually
+  for aesthetics/60 FPS (request §70). The request §30/§70
+  simulation-boundary + reusable headless-scenario-harness requirement
+  is not yet in the codebase — it lands with the first movement/resource
+  scenario (WI-03) and gates how every later gameplay feature is
+  verified.
+- Spoiler containment is a cross-cutting risk for every later role and
+  work item: artifacts, commit messages, screenshots, and progress
+  reports must avoid hidden-content vocabulary (request §0, §68);
+  `design_private/` is already gitignored.
 - Scope risk: the request is large (75 sections). Request §72's cut
   order is the safety valve; creature roster quality, depth
   progression, sonar, atmosphere, the five spectacle beats, the final
   reveal, friendly fauna, and saves must not be cut.
-- Determinism risk: seeded RNG must never touch critical gates,
-  critical resources, major reveals, or final-path viability
-  (request §61, §4.4).
-- Save schema must be versioned from the start so later migrations stay
-  trivial (request §42, §70).
+- Determinism risk: `createRng` must never touch critical gates,
+  critical resources, major reveals, or final-path viability (request
+  §61, §4.4); critical resources are authored, not randomized.
+- The save schema must be versioned from the start (`SaveGameV1`,
+  request §42) so later migrations stay trivial; a malformed save must
+  reset or back up gracefully (request §70).
+- The greybox `GREYBOX_WORLD` is a preparatory-refactor target (WI-07),
+  not a throwaway: the request §17 chunk model grows the same
+  `worldData.ts` and `buildTerrain` core, preserving behavior (plan
+  A-R8).
 
 ## Codegraph Queries Run
 
-1. First (mandatory gate) query: `codegraph_explore`
-   "Game main entry point boot loop Vite Three.js player rendering".
-   The first call failed with "No CodeGraph project is loaded for this
-   session" (server root `C:\source\pm\pm-workflows`); the retry with
-   `projectPath: C:\Temp\hadal` returned "No relevant code found" — the
-   index exists at `.codegraph/` but contains no product symbols,
-   consistent with the greenfield checkout.
-2. `codegraph_explore` "project hadal request index mcpServers
-   configuration" (projectPath `C:\Temp\hadal`) — again "No relevant
-   code found"; the index does not even surface scaffolding
-   markdown/JSON symbols. Structural conclusions therefore rest on
-   `git ls-files` (39 tracked files, no product code) plus direct
-   reads of `request.md`, `project.md`, `.mcp.json`, `.gitignore`, and
-   the root docs.
+1. First (mandatory gate) query: `codegraph_explore` "Game update boot
+   loop main entry point player controller terrain collision world
+   renderer" (projectPath `C:\Temp\hadal`) — returned "No relevant code
+   found". Retried with the single symbol `PlayerController` and with
+   `resolveCircle createRng buildTerrain mulberry32` — all "No relevant
+   code found". The index at `.codegraph/` (codegraph.db, mtime
+   2026-09-05 10:49) contains no product symbols, matching the WI-01
+   reviewer note that the index predates the product code.
+2. Fallback (sanctioned by the WI-01 reviewer note for this small new
+   tree): direct reads of the 17 `src/` files listed in "Code
+   Located", plus the project notes under `agents/projects/hadal/
+   notes/`, `package.json`, and the config files. Structural facts in
+   this document rest on those reads and on the passing test/build runs,
+   not on codegraph.
 
 ## Assumptions
 
 - `request.md` is the sole, complete product specification; where it is
   silent, follow its own decision rules (request §75: decide
   independently, prefer the more memorable experience, prefer bespoke
-  small solutions). Rejected alternative: waiting on user choices,
-  which this unattended workflow does not allow and which request §75
-  explicitly forbids for creative decisions.
-- "Change no product code" for this role means creating no product
-  files at all — not even `index.html` or `package.json` scaffolding.
-  Scaffolding is implementer work; pre-creating it here would blur role
-  boundaries and the next gate's baseline.
-- In a greenfield repository, `Code Located` must cite files that
-  actually exist (the `understanding_grounded` gate rejected attempts
-  1–2 for citing target paths like `src/game/Game.ts`); therefore the
-  bullets cite the spec sections and scaffolding files that exist, and
-  target paths are named in prose instead.
-- The working title remains `HADAL` (request §2 permits alternatives;
-  no decision is required now).
-- The four project files are written as target-state documents (stack,
-  commands, layout all sourced from `request.md` sections) and are
-  labeled "target" throughout, because no code or manifest exists to
-  document as current fact; the current state is recorded as
-  greenfield.
+  small solutions, prefer finishing the 2-hour arc). Rejected
+  alternative: waiting on user choices — unavailable in this unattended
+  workflow and explicitly forbidden for creative decisions.
+- "Change no product code" for this role means touching only project
+  knowledge and the task folder — no product files, no `package.json`
+  or `src/` edits. Scaffolding and feature work are implementer work
+  (WI-03+). This session updated the four project files because they
+  were stale (they described the greenfield state) and the task is now
+  about extending existing code; no product code was changed.
+- In a repository that now has product code, `Code Located` cites real
+  symbols/files that exist at 7aa2435 (the grounded-understanding gate
+  rejects target-only citations); target paths for not-yet-built
+  behaviors are named in prose and in the seam-map note instead.
+- The working title stays `HADAL` (request §2 permits alternatives; no
+  decision is required now).
+- The four project files are updated to document the 7aa2435 state
+  (what is built vs. target) while keeping the request-sourced target
+  facts; they remain navigation maps, not a second copy of the code.

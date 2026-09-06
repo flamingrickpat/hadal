@@ -12,14 +12,23 @@
 - Primary languages: TypeScript (Vite), HTML5, CSS (UI), Three.js
   `WebGLRenderer` for rendering, native WebAudio, `localStorage` for
   saves, Vitest for logic tests (request §28).
-- Product maturity: greenfield. At revision 207a690 ("init repo") no
-  product code exists: the repository holds only workflow scaffolding
-  (`agents/`), five byte-identical root agent-doc copies, `project.md`,
-  `.mcp.json`, `.gitignore`, and `.pi/search.json`. The complete
-  specification is `agents/tasks/hadal/request.md` (75 sections).
-- Canonical user entry points: none yet. Target per request §29/§69:
-  `index.html` -> `src/main.ts`, served by `npm run dev`; production via
-  `npm run build` + `npm run preview`.
+- Product maturity: skeleton + player core (built in 184d348 / 6a21844,
+  approved at 7aa2435). A buildable Vite + TS + Three.js game boots
+  (`index.html` -> `src/main.ts`), the player swims inertially with
+  O2/HP/depth meters, collides with a small greybox world, shows a
+  minimal HUD, and has a hidden debug teleport panel (work items WI-01
+  and WI-02, both reviewed and approved). The rest of the 75-section
+  game — save system, surface base/crafting, visual and audio language,
+  sonar + signal bus, the full 5-band macro world, the creature
+  framework and hidden roster, authored encounters, MacGuffin/ending,
+  balance pass, and the spoiler-safe handoff — is not yet built. The
+  complete specification is `agents/tasks/hadal/request.md` (75
+  sections).
+- Canonical user entry points: `index.html` -> `src/main.ts`, served by
+  `npm run dev` (dev port 5173); production via `npm run build` +
+  `npm run preview` (request §29/§69). The boot loop is
+  `Game.start()` -> `requestAnimationFrame` -> fixed 1/60 s steps of
+  `Game.update(FIXED_DT)` (request §30).
 - Non-goals (request §73): base construction, farming, hunger/thirst,
   multiplayer, procedural infinite world, roguelike runs, deep dialogue
   trees, quest board, skill/XP system, dozens of weapons, armor rarity,
@@ -30,7 +39,12 @@
 ## Reconnaissance Status
 
 - Status: usable
-- Documented against: 207a690ed0f3 ("init repo")
-- Evidence: codegraph (index at `.codegraph/`; explore queries return no
-  product symbols) plus `agents/tasks/hadal/request.md`, `project.md`,
-  `.mcp.json`, `.gitignore`, `git ls-files`, and the root agent docs
+- Documented against: 7aa2435a2ee1 ("[review] approve WI-02 player swim,
+  terrain collision, meters, HUD, debug teleport")
+- Evidence: direct reads of the current `src/` tree, the project notes
+  under `agents/projects/hadal/notes/`, `package.json` + configs, the
+  test suite (`npx vitest run` = 4 files / 31 tests, all passing at this
+  revision), `npm run build` (exit 0), and
+  `agents/tasks/hadal/request.md`. The codegraph index at `.codegraph/`
+  is stale for product symbols (see the WI-01 reviewer note), so
+  structural facts rest on direct file reads, not codegraph queries.
