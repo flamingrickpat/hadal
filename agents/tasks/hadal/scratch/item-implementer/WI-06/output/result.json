@@ -1,0 +1,46 @@
+{
+  "pass": true,
+  "failures": 0,
+  "results": [
+    {
+      "ok": true,
+      "name": "both the normal and massive objects produced active echoes",
+      "detail": "active=6"
+    },
+    {
+      "ok": true,
+      "name": "a massive object (size 8) renders a LARGER echo than a normal one (size 1)",
+      "detail": "normal=6 massive=31.200000762939453"
+    },
+    {
+      "ok": true,
+      "name": "a size-1 object renders at the base echo size (~6px, no visual change)",
+      "detail": "normal=6"
+    },
+    {
+      "ok": true,
+      "name": "a massive object renders a LARGER tag than a normal one",
+      "detail": "normal=5 massive=26"
+    },
+    {
+      "ok": true,
+      "name": "the standalone sonar render produced no console/page exceptions (shader compiled)",
+      "detail": "clean"
+    },
+    {
+      "ok": true,
+      "name": "the real game boots with the sonar wired in and no console exceptions",
+      "detail": "clean"
+    },
+    {
+      "ok": true,
+      "name": "the sonar-1 upgrade is crafted in the real game",
+      "detail": "result=clicked"
+    },
+    {
+      "ok": true,
+      "name": "firing the sonar (Q) in the real game produces no runtime exceptions",
+      "detail": "clean"
+    }
+  ]
+}

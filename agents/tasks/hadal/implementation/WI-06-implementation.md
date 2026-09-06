@@ -151,3 +151,70 @@ lists the nearby recent signals. A creature reacts to a channel by checking
 and creatures can be tagged by adding them to the `SonarSystem`'s `objects`
 (see `SonarObject`). A project note records the bus API so WI-10 does not
 re-derive it.
+
+## Revision — attempt 2 (2026-09-07): render-layer fix for Finding 1
+
+The work-item review (`reviews/WI-06-sonar-signal-bus-review.md`) returned one
+low-severity finding: the render layer (`src/render/sonar.ts`) expressed only the
+*slower* half of "larger/slower pulses from massive objects" (request §18, §52E).
+The simulation already models the larger/slower pulse — `SonarSystem.spawnEcho`
+sets `echo.size = t.size` and the tag/echo duration scales with size — but
+`SonarVisuals` drew every echo and tag point at a fixed `PointsMaterial` size
+(echo `size: 6`, tag `size: 5`), so a tagged massive object rendered the same
+pixel size as a small one. The simulation-side tests only asserted the
+`echo.size` field, so the rendering gap went uncaught.
+
+### Fix
+
+`src/render/sonar.ts` (`SonarVisuals`) now drives a per-vertex point size from
+the object size:
+
+- Replaced the two `THREE.PointsMaterial`s with one shared `THREE.ShaderMaterial`
+  (`pointMat`) with a per-vertex `attribute float size` (and the existing
+  per-vertex `tint`); the vertex shader sets `gl_PointSize = size` in pixels.
+- Added public readonly `echoSize: Float32Array` and `tagSize: Float32Array`
+  (parallel to the `tint` buffers). In `update`, each active echo/tag gets
+  `ECHO_BASE_SIZE * (1 + (size - 1) * MASSIVE_FLASH_SCALE)` (echo base 6) and
+  `TAG_BASE_SIZE * (1 + (size - 1) * MASSIVE_FLASH_SCALE)` (tag base 5), so a
+  size-1 object stays at the base size (no visual change) and a size-8 object
+  renders ~5.2x larger, matching the simulation's `echo.size`.
+- `markDirty` now uploads the `position` + `tint` + `size` buffers; `dispose`
+  also disposes the shared `pointMat`. The L1/L2 contract was updated.
+
+No changes to `SonarSystem.ts`, `senses.ts`, `Simulation.ts`, or `Game.ts` (all
+already correct from attempt 1); the fix is confined to the render layer.
+
+### New test (written first, confirmed failing)
+
+`src/render/sonar.test.ts` (4 tests) — the render layer, not the simulation:
+- a massive object (size 8) renders a larger echo than a normal one (size 1);
+- a massive object renders a larger tag than a normal one;
+- the per-vertex size comes from the echo geometry `size` attribute, not a fixed
+  size (asserted through the public `echoSize` buffer);
+- a size-1 object stays at the base echo size (~6px).
+
+Test-first was red (the fixed-size layer failed the first two assertions), then
+green after the shader change.
+
+### Evidence
+
+- `npx vitest run src/render/sonar.test.ts` → 4 pass. Full suite:
+  **16 files / 107 tests pass** (was 15/103). `npm run build` and
+  `npx tsc --noEmit` → exit 0.
+- **Browser probe** (`scratch/item-implementer/WI-06/probe.mjs`, run with
+  headless Chromium + the live Vite dev server): Part 1 renders the product
+  `SonarSystem` + `SonarVisuals` in a real WebGL context with a normal (size 1)
+  and a massive (size 8) object and asserts the massive echo (31.2px) and tag
+  (26px) render larger than the normal ones (6px / 5px), with no console
+  exception (the new shader compiles); Part 2 boots the real game, crafts
+  sonar-1, fires Q, and the ring + echoes render with no console exception
+  (regression: the shader did not break the render path). All 8 assertions pass;
+  screenshot `scratch/item-implementer/WI-06/output/sonar-massive-vs-normal.png`.
+
+### Shrink/Flatten (this revision)
+
+One shared `ShaderMaterial` replaced two `PointsMaterial`s (fewer objects, and
+the ring still uses its own `LineBasicMaterial`). No one-use wrappers, unused
+extension points, or defensive branches remain; the only added surface is the
+public `echoSize`/`tagSize` buffers that the new test reads.
+

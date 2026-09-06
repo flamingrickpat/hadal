@@ -3,34 +3,63 @@
  *   echo-particle state but does no rendering (request §30); solution — a thin
  *   browser layer that draws that state: an expanding ring, the brief outline
  *   tags, and the short-lived echo particles, all as pooled, non-reallocated
- *   Three.js objects (request §34/§18).
+ *   Three.js objects (request §34/§18). A massive object renders a larger echo
+ *   and tag than a normal one via a per-vertex point size (request §18, §52E).
  *
  * archetype: service-provider (owns the sonar's rendered meshes)
  * owns: the sonar ring (`THREE.LineLoop`), the echo-tag layer, and the
  *   echo-particle layer — three fixed, reused objects read from the
- *   `SonarSystem` each frame.
+ *   `SonarSystem` each frame; and the per-vertex point size that scales a tag /
+ *   echo with the tagged object's size (the "larger pulse" half of §18).
  * not own: the sonar state or the world-signal bus — the `SonarSystem` owns
  *   those; this layer only draws them.
  * invariant: the ring and both point layers are allocated once and never
- *   re-created; per frame only their transform, draw contents, and opacity
- *   change (no per-frame allocation, request §34).
+ *   re-created; per frame only their transform, draw contents, and the
+ *   per-vertex size change (no per-frame allocation, request §34).
  * fails when: none — the buffers are fixed-size and only ever rewritten.
  */
 import * as THREE from 'three';
 import type { SonarSystem } from '../systems/SonarSystem';
+import { MASSIVE_FLASH_SCALE } from '../game/constants';
 
 const RING_SEGMENTS = 96;
 const SONAR_Z = 8; // just behind the player (z = 10), in front of the terrain
+const TAG_BASE_SIZE = 5; // px, a size-1 object's tag (request §18)
+const ECHO_BASE_SIZE = 6; // px, a size-1 object's echo (request §18)
+
+// A per-vertex-sized point (request §18: a massive object renders a larger
+// echo / tag). `size` is a pixel size (no attenuation); `tint` carries the
+// faded accent color with the alpha folded into the RGB, so a faded point
+// sinks to black against the dark water.
+const POINT_VERT = /* glsl */ `
+  attribute float size;
+  attribute vec3 tint;
+  varying vec3 vTint;
+  void main() {
+    vTint = tint;
+    gl_PointSize = size;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const POINT_FRAG = /* glsl */ `
+  varying vec3 vTint;
+  void main() {
+    gl_FragColor = vec4(vTint, 1.0);
+  }
+`;
 
 export class SonarVisuals {
   private readonly ring: THREE.LineLoop;
   private readonly ringMat: THREE.LineBasicMaterial;
-  private readonly tagPts: THREE.Points;
+  private readonly pointMat: THREE.ShaderMaterial;
+  readonly tagPts: THREE.Points;
+  readonly echoPts: THREE.Points;
   private readonly tagPos: Float32Array;
   private readonly tagCol: Float32Array;
-  private readonly echoPts: THREE.Points;
+  readonly tagSize: Float32Array;
   private readonly echoPos: Float32Array;
   private readonly echoCol: Float32Array;
+  readonly echoSize: Float32Array;
   private readonly accent: THREE.Color;
 
   constructor(scene: THREE.Scene, private readonly sonar: SonarSystem) {
@@ -46,16 +75,22 @@ export class SonarVisuals {
     this.ring.visible = false;
     scene.add(this.ring);
 
+    this.pointMat = new THREE.ShaderMaterial({
+      vertexShader: POINT_VERT,
+      fragmentShader: POINT_FRAG,
+      transparent: true,
+      depthWrite: false,
+    });
+
     const nT = sonar.targets.length;
     this.tagPos = new Float32Array(nT * 3);
     this.tagCol = new Float32Array(nT * 3);
+    this.tagSize = new Float32Array(nT);
     const tagGeo = new THREE.BufferGeometry();
     tagGeo.setAttribute('position', new THREE.BufferAttribute(this.tagPos, 3));
-    tagGeo.setAttribute('color', new THREE.BufferAttribute(this.tagCol, 3));
-    this.tagPts = new THREE.Points(
-      tagGeo,
-      new THREE.PointsMaterial({ size: 5, vertexColors: true, transparent: true, depthWrite: false, sizeAttenuation: false }),
-    );
+    tagGeo.setAttribute('tint', new THREE.BufferAttribute(this.tagCol, 3));
+    tagGeo.setAttribute('size', new THREE.BufferAttribute(this.tagSize, 1));
+    this.tagPts = new THREE.Points(tagGeo, this.pointMat);
     this.tagPts.frustumCulled = false;
     this.tagPts.position.z = SONAR_Z;
     this.tagPts.renderOrder = 4;
@@ -64,13 +99,12 @@ export class SonarVisuals {
     const nE = sonar.echoes.length;
     this.echoPos = new Float32Array(nE * 3);
     this.echoCol = new Float32Array(nE * 3);
+    this.echoSize = new Float32Array(nE);
     const echoGeo = new THREE.BufferGeometry();
     echoGeo.setAttribute('position', new THREE.BufferAttribute(this.echoPos, 3));
-    echoGeo.setAttribute('color', new THREE.BufferAttribute(this.echoCol, 3));
-    this.echoPts = new THREE.Points(
-      echoGeo,
-      new THREE.PointsMaterial({ size: 6, vertexColors: true, transparent: true, depthWrite: false, sizeAttenuation: false }),
-    );
+    echoGeo.setAttribute('tint', new THREE.BufferAttribute(this.echoCol, 3));
+    echoGeo.setAttribute('size', new THREE.BufferAttribute(this.echoSize, 1));
+    this.echoPts = new THREE.Points(echoGeo, this.pointMat);
     this.echoPts.frustumCulled = false;
     this.echoPts.position.z = SONAR_Z;
     this.echoPts.renderOrder = 4;
@@ -103,9 +137,9 @@ export class SonarVisuals {
       this.tagCol[i * 3] = c.r * fade;
       this.tagCol[i * 3 + 1] = c.g * fade;
       this.tagCol[i * 3 + 2] = c.b * fade;
+      this.tagSize[i] = TAG_BASE_SIZE * (1 + (t.size - 1) * MASSIVE_FLASH_SCALE);
     }
-    (this.tagPts.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
-    (this.tagPts.geometry.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true;
+    markDirty(this.tagPts);
     for (let i = 0; i < this.sonar.echoes.length; i += 1) {
       const e = this.sonar.echoes[i]!;
       const rem = e.active ? e.born + e.life - time : -1;
@@ -116,17 +150,24 @@ export class SonarVisuals {
       this.echoCol[i * 3] = c.r * fade;
       this.echoCol[i * 3 + 1] = c.g * fade;
       this.echoCol[i * 3 + 2] = c.b * fade;
+      this.echoSize[i] = ECHO_BASE_SIZE * (1 + (e.size - 1) * MASSIVE_FLASH_SCALE);
     }
-    (this.echoPts.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
-    (this.echoPts.geometry.getAttribute('color') as THREE.BufferAttribute).needsUpdate = true;
+    markDirty(this.echoPts);
   }
 
   dispose(): void {
     this.ring.geometry.dispose();
     this.ringMat.dispose();
     this.tagPts.geometry.dispose();
-    (this.tagPts.material as THREE.Material).dispose();
     this.echoPts.geometry.dispose();
-    (this.echoPts.material as THREE.Material).dispose();
+    this.pointMat.dispose();
   }
+}
+
+// Upload the rewritten point buffers (position + tint + per-vertex size).
+function markDirty(points: THREE.Points): void {
+  const g = points.geometry;
+  (g.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+  (g.getAttribute('tint') as THREE.BufferAttribute).needsUpdate = true;
+  (g.getAttribute('size') as THREE.BufferAttribute).needsUpdate = true;
 }
