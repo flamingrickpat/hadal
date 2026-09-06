@@ -202,3 +202,121 @@ the blocked-route target. Reuse the `Simulation` core, the `Scenario`
 harness, and the `EquipmentDef`/`Capability`/`SaveGameV1` types — do not
 clone them. See the project note
 `agents/projects/hadal/notes/20260906-implementer-wi03-sim-save-seams.md`.
+
+## Revision (2026-09-06) — implementer re-pass: fix the browser-adapter findings
+
+The work-item reviewer (`reviews/WI-03-base-resource-crafting-save-review.md`,
+Status: findings) confirmed the headless core is sound but the browser adapter
+was broken: the game did not boot in a real browser, the fixed-step frame
+cadence was regressed, and `test:browser` was a build rather than a browser
+test. The headless core is unchanged and still green; this pass fixes the
+three findings and wires a real shared browser harness.
+
+### Finding 1 (critical) — the browser does not boot
+
+`src/main.ts` read `document.getElementById('app')!` but `index.html` only
+defines `<div id="game">`. `Renderer`'s constructor
+(`src/render/Renderer.ts` `container.appendChild(this.domElement)`) threw
+`TypeError: Cannot read properties of null (reading 'appendChild')` before any
+canvas, HUD, or debug panel appeared, so every §30/§70 browser criterion
+failed at the first user-visible step.
+
+- **Fix:** `src/main.ts` reads `getElementById('game')` (matching `index.html`).
+- **Evidence (red→green):** `tests/browser/boot.test.mjs` fails on the
+  unfixed code with exactly `TypeError: Cannot read properties of null
+  (reading 'appendChild')` (all 4 tests), and passes after the fix.
+
+### Finding 2 (moderate) — the fixed-step accumulator was removed
+
+The prior diff reduced the loop to `requestAnimationFrame(now) { game.update
+(FIXED_DT) }`, tying simulated time to the display refresh rate (1 Hz on a 60
+Hz display), violating request §30 "Avoid tying movement to frame rate"
+(whose pseudo-code is exactly this accumulator pattern).
+
+- **Fix:** new `src/game/frame.ts` — `stepCountSince(elapsed, accumulator)`
+  drains a clamped real-time accumulator into whole `FIXED_DT` steps
+  (request §30); `src/main.ts` runs the fixed-step frame loop and advances
+  `N` simulation steps per display frame, rendering once. The same
+  accumulator the approved WI-02 `Game.frame` used, restored as a pure
+  helper so the §30 cadence is unit-tested.
+- **Evidence:** `src/game/frame.test.ts` (5 tests) pins the §30 invariant —
+  a slice of real time yields the same step count at any refresh rate
+  (60 / 120 / 12 Hz), a sub-step frame carries its fraction forward, and a
+  tab-stall gap clamps to `MAX_FRAME_DT` (6 steps) so it cannot spiral.
+
+### Finding 3 (moderate) — `test:browser` was a build, not a browser test
+
+`package.json` `"test:browser": "vite build"` could never catch Finding 1 (no
+browser page loads). It is now a real browser command: `node tests/browser/
+boot.test.mjs`, a shared harness that boots the real `npm run dev` page in
+headless Chromium (the documented ms-playwright binary) and runs the §70
+Boot + Save checklist items. `playwright-core` 1.63.0 was added to
+devDependencies (the §70 "shared browser harness"; the reviewer's scratch
+probe uses the same version).
+
+- **Evidence:** `npm run test:browser` → 4 tests PASS:
+  - fresh boot: canvas + `#hud-root` + `.debug-panel` present, no page
+    exception (§70 Boot);
+  - keyboard input reaches the simulation and moves the player (D raises the
+    debug readout x) (§70 Boot);
+  - resize produces a usable layout (canvas tracks a 2560 px window) (§70
+    Boot);
+  - the storage adapter preserves state across an actual page reload — a
+    base-return autosave writes `hadal.save.v1`, survives `page.reload`, and
+    the game boots from it (§70 Save).
+- **Separate commands:** `npm test` (Vitest, `src/**/*.test.ts`) runs the
+  headless suite once and returns its status (9 files / 61 tests); the browser
+  harness lives at `tests/browser/boot.test.mjs` and is not picked up by
+  Vitest, so it stays out of the default headless command (request §44, §70).
+
+### Files touched (this pass)
+
+- `src/main.ts` (modified) — `getElementById('game')`; the §30 fixed-step
+  frame loop (accumulator → `N` steps, one render).
+- `src/game/frame.ts` (new) — `stepCountSince`, the §30 accumulator drain.
+- `src/game/frame.test.ts` (new) — 5 §30 cadence tests.
+- `tests/browser/boot.test.mjs` (new) — the shared browser harness (4 tests).
+- `package.json` (modified) — `test:browser` → the real browser harness;
+  `playwright-core` 1.63.0 added to devDependencies (+ `package-lock.json`).
+
+### Commands and results (this pass)
+
+- `npm install` → added `playwright-core` 1.63.0 (1 package, 0 vulnerabilities).
+- `npx vitest run` → 9 files / 61 tests PASS (the headless suite + the new
+  `frame.test.ts`; the browser `.mjs` is not picked up).
+- `npm run test:browser` → 4 tests PASS (confirmed red — all 4 failing with
+  the `#app`/`#game` crash — before the `main.ts` fix).
+- `npm run build` → exit 0 (the pre-existing three.js chunk-size warning is
+  informational and unchanged).
+
+### Shrink / Flatten (this pass)
+
+- Removed a brittle `assert.equal(consoleErrors.length, 0)` from the boot
+  test: a benign console message in another environment would flake a shared
+  harness; the §70 "no console exceptions" requirement is the `pageerror`
+  signal, which the test asserts — console errors are logged for context
+  instead. Reason: the hard assertion could not fire on the intended failure
+  and could misfire on a benign environment message.
+- No abstraction removed: `src/game/frame.ts` is a single pure helper, not a
+  manager/registry; its second user is the `frame.test.ts` that pins the §30
+  cadence (the exact regression Finding 2 flags). `tests/browser/boot.test.mjs`
+  is the §70 "shared browser harness" the work item requires, not a one-off
+  probe — a `test(name, fn)` registry future sessions extend by adding cases.
+
+### Assumptions (this pass)
+
+- The ms-playwright Chromium on this host is a different revision
+  (`chromium-1234`) than the one `playwright-core` 1.63.0's default
+  `executablePath()` expects (`chromium-1243`, not installed), so the harness
+  resolves the newest present `chromium-*/chrome-win64/chrome.exe` (env
+  override `HADAL_BROWSER`). This matches the reviewer's scratch probe, which
+  hardcoded the same `chromium-1234` binary with the same playwright-core
+  version.
+- `tests/browser/boot.test.mjs` is a plain `.mjs` outside `src/` so the
+  headless `npm test` (Vitest `include: src/**/*.test.ts`) never picks it up;
+  the headless and browser commands stay distinct (request §44/§70). The file
+  is not type-checked by the build `tsc --noEmit` (the tsconfig includes only
+  `src`, `vite.config.ts`, `vitest.config.ts`), which is intended.
+- Finding 2 is verified by the §30 `frame.test.ts` (the cadence invariant) and
+  by the restored accumulator in `main.ts`, matching request §30's pseudo-code;
+  the reviewer re-verifies the specific `main.ts` change from the git diff.
