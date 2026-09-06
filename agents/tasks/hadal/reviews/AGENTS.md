@@ -35,6 +35,18 @@ for WI-15.
    `lighting.test.ts` (confirmed failing pre-fix in a worktree). Headless suite
    12 files / 75 tests, build exit 0. ~60 FPS on a real GPU and the
    parallax-layer distinctness remain non-blocking observations.
+- `WI-05-audio-system-review.md` — review of the procedural WebAudio system
+  (depth soundscape, §27 helpers, master volume slider; commit `58536b7`,
+  2026-09-07): **pass** — all five acceptance criteria met with real unit
+  evidence (`audio.test.ts`, 10 tests; full suite 13 files / 85 tests), a
+  green build (exit 0), and an independent reviewer browser probe (12/12)
+  that hooks the `AudioContext` constructor and reads the live node values:
+  no `AudioContext` before the first gesture (acCount 0 → 1), the ambient
+  graph is built after input, no long looping music track (max looping
+  buffer 2.00 s, drone bed oscillator-based), the high-cut/reverb/hull node
+  parameters change with depth, and the volume slider changes the actual
+  `masterGain` node. One minor non-blocking observation: the `Game` L2
+  `owns` list does not name the newly-owned `AudioSystem`.
 
 Whole-task review (`task-review.md`) and independent testing
 (`../testing/task-test.md`) arrive with their respective roles.

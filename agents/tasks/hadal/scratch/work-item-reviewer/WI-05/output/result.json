@@ -1,0 +1,71 @@
+{
+  "pass": true,
+  "failures": 0,
+  "results": [
+    {
+      "ok": true,
+      "name": "no AudioContext is constructed before the first user input (lazy init)",
+      "detail": "acCount=0"
+    },
+    {
+      "ok": true,
+      "name": "no ambient graph nodes exist before the first user input",
+      "detail": "bufferSources=0 oscillators=0"
+    },
+    {
+      "ok": true,
+      "name": "snapshot reports locked / not-created before input",
+      "detail": "unlocked=false state=not-created"
+    },
+    {
+      "ok": true,
+      "name": "exactly one AudioContext is constructed after the first user input",
+      "detail": "acCount=1"
+    },
+    {
+      "ok": true,
+      "name": "the AudioContext is unlocked and running after input",
+      "detail": "unlocked=true state=running"
+    },
+    {
+      "ok": true,
+      "name": "the ambient graph is built after input (all layer nodes present)",
+      "detail": "worldBus worldLowpass reverbSend convWet masterGain oceanBedGain currentGain subRumbleGain hullGain breathGain droneGain"
+    },
+    {
+      "ok": true,
+      "name": "no looping music track of 30 s or longer exists (request §58)",
+      "detail": "looping=4 maxLoopingDuration=2.00s"
+    },
+    {
+      "ok": true,
+      "name": "ambient beds are looping noise + the drone bed is oscillator-based",
+      "detail": "loopingNoise=4 oscillators=7"
+    },
+    {
+      "ok": true,
+      "name": "the global high-cut node frequency drops with depth",
+      "detail": "worldLowpass 15993 -> 4297"
+    },
+    {
+      "ok": true,
+      "name": "the reverb/delay node mix rises with depth",
+      "detail": "reverbSend 0.105 -> 0.515 convWet 0.120 -> 0.588"
+    },
+    {
+      "ok": true,
+      "name": "the hull/equipment node gain recedes with depth (further from base)",
+      "detail": "hull 0.0718 -> 0.0228"
+    },
+    {
+      "ok": true,
+      "name": "the volume slider changes the actual masterGain node value",
+      "detail": "masterGain.gain 1.000 -> 0.300"
+    },
+    {
+      "ok": true,
+      "name": "no page exceptions during the probe",
+      "detail": "clean"
+    }
+  ]
+}
