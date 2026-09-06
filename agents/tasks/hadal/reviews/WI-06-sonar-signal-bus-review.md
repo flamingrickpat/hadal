@@ -51,3 +51,65 @@ decorative emitter).
 ## Assumptions
 
 - **Sonar is gated on the `sonar` capability, not a starter tool.** The work item lists `Q` as a control (request §6) and sonar as never-cut (request §72), while the vision link and the `EquipmentDef` model (request §62, Tier 1 "simple sonar") make sonar a Tier 1 upgrade. The implementer documented this deviation in `implementation/WI-06-implementation.md` §Deviation. I took the documented reading: the `Q` input is always wired; the pulse fires only once the `sonar` capability is owned (via the `sonar-1` recipe). This matches §9 (Tier 1 "simple sonar" is not a Tier 0 starter) and is verified end-to-end by the `scenarios.test.ts` sonar scenario (inert before the upgrade, emits a world signal after). Rejected the "starter Q" reading only because it contradicts the upgrade model.
+
+## Revision — attempt 2 (2026-09-07)
+
+Re-verified in a fresh session (no prior context) against the preserved
+candidate commit `9e62246`. The verdict above is confirmed: **findings** —
+one low-severity render gap, otherwise every acceptance criterion met with
+real evidence.
+
+Independent verification performed this attempt:
+
+- **codegraph gate:** `codegraph_explore` on the sonar/senses area
+  (`WorldSignalBus SonarSystem perceive queryNear emitPlayerSignals
+  Simulation sonar senses SonarVisuals`). The index is now fresh (the
+  implementer note and the earlier `understanding.md` recorded it as stale,
+  but it has caught up). Blast radius: the new symbols are consumed only by
+  `Simulation` (owns `signals` + `sonar`), `Game` (drives `SonarVisuals` + the
+  audio ping), and the tests; `Player` (15 callers), `PlayerController`,
+  `World`, `PlayerInput` are unchanged in signature. No unconsidered caller.
+- **Read the load-bearing files directly** (the explore output truncates before
+  them): `src/creatures/senses.ts` (the §63 bus, `WorldSignal` reused
+  verbatim, real spatial + temporal decay, allocation-free `perceive`),
+  `src/systems/SonarSystem.ts` (pure; expanding ring, transient tags/echoes,
+  resource signatures, size-scaled `tagDuration`/echo life, no per-frame
+  allocation in `update`), `src/sim/Simulation.ts` (`emitPlayerSignals` for
+  tool/boost noise + `SonarSystem.fire` for sonar + noise; `Q` gated on the
+  `sonar` capability), `src/game/Game.ts` (`SonarVisuals` owned at line 66,
+  driven each frame at line 132), and the three test files (`senses.test.ts`
+  7, `SonarSystem.test.ts` 10, `scenarios.test.ts` 8) — all real behavioral
+  assertions, not no-crash checks.
+- **Ran the suite + build myself:** `npx vitest run` → 15 files / 103 tests
+  pass; `npm run build` (`tsc --noEmit && vite build`) → exit 0 (the >500 kB
+  chunk is the documented three.js bundle).
+- **Hand-checked the decay** (`src/util/audio.ts:96` `distanceGain` =
+  `(ref/(ref+d))^2`, `ref = 1500`; times the linear temporal ramp over
+  `SIGNAL_LIFETIME = 3.0`): at d=750 ≈ 0.44, at d=12000 ≈ 0.012; the
+  fixture-creature threshold (0.2) separates near from far. The bus is a
+  genuine perception seam, not a decorative emitter.
+- **Inspected the prior reviewer's browser screenshots**
+  (`scratch/work-item-reviewer/WI-06/output/sonar-ring-early.png` / `-late.png`):
+  the ring is centered on the player and visibly expands between the two frames
+  (a mid-size circle → a large, mostly off-screen arc), with scattered echo
+  particles — real browser evidence the sonar is an expanding ring, not a
+  static sprite.
+
+### Correction to Finding 1 (details, not substance)
+
+Finding 1's file references are slightly off; the substance stands. The
+fixed sizes are at `src/render/sonar.ts:72` (echo `PointsMaterial`
+`size: 6`) and `:57` (tag `size: 5`), both `sizeAttenuation: false`, and the
+`update` loop writes only position + per-target color alpha — never per-vertex
+size — so `SonarEcho.size` (set from `SonarObject.size` in
+`SonarSystem.spawnEcho`) is never rendered. The "larger" half of the
+"larger/slower pulse" is modeled in the simulation but not expressed in the
+pixels, and is invisible today because the greybox has no massive objects
+(real ones arrive with WI-10). This remains the single low-severity finding.
+
+### Result
+
+The only prior failure cause ("result object is missing required field(s):
+blocker") is a reporting-contract issue, not a substantive one: neither the
+review nor the work under it was altered this attempt. Confirmed verdict:
+**findings**.
