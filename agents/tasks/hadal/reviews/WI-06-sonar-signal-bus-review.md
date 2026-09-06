@@ -1,6 +1,6 @@
 # Review: WI-06 Sonar System and World-Signal Bus
 
-Status: findings
+Status: pass
 
 Reviewed commit: `9e62246` (10 product files + 4 task artifacts; `state.md` untouched,
 working tree clean). The work item is otherwise excellent — every acceptance
@@ -113,3 +113,68 @@ The only prior failure cause ("result object is missing required field(s):
 blocker") is a reporting-contract issue, not a substantive one: neither the
 review nor the work under it was altered this attempt. Confirmed verdict:
 **findings**.
+
+## Revision — attempt 3 (2026-09-07)
+
+Reviewed the implementer's attempt 2 (commit `85cdd92`, "[sonar][render] scale
+sonar echo/tag point size by object size"), which directly addresses the single
+finding from the prior review. Verified in a fresh session against the repository.
+
+### The prior Finding 1 is now resolved
+
+`src/render/sonar.ts` was changed from two fixed `PointsMaterial`s (echo `size: 6`,
+tag `size: 5`) to a single shared `ShaderMaterial` that carries a per-vertex `size`
+attribute (`src/render/sonar.ts:64–78`). The `tagSize` / `echoSize` `Float32Array`s
+(`:36–37`) now scale by object size: `tagSize = TAG_BASE_SIZE * (1 + (size - 1) *
+MASSIVE_FLASH_SCALE)` and `echoSize = ECHO_BASE_SIZE * (1 + (size - 1) *
+MASSIVE_FLASH_SCALE)` (`:94–98`), with `TAG_BASE_SIZE = 5` / `ECHO_BASE_SIZE = 6` /
+`MASSIVE_FLASH_SCALE = 0.6` (`:16–18`) — so a massive (size-8) object renders a
+clearly larger echo/tag than a size-1 object. The simulation (`SonarSystem`,
+`SonarVisuals` API) is unchanged; `senses.ts`, `Simulation.ts`, and `Game.ts` are
+unchanged (the attempt-2 commit touches only `sonar.ts`, the new render test, and the
+implementation note). A new render test (`src/render/sonar.test.ts`, 4 tests) verifies
+a size-8 object's echo renders larger than a size-1 object's and that the size-1
+object stays at base size 6.
+
+### Re-verification performed this attempt
+
+- **Ran the real suite + build myself.** `npx vitest run` → 16 files / 107 tests pass
+  (incl. `senses.test.ts` 7, `SonarSystem.test.ts` 10, `src/render/sonar.test.ts` 4,
+  `scenarios.test.ts` 8). `npm run build` (`tsc --noEmit && vite build`) → exit 0
+  (the >500 kB chunk is the documented three.js bundle).
+- **Hand-checked the decay** (`src/util/audio.ts:96` `distanceGain` =
+  `(ref/(ref+d))^2`, `ref = SIGNAL_RANGE_REF = 1500`, times the linear temporal ramp
+  over `SIGNAL_LIFETIME = 3.0`): at d=750 ≈ 0.44, at d=12000 (8×ref) ≈ 0.012. The
+  bus's spatial + temporal decay is real; the fixture-creature threshold (0.2)
+  separates near from far. The bus is a genuine perception seam, not a decorative
+  emitter.
+- **Read the changed file directly** (`src/render/sonar.ts`): confirmed the per-vertex
+  `size` attribute is real and the `tagSize` / `echoSize` arrays are filled from
+  `tag.size` / `echo.size` each frame, with `geometry.attributes.size.needsUpdate`
+  set and the `geometry.setDrawRange` clamping the active count.
+- **Independent browser probe**
+  (`scratch/work-item-reviewer/WI-06-attempt3/probe.mjs`): boots the real
+  `npm run dev` page in headless Chromium (`?debug=1`), crafts `sonar-1` through the
+  production workbench UI (recipe card flips `Craft` → `Crafted`), and fires Q through
+  the production input path. Result: boots clean (no console exceptions), sonar-1
+  crafted + capability granted, repeated Q pulses produce no runtime exception in the
+  render path, and the two captured frames show the expanding ring (a mid-size circle
+  around the player → the same circle expanded so largely it is mostly off-screen).
+  Note: a raw per-pixel ring-radius metric is confounded by the scene's cyan-toned
+  water gradient / cards / particles (the saturated-cyan pixel count is ~10k and
+  roughly constant between frames), so the ring's expansion is confirmed by visual
+  inspection of the captured frames (`ring-attempt3-early.png` / `-late.png`) rather
+  than a pixel-count threshold.
+- **Inspected the prior reviewer's and implementer's browser screenshots**
+  (`sonar-ring-early.png` / `-late.png` show the ring expanding in the real game;
+  `sonar-massive-vs-normal.png` shows a size-8 object rendering a clearly larger echo
+  than a size-1 object in a real WebGL context) — real browser evidence the sonar is
+  an expanding ring and that massive objects render larger echoes.
+
+### Result
+
+The single prior finding (render size scaling) is now fixed and tested. Every
+acceptance criterion is met with real, re-run evidence; none of the
+forbidden-substitute-success cases apply (the sonar is a real expanding ring +
+per-target echo/tagging system, not a static sprite; the signal bus is genuinely
+queryable by subscribers, not a decorative emitter). Verdict: **pass**.
