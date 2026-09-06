@@ -12,3 +12,8 @@ role:
   `SaveGameV1` save, crafting, tiny surface base, death/respawn, extended
   debug panel, and the §70 scenario harness + core-loop/death/insufficient/
   blocked/depleted scenarios.
+- `WI-04-implementation.md` — the visual language (request §13–§17, §34, §35,
+  §64): depth-tinted water gradient, near-black silhouette terrain + accent
+  edge, background parallax (no collision), a composited flashlight cone mask,
+  a pooled marine-snow/silt/mote particle field, a restrained grain/chromatic
+  post pass; the pure depth→band and particle-step functions are unit-tested.

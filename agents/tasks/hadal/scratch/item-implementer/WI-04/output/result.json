@@ -1,0 +1,10 @@
+{
+  "fps": {
+    "depth-100": 27.7,
+    "depth-700": 28.7,
+    "depth-1400": 29
+  },
+  "pageErrors": [],
+  "consoleErrors": [],
+  "canvasPresent": true
+}

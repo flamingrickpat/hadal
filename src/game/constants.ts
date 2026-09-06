@@ -48,6 +48,9 @@ export const CARGO_BASE_CAPACITY = 10; // request §7: single capacity number
 
 // Camera (request §16): smooth follow with 0.12–0.2 s lag.
 export const CAMERA_LAG_SEC = 0.15;
+// The gameplay plane the player and terrain are drawn at (request §13: z is
+// visual layering only; the beam at 12 and the gradient at -50 bracket it).
+export const PLAYER_PLANE_Z = 10;
 
 // Base + harvesting (request §5, §8): tiny surface platform the player
 // returns to; one core material harvested by swimming near a node + E.

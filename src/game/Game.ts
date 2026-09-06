@@ -25,6 +25,11 @@ import { Hud } from '../ui/hud';
 import { CraftingMenu } from '../ui/menu';
 import { createSimulation, makeSimWorld, type Simulation } from '../sim/Simulation';
 import { loadFromStorage, resetSave, saveToStorage } from './save';
+import { PLAYER_PLANE_Z } from './constants';
+import { Lighting } from '../render/lighting';
+import { ParticleField } from '../render/particles';
+import { PostFX } from '../render/postfx';
+import { bandProfileAtDepth } from '../render/band';
 import type { Vec2 } from '../util/math';
 import type { DebugPanelHost } from '../util/debug';
 
@@ -36,6 +41,9 @@ export class Game implements DebugPanelHost {
   private readonly hud: Hud;
   private readonly menu: CraftingMenu;
   private readonly world: World;
+  private readonly lighting: Lighting;
+  private readonly particles: ParticleField;
+  private readonly postfx: PostFX;
   private readonly playerMesh: THREE.Group;
   private readonly radio: HTMLElement;
   private lastShownLine: string | null = null;
@@ -48,6 +56,13 @@ export class Game implements DebugPanelHost {
     this.sim.loadFromSave(loadFromStorage(window.localStorage).save);
     this.world = new World(renderer.scene, this.sim.chunks);
     renderer.setWorldBounds(this.world.bounds);
+    this.lighting = new Lighting(renderer.scene);
+    this.particles = new ParticleField(renderer.scene);
+    const buffer = new THREE.Vector2();
+    renderer.gl.getDrawingBufferSize(buffer);
+    this.postfx = new PostFX(renderer.gl, Math.max(1, buffer.x), Math.max(1, buffer.y));
+    renderer.setPostFX(this.postfx);
+    this.lighting.setHalf(renderer.cameraHalf());
     this.playerMesh = this.buildPlayerMesh();
     renderer.scene.add(this.playerMesh);
     this.hud = new Hud(document.body);
@@ -73,8 +88,25 @@ export class Game implements DebugPanelHost {
 
   private syncPlayerMesh(): void {
     const p = this.sim.player.position;
-    this.playerMesh.position.set(p.x, p.y, 0);
+    this.playerMesh.position.set(p.x, p.y, PLAYER_PLANE_Z);
     this.playerMesh.rotation.z = this.sim.player.facing;
+  }
+
+  /**
+   * Per-frame visual update (request §14.3/§15): the depth-band palette and
+   * parallax, the flashlight/water gradient, the pooled particle field, and the
+   * restrained post pass — all driven by the player's current depth band.
+   */
+  renderVisuals(frameDt: number): void {
+    const center = this.renderer.cameraCenter();
+    const half = this.renderer.cameraHalf();
+    const profile = bandProfileAtDepth(this.sim.player.depth);
+    this.world.updatePalette(profile);
+    this.world.updateParallax(center);
+    this.lighting.setHalf(half);
+    this.lighting.update(center, this.sim.player.facing, profile);
+    this.particles.update(frameDt, center, half, profile);
+    this.postfx.update(profile, frameDt);
   }
 
   private updateRadio(): void {

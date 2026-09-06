@@ -16,13 +16,15 @@ const debugPanel = new DebugPanel(game);
 let last: number | null = null;
 let accumulator = 0;
 const frame = (now: number): void => {
+  const rawDt = last === null ? 0 : (now - last) / 1000;
   if (last !== null) {
-    const { steps, accumulator: next } = stepCountSince((now - last) / 1000, accumulator);
+    const { steps, accumulator: next } = stepCountSince(rawDt, accumulator);
     for (let i = 0; i < steps; i += 1) game.update(FIXED_DT);
     accumulator = next;
   }
   last = now;
   renderer.follow(game.player.position);
+  game.renderVisuals(Math.min(rawDt, 0.1));
   renderer.render();
   debugPanel.tick(now);
   requestAnimationFrame(frame);

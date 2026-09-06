@@ -19,10 +19,11 @@
 import * as THREE from 'three';
 import { CAMERA_LAG_SEC, CAMERA_VIEW_WIDTH } from '../game/constants';
 import { clamp, vec2, type Rect, type Vec2 } from '../util/math';
+import type { PostFX } from './postfx';
 
 export class Renderer {
   readonly scene = new THREE.Scene();
-  private readonly gl: THREE.WebGLRenderer;
+  private readonly glRenderer: THREE.WebGLRenderer;
   private readonly camera: THREE.OrthographicCamera;
   private halfW = 0;
   private halfH = 0;
@@ -30,24 +31,49 @@ export class Renderer {
   private readonly camOffset = { x: 0, y: 0 };
   private camInit = false;
   private lastFollowMs: number | null = null;
+  private postfx: PostFX | null = null;
+  private readonly buffer = new THREE.Vector2();
+
+  get gl(): THREE.WebGLRenderer {
+    return this.glRenderer;
+  }
 
   constructor(container: HTMLElement) {
-    this.gl = new THREE.WebGLRenderer({ antialias: true });
-    this.gl.setPixelRatio(window.devicePixelRatio);
+    this.glRenderer = new THREE.WebGLRenderer({ antialias: true });
+    this.glRenderer.setPixelRatio(window.devicePixelRatio);
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100000);
     this.camera.position.set(0, 0, 1000);
     this.scene.background = new THREE.Color(0x03070a);
-    container.appendChild(this.gl.domElement);
+    container.appendChild(this.glRenderer.domElement);
     window.addEventListener('resize', () => this.resize());
     this.resize();
+  }
+
+  /** Attach the post pass (request §14.1); before this, `render` draws direct. */
+  setPostFX(postfx: PostFX): void {
+    this.postfx = postfx;
+  }
+
+  /** The camera's current world-space center (what the view is anchored to). */
+  cameraCenter(): Vec2 {
+    return vec2(this.camOffset.x, this.camOffset.y);
+  }
+
+  /** Half the current view extent in world units (for gradient / particle box). */
+  cameraHalf(): Vec2 {
+    return vec2(this.halfW, this.halfH);
   }
 
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.gl.setSize(w, h);
+    this.glRenderer.setSize(w, h);
     this.halfW = CAMERA_VIEW_WIDTH / 2;
     this.halfH = CAMERA_VIEW_WIDTH / (w / h) / 2;
+    if (this.postfx !== null) {
+      this.glRenderer.getDrawingBufferSize(this.buffer);
+      this.postfx.resize(this.buffer.x, this.buffer.y);
+    }
   }
 
   setWorldBounds(bounds: Rect): void {
@@ -79,7 +105,7 @@ export class Renderer {
   }
 
   screenToWorld(clientX: number, clientY: number): Vec2 {
-    const rect = this.gl.domElement.getBoundingClientRect();
+    const rect = this.glRenderer.domElement.getBoundingClientRect();
     const nx = ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
     const ny = -(((clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1);
     return vec2(this.camOffset.x + nx * this.halfW, this.camOffset.y + ny * this.halfH);
@@ -91,6 +117,10 @@ export class Renderer {
     this.camera.top = this.halfH + this.camOffset.y;
     this.camera.bottom = -this.halfH + this.camOffset.y;
     this.camera.updateProjectionMatrix();
-    this.gl.render(this.scene, this.camera);
+    if (this.postfx !== null) {
+      this.postfx.render(this.scene, this.camera);
+    } else {
+      this.glRenderer.render(this.scene, this.camera);
+    }
   }
 }
