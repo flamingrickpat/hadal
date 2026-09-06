@@ -152,3 +152,120 @@ durable artifacts.
   results append; specs are never rewritten). The WI-02 acceptance
   criteria, evidence table, and scope are byte-identical to the planner's
   version except for the appended section.
+
+---
+
+## Re-verification (reviewer, fresh workflow run — 2026-09-06, at accepted revision 2deabb0 / HEAD fdcd243)
+
+Status: pass
+
+Re-reviewed this work item in a fresh session against the live repository at
+`2deabb0` (HEAD `fdcd243`), which now also carries the reviewer-approved WI-02
+player/terrain build on top of the intact WI-01 scaffold. All nine acceptance
+criteria were independently re-verified with evidence that does not reuse the
+implementer's or the first reviewer's probes. No prior finding is retracted
+and none is introduced.
+
+### Acceptance Criteria (re-verified)
+
+| Criterion | Verdict | Independent evidence checked |
+|---|---|---|
+| `package.json`, `vite.config.ts`, `tsconfig.json`, `index.html` exist; `npm install` and `npm run build` exit 0 | passed | All four at repo root (plus `vitest.config.ts`). Fresh check: deleted `node_modules`, `npm install` exit 0 (47 packages, 0 vulnerabilities from the committed lockfile), `npm run build` = `tsc --noEmit && vite build` exit 0 (22 modules transformed, `dist/` emitted, 555.74 kB three.js chunk notice is informational). |
+| `src/main.ts` boots `WebGLRenderer` + scene + orthographic camera; a frame renders at 1920×1080 in a real browser, no console exceptions | passed | `src/render/Renderer.ts:35` `WebGLRenderer`, `:24` `Scene`, `:37` `OrthographicCamera` (fixed 2000-unit view width); `src/main.ts:23-29` assembles and `game.start()`. Independent re-verify probe (`scratch/work-item-reviewer/WI-01-reverify/probe.mjs`, fresh Chromium profile at 1920×1080 dpr 1 against `npm run dev` port 5310 and `npm run preview` port 5311): title HADAL, canvas present, WebGL2 context live, drawing buffer 1920×1080, non-blank frame (luminance range 210; `output/A-dev-1920x1080.png` shows the player capsule + aim line + O2/HP/depth/tool HUD on the dark scene), zero page exceptions, zero console errors, empty localStorage. The production build boots identically (phase C). |
+| Fixed 1/60 s timestep, accumulator, not frame-tied | passed | `src/game/Game.ts:144-156` is request §30's pseudo-code verbatim in structure (clamped real dt → `accumulator` → `while (accumulator >= FIXED_DT) { update(FIXED_DT); accumulator -= FIXED_DT; }` → exactly one `render(accumulator / FIXED_DT)`; `FIXED_DT = 1/60`, `MAX_FRAME_DT = 0.1`, `constants.ts:15-16`). Behavior: the re-verify probe drove the player down (hold S) and measured the `#hud-depth-text` advance over an identical 3 s window — +696 m unthrottled vs +700 m with the page rAF throttled to ~1/4 (delivered rAF 354 → 109, ~36 Hz vs ~118 Hz). Within 0.6%: a frame-tied simulation would have advanced ~1/4 as far. `output/result.json` records both. |
+| `Game` orchestrator owns `update(FIXED_DT)` / `render` + fixed-step loop | passed | `Game.ts` (coordinator L1+L2) owns the rAF loop, accumulator, `start`/`stop`, `update` (single simulation seam, always called with `FIXED_DT`), and `render(alpha)`; `main.ts` only assembles. `GameState` is a pure clock holder (`timeSec` via `tick`); `constants.ts` pure data. |
+| `src/game/` core + `src/render/Renderer.ts` exist | passed | All four present with L1+L2 contracts matching the spec's L1 lines. `src/util/rng.ts` (+ `rng.test.ts`) present as required by "Tests To Write First". |
+| `.gitignore` includes `design_private/` and node build artifacts | passed | Ran the work item's exact command: `git check-ignore -v design_private/probe` → `.gitignore:14:design_private/  design_private/probe` (exit 0); `node_modules/` (line 7) and `dist/` (line 8) also ignored. |
+| Vitest configured; ≥1 deterministic logic test passes via `npx vitest run` | passed | `vitest.config.ts` (node env, `src/**/*.test.ts`); `npx vitest run` exit 0, 4 files / 31 tests, incl. `src/util/rng.test.ts` (4 deterministic tests: determinism, seed sensitivity, known-vector pin for seed `0xdeadbeef`, [0,1) range). |
+| `README.md` skeleton with install/build/run/dev, noting WI-17 | passed | `README.md` at root: install / run (dev) / build+preview / test, and the explicit note that the full spoiler-safe README arrives with WI-17 (request §69). |
+| Node LTS recorded in `agents/projects/hadal/BUILD.md` | passed | `BUILD.md` "Toolchain Resolved (WI-01, 2026-09-05)": Node 24 "Krypton" LTS (nodejs.org/dist/index.json), verified on v24.15.0/npm 11.12.1; locked toolchain matches `package-lock.json` exactly (three 0.185.1, vite 8.2.2, typescript 7.0.2, vitest 5.0.0, @types/three 0.185.4). My verification ran on the same v24.15.0/npm 11.12.1 runtime. |
+
+### Forbidden-substitute success (all clear)
+
+- Not a Node-only build that skips rendering: the production build renders a
+  real WebGL2 1920×1080 frame in the browser (probe phase C).
+- Not a frame tied to rAF timing: depth advances at real-time speed under an
+  rAF throttle (phase B, +700 m vs +696 m unthrottled).
+- Not an empty scene: the frame shows the player capsule + aim line + HUD
+  (`output/A-dev-1920x1080.png`).
+
+### Impact check (codegraph index stale)
+
+`codegraph_explore` for the boot/game symbols (projectPath `C:\Temp\hadal`)
+returns "No relevant code found"; the `.codegraph/` index (built 2026-06-09)
+predates this product tree, consistent with `ARCHITECTURE.md`
+"Reconnaissance Status" and the first reviewer's note. As a substitute I mapped
+the complete import graph by grep over `src/`: `index.html → src/main.ts →
+Game, Renderer, util/debug`; `Game → Renderer, Player, PlayerController,
+equipment, CollisionSystem, World, worldData, hud, constants (FIXED_DT,
+MAX_FRAME_DT), GameState`; `Renderer → constants (CAMERA_VIEW_WIDTH,
+CAMERA_LAG_SEC), util/math, three`; `rng.test.ts → rng`; `constants.ts`,
+`GameState.ts`, `rng.ts` import nothing. No cycles, no consumers outside
+`src/`, no forbidden dependencies (no React, no ECS). The
+`@dimforge/rapier3d-compat` entry in `package-lock.json` is a `dev: true`
+transitive dependency of `@types/three` (type defs for three's examples); it
+is never imported by product code and is not in the 555.74 kB bundle, so it
+does not add a physics engine (request §28/§31 use custom 2D collision).
+
+### Independent adversarial probe
+
+`scratch/work-item-reviewer/WI-01-reverify/probe.mjs` (own script, own ports
+5310/5311, own playwright-core install; local ms-playwright chromium-1234
+engine, SwiftShader software GL; exit 0; `output/result.json` + screenshot are
+the durable artifacts).
+1. **Fresh install from lockfile** (repo root): deleted `node_modules`,
+   `npm install` (exit 0, 47 packages) + `npm run build` (exit 0). Could
+   falsify: a warm-cache-only build that does not reproduce. Observed:
+   reproduced, `dist/` emitted.
+2. **Dev boot, fresh profile** (phase A, 1920×1080 dpr 1): title, canvas,
+   WebGL2, 1920×1080 buffer, non-blank (luminance range 210), empty
+   localStorage, zero page exceptions, zero console errors. Could falsify
+   criterion 2 (a blank / non-WebGL2 / dirty frame in a clean profile).
+3. **Frame-rate-independence** (phase B, the key adversarial check): an
+   `addInitScript` vsync pump delivered the page's rAF on only 1 of every 4
+   vsyncs (delivered 109 vs 354 unthrottled over the same 3 s — throttle
+   asserted effective, so the test cannot pass vacuously; the ~36 Hz
+   throttled rate keeps each callback gap < `MAX_FRAME_DT` 0.1 s, so no
+   simulation time is clamped away). The player's depth (a pure function of the
+   sim clock `GameState.timeSec`, advanced via `Game.update`) advanced +700 m
+   throttled vs +696 m unthrottled (within 0.6%). A frame-tied simulation
+   would have advanced ~1/4 as far. Could falsify: forbidden-substitute #2.
+4. **Production build in a browser** (phase C): `npm run build` +
+   `npm run preview` (port 5311): page boots, WebGL2 1920×1080 frame renders,
+   zero console errors. Could falsify: forbidden-substitute #1 or the
+   `base: './'` config choice.
+5. **Exact evidence commands** (repo root): `git check-ignore -v
+   design_private/probe` (returns the path, exit 0), `npx vitest run` (exit 0,
+   4 files / 31 tests).
+
+### What I could not verify
+
+- **Visual verification on a real GPU desktop browser.** Same constraint as
+  the first review: no headed GPU session is automatable in this checkout; the
+  probe used the real Chromium engine at the exact required 1920×1080 with a
+  real `WebGLRenderer`. Criterion 2 as written requires only "a frame renders
+  at 1920×1080 … no console exceptions", which the probe verifies. The full
+  request §70 / §34 / §14.3 GPU + aesthetic observations remain manual and are
+  deferred to WI-17.
+- **codegraph-based impact analysis.** The index is stale for product symbols;
+  substituted with the complete import graph by grep, which is exhaustive for
+  this tree.
+- **Headed human observation.** No human observed the page in this unattended
+  run; the automated headless probe is the strongest observation available and
+  matches the work item's stated live-verification requirement.
+
+### Assumptions (re-confirmed)
+
+- **A-R1 (real browser = the real Chromium engine, headless).** Same reading
+  as the first review; unchanged by the re-verification.
+- **A-R2 (no console exceptions = zero `pageerror` + zero console type
+  `error`).** The one observed console warning ("GPU stall due to
+  ReadPixels") is induced by the probe's own `readPixels` under SwiftShader,
+  not by the page; it reproduces in all three phases and is a `warning`, not an
+  exception.
+- **Scaffold is WI-01 + approved WI-02 on top.** The accepted revision already
+  contains the approved WI-02 player/terrain build; the WI-01 criterion "a
+  minimal 3D scene" is verified as "a real scene (now with the player) renders
+  at 1920×1080 with a clean console", which is the criterion's verifiable
+  content. The scaffold files themselves are intact and unchanged from the
+  first-verified revision.

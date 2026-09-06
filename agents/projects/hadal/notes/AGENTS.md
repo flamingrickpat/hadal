@@ -13,3 +13,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260905-implementer-wi02-world-seams.md -->
 <!-- include: ./20260905-reviewer-wi02-probe-sim-clock.md -->
 <!-- include: ./20260906-planner-replan-sim-boundary.md -->
+<!-- include: ./20260906-reviewer-wi01-reverify-depth-cadence-observable.md -->

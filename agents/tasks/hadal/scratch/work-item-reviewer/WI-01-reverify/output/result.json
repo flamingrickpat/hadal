@@ -1,0 +1,175 @@
+{
+  "failures": [],
+  "report": {
+    "phases": {
+      "A": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "buffer": {
+          "w": 1920,
+          "h": 1080
+        },
+        "lumRange": 210,
+        "d0": 100,
+        "d1": 796,
+        "depthDelta": 696,
+        "rafWindow": 354,
+        "pageErrors": [],
+        "consoleErrors": [],
+        "consoleWarnings": [
+          {
+            "type": "debug",
+            "text": "[vite] connecting..."
+          },
+          {
+            "type": "debug",
+            "text": "[vite] connected."
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+          },
+          {
+            "type": "warning",
+            "text": "[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+          }
+        ],
+        "localStorageFresh": 0
+      },
+      "B": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "buffer": {
+          "w": 1920,
+          "h": 1080
+        },
+        "lumRange": 210,
+        "d0": 100,
+        "d1": 800,
+        "depthDelta": 700,
+        "rafWindow": 109,
+        "pageErrors": [],
+        "consoleErrors": [],
+        "consoleWarnings": [
+          {
+            "type": "debug",
+            "text": "[vite] connecting..."
+          },
+          {
+            "type": "debug",
+            "text": "[vite] connected."
+          }
+        ],
+        "localStorageFresh": 0
+      },
+      "C": {
+        "title": "HADAL",
+        "hasCanvas": true,
+        "hasWebGL2": true,
+        "buffer": {
+          "w": 1920,
+          "h": 1080
+        },
+        "lumRange": 210,
+        "d0": 100,
+        "d1": 796,
+        "depthDelta": 696,
+        "rafWindow": 351,
+        "pageErrors": [],
+        "consoleErrors": [],
+        "consoleWarnings": [],
+        "localStorageFresh": 0
+      }
+    },
+    "dev server ready on port 5310": {
+      "pass": true,
+      "detail": "\n> hadal@0.1.0 dev\n> vite --port 5310 --strictPort\n\n\n  \u001b[32m\u001b[1mVITE\u001b[22m v8.2.2\u001b[39m  \u001b[2mready in \u001b[0m\u001b[1m220\u001b[22m\u001b[2m\u001b[0m ms\u001b[22m\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5310\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b[2m to expose\u001b[22m\n"
+    },
+    "preview server ready on port 5311": {
+      "pass": true,
+      "detail": "\n> hadal@0.1.0 preview\n> vite preview --port 5311 --strictPort\n\n  \u001b[32m➜\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m5311\u001b[22m/\u001b[39m\n\u001b[2m  \u001b[32m➜\u001b[39m  \u001b[1mNetwork\u001b[22m\u001b[2m: use \u001b[22m\u001b[1m--host\u001b[22m\u001b[2m to expose\u001b[22m\n"
+    },
+    "A title is HADAL": {
+      "pass": true,
+      "detail": "HADAL"
+    },
+    "A canvas present (dev)": {
+      "pass": true,
+      "detail": "true"
+    },
+    "A WebGL2 context (dev)": {
+      "pass": true,
+      "detail": "{\"title\":\"HADAL\",\"hasCanvas\":true,\"hasWebGL2\":true,\"buffer\":{\"w\":1920,\"h\":1080},\"lumRange\":210,\"d0\":100,\"d1\":796,\"depthDelta\":696,\"rafWindow\":354,\"pageErrors\":[],\"consoleErrors\":[],\"consoleWarnings\":[{\"type\":\"debug\",\"text\":\"[vite] connecting...\"},{\"type\":\"debug\",\"text\":\"[vite] connected.\"},{\"type\":\"warning\",\"text\":\"[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels\"},{\"type\":\"warning\",\"text\":\"[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels\"},{\"type\":\"warning\",\"text\":\"[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels\"},{\"type\":\"warning\",\"text\":\"[.WebGL-0x3034001b1000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)\"}],\"localStorageFresh\":0}"
+    },
+    "A drawing buffer 1920x1080 (dpr 1)": {
+      "pass": true,
+      "detail": "{\"w\":1920,\"h\":1080}"
+    },
+    "A frame non-blank (lumRange > 10)": {
+      "pass": true,
+      "detail": "210"
+    },
+    "A fresh profile (empty localStorage)": {
+      "pass": true,
+      "detail": "0"
+    },
+    "A no page exceptions": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "A no console errors": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "C title is HADAL (production build)": {
+      "pass": true,
+      "detail": "HADAL"
+    },
+    "C WebGL2 context (production build)": {
+      "pass": true,
+      "detail": "{\"w\":1920,\"h\":1080}"
+    },
+    "C frame non-blank (production build)": {
+      "pass": true,
+      "detail": "210"
+    },
+    "C no page exceptions (production build)": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "C no console errors (production build)": {
+      "pass": true,
+      "detail": "[]"
+    },
+    "A player sank (|depthDelta| > 100 m over 3 s)": {
+      "pass": true,
+      "detail": "696"
+    },
+    "B player sank (|depthDelta| > 100 m over 3 s)": {
+      "pass": true,
+      "detail": "700"
+    },
+    "B throttle effective (delivered rAF < 60% of A)": {
+      "pass": true,
+      "detail": "A=354 B=109"
+    },
+    "B throttled rate above clamp floor (>10 Hz, gap < MAX_FRAME_DT)": {
+      "pass": true,
+      "detail": "109"
+    },
+    "B cadence independent of rAF timing (depthDelta within 40% of A)": {
+      "pass": true,
+      "detail": "A=696 B=700"
+    }
+  }
+}
