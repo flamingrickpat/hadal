@@ -1,0 +1,33 @@
+{
+  "checks": {
+    "greybox world boots: HUD root present and visible": true,
+    "debug panel visible via ?debug=1": true,
+    "player starts at x 1300 / depth 100": true,
+    "HUD shows the selected tool (starter knife)": true,
+    "HUD shows O2, HP and DEPTH readouts": true,
+    "inertial dive: 3 s of S reaches depth 600–1050": true,
+    "not frictionless: depth keeps rising > 100 after release (coast)": true,
+    "seabed blocks the player: depth saturates at 1330–1410": true,
+    "debug teleport moves the player to x 2000 / depth 150": true,
+    "Digit2 selects the work light in the HUD": true,
+    "Digit1 reselects the salvage knife": true,
+    "no page exceptions": true,
+    "no console errors": true
+  },
+  "trace": [
+    "PASS: greybox world boots: HUD root present and visible",
+    "PASS: debug panel visible via ?debug=1",
+    "PASS: player starts at x 1300 / depth 100 — x=1300 depth=100",
+    "PASS: HUD shows the selected tool (starter knife) — tool=Salvage Knife",
+    "PASS: HUD shows O2, HP and DEPTH readouts",
+    "PASS: inertial dive: 3 s of S reaches depth 600–1050 — depth=736.1",
+    "PASS: not frictionless: depth keeps rising > 100 after release (coast) — +183.8",
+    "PASS: seabed blocks the player: depth saturates at 1330–1410 — depth=1396.9",
+    "PASS: debug teleport moves the player to x 2000 / depth 150 — x=2000 depth=150",
+    "PASS: Digit2 selects the work light in the HUD — tool=Work Light",
+    "PASS: Digit1 reselects the salvage knife — tool=Salvage Knife",
+    "PASS: no page exceptions",
+    "PASS: no console errors"
+  ],
+  "pageErrors": []
+}

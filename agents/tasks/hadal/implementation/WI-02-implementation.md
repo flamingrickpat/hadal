@@ -175,3 +175,57 @@ circle-vs-segment terrain collision over a swimmable greybox
 and the `?debug=1`/backtick+F2 teleport; `npx vitest run` 31/31,
 `npm run build` exit 0, 25/25 browser probe checks green with a clean
 console.
+
+## Re-verification (item-implementer, 2026 re-dispatch)
+
+The controller re-selected this work item and re-dispatched the
+implementer at accepted revision `81eb9fa66790`. Inspection of the
+baseline shows the WI-02 product work was **already implemented,
+committed, and reviewed** before this re-dispatch:
+
+- `git log` → the single WI-02 product commit is `6a21844`
+  (`[game][player] add inertial swim, terrain collision, meters, HUD,
+  and debug teleport`), reviewed/approved at `7aa2435`
+  (`reviews/WI-02-player-swim-terrain-oxygen-review.md`, Status: pass,
+  adversarial probe 26/26 green). Both are ancestors of the current
+  HEAD, so every acceptance criterion's code and artifact already exists
+  in the working tree.
+- `state.md`'s history records only up to `WI-02 … selected` and is
+  missing the `implement`/`review` steps that the git history and the
+  review artifact contain. That is a stale controller record, not a
+  repository defect; the repository is the source of truth and shows the
+  work complete.
+
+No product code was changed in this re-dispatch (the existing modules are
+correct and reviewed; rewriting them would only risk regressions). This
+session independently re-confirmed the acceptance criteria on the current
+baseline:
+
+- `npx vitest run` → 4 files / **31 tests pass** (terrain 7,
+  PlayerController 10, PlayerMeters 10, rng 4).
+- `npm run build` → exit 0 (only the expected three.js >500 kB chunk
+  warning).
+- Code re-read against each criterion: `PlayerController.update`
+  (criterion 1 inertial §6 integrator + separate H/V accel),
+  `terrain.ts resolveCircle` (criterion 2 circle-vs-segment),
+  `worldData.ts GREYBOX_WORLD` (criterion 3 seabed + west/central wall +
+  east ridge, swimmable), `PlayerController.updateMeters` (criterion 4
+  O2/HP/depth, zero-O2 → HP drain, clamp [0,100]), `hud.ts` (criterion 5
+  O2/HP/depth/tool, fades when full, few DOM nodes), `bindToWindow` +
+  `updateFacing` (criterion 6 §6 mapping + body rotation), `debug.ts` +
+  `Game.debugTeleport` (criterion 7 `?debug=1` / backtick+F2 teleport).
+- Fresh independent browser probe
+  (`scratch/item-implementer/WI-02-reverify/probe.mjs`, port 5199,
+  real `npm run dev` + SwiftShader Chromium at 1920×1080 with
+  `?debug=1`, real keyboard/mouse events): **13/13 checks green** —
+  greybox boot (x 1300 / depth 100), HUD + `?debug=1` panel visible,
+  O2/HP/DEPTH/TOOL readouts, inertial dive (depth 736.1 at 3 s) then a
+  non-frictionless coast (+183.8 after release), seabed saturation at
+  1396.9 (circle-vs-segment blocking), debug teleport (2000, 150) exact,
+  Digit1/Digit2 tool select in the HUD, zero page exceptions, zero
+  console errors. Artifacts:
+  `scratch/item-implementer/WI-02-reverify/output/` (`result.json`,
+  `trace.txt`, `console.json`, `server.log`, screenshots).
+
+Result: WI-02 remains complete and passing on the current baseline; the
+re-dispatch needed no product change.
