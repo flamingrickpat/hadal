@@ -108,3 +108,83 @@ full §17 chunk model; `worldBounds` feeds the camera clamp in
 `Renderer.follow`. See the project note
 `agents/projects/hadal/notes/20260905-implementer-wi02-world-seams.md`
 and `implementation/WI-02-implementation.md`.
+
+## Addendum (re-plan at 3b12fa7, 2026-09-06): §30/§70 verification architecture
+
+The request's executive directive (§0) and §30/§70 require a headless TypeScript
+simulation shared by the browser and Node tests, plus a reusable Node scenario
+harness. WI-02 established the start (Node-importable per-function unit tests for
+the movement integrator, meters, and terrain) but not the unified boundary. This
+work item delivers the first full headless core loop, so it also establishes the
+verification architecture that every later gameplay feature is verified against.
+These are additional acceptance criteria and tests on top of the spec above; the
+base/resource/crafting/save work above remains in force.
+
+### Additional acceptance criteria
+
+- [ ] §30 simulation boundary: the core gameplay logic (movement, collision,
+  oxygen, harvesting, crafting, gates, and save) is Node-importable without
+  browser globals or browser emulation. A small API — `createSimulation(world,
+  seed)` and `step(state, input, dt)` (or an equivalent class API) — creates a
+  simulation from the production world data and advances it with player input on a
+  fixed step, and is used by both the browser game and every headless scenario.
+  Player actions are data (movement, interaction, menu selection), converted from
+  browser events by a thin input adapter. Renderer construction and browser side
+  effects (Three.js, DOM, WebAudio, `localStorage`) are adapters around the
+  simulation, never part of it. No second simulation or simplified collision
+  system is created for tests (request §30).
+- [ ] §70 reusable scenario harness: a reusable Node harness advances the
+  production simulation with normal player actions using production world
+  geometry, resource placement, recipes, gates, and the actual spawn. It exposes
+  helpers for fixed steps, input sequences, state assertions, and concise failure
+  traces; each failure trace records the seed, simulated time, position, input,
+  and the failed assertion. It is reusable across implementer and reviewer
+  sessions (request §30, §70).
+- [ ] §70 continuous core-loop scenario (steps 1–9 as one scenario): (1) start at
+  the actual spawn with a fresh game and starter equipment; (2) swim to an actual
+  first resource through normal movement and collision; (3) interact to collect
+  the materials for the first upgrade; (4) return to the actual base and reach
+  the required station; (5) craft through the same gameplay action the browser
+  menu submits; (6) verify the resource costs and the resulting capability
+  change; (7) leave the base and demonstrate the improved capability through
+  simulation; (8) serialize the save and load it into a fresh simulation; (9)
+  verify the upgrade and required progression state persist (request §70). No
+  teleportation, noclip, free materials, or direct state edits are used as
+  evidence of reachability.
+- [ ] Separate headless scenarios exist for death (respawn keeps upgrades, loses a
+  modest fraction of unbanked resources), depleted resources,
+  insufficient-materials rejection, and a blocked route (request §70).
+- [ ] Separate documented commands: `npm test` runs the headless (Vitest) suite
+  once and returns its exit status; browser tests are a separate command kept out
+  of the default headless command (request §44 phase 1, §70).
+
+### Additional tests to write first
+
+- The §70 9-step continuous core-loop scenario as a single headless scenario over
+  the production world and spawn (assertions at steps 3, 5, 6, 7, and 9).
+- Separate scenarios for death, insufficient materials, and a blocked route.
+- A scenario-harness failure-trace test: a deliberately-failing assertion
+  produces a trace containing the seed, simulated time, position, input, and the
+  failed assertion.
+
+### Additional evidence
+
+| Criterion | Evidence type | Command or artifact |
+|---|---|---|
+| §30 simulation boundary (Node-importable, single sim) | automated + workflow | import the simulation + world data in Node with no browser globals; reviewer confirms no second sim/collision; `npm test` exit 0 |
+| §70 reusable scenario harness | automated | the harness advances the production simulation with player actions; a failing scenario emits a seed/time/position/input/assertion trace |
+| §70 9-step core-loop scenario | automated | one headless scenario passes end to end (spawn → resource → craft → save → load → verify) with no teleport/no-clip/free materials |
+| Separate scenarios (death, insufficient, blocked) | automated | each scenario passes over the production simulation |
+| Separate headless vs browser commands | workflow | `npm test` runs the headless suite once and returns its status; the browser command is distinct |
+
+### Integration constraints (addendum)
+
+The simulation core is a new seam (e.g. `src/sim/` or `src/game/`) that
+`Game.update(FIXED_DT)` delegates to; the browser renders it and a thin input
+adapter feeds it player actions. Reuse the existing Node-importable units from
+WI-02 (the movement integrator, meters, terrain resolution) and `createRng`
+(`src/util/rng.ts`) rather than re-deriving them (request §30). The scenario
+harness lives under the task test area or a small `src`-adjacent module; keep it
+reusable across sessions, not a one-off probe (request §30, §70). This addendum
+does not change the base/resource/crafting/save work above — it adds the
+verification architecture those features are checked against.

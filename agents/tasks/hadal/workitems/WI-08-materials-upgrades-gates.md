@@ -86,3 +86,32 @@ Note the `Capability` set, the gate-capability mapping, and the validator entry 
 ## Fresh-Session Handoff
 
 Enter `item-implementer` mode for this exact work item. Read the task or story state from top to bottom, the project documentation, all passed gate artifacts, this work-item specification, and only then the listed source files.
+
+## Addendum (re-plan at 3b12fa7, 2026-09-06): §70/§32 physical route scenarios
+
+The abstract `simulateCriticalPath()` does not prove that physical routes are
+traversable (request §32). It must be paired with headless movement scenarios that
+verify required passages against production collision geometry at the capability
+stage then available. This is an additional acceptance criterion and test on top of
+the spec above; the material/upgrade/gate/validator work above remains in force.
+
+### Additional acceptance criteria
+
+- [ ] Headless movement/waypoint scenarios verify that each required gate,
+  shortcut, and progression-material passage is physically traversable using the
+  actual production collision geometry and the capabilities available at that
+  progression stage — not inferred from chunk adjacency alone (request §32, §70).
+- [ ] Waypoints select movement inputs only; they never assign player positions or
+  bypass collision. Each scenario has a finite simulated duration and an explicit
+  success condition; if the condition remains false, the scenario fails with the
+  harness state trace (request §70).
+- [ ] The scenarios run on the same production simulation + scenario harness
+  (WI-03 addendum) and are paired with `simulateCriticalPath()` to cover
+  progression dependencies (request §32, §70).
+
+### Additional tests to write first
+
+- One headless waypoint scenario per required gate / shortcut / progression-material
+  passage, asserting reachability at the correct capability stage, paired with the
+  `simulateCriticalPath()` assertion that the final objective is reachable
+  (request §32, §70).

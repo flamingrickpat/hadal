@@ -162,3 +162,71 @@ There is no user to ask (unattended). The decisions above (A-R1..A-R8) are made 
 ## Handoff
 
 No implementer handoff is written yet (per plan mode). Each work item carries its own Fresh-Session Handoff section; the work-item sequence above is the dispatch order.
+
+## Revision — re-plan at 3b12fa7 (2026-09-06)
+
+Dated revision of the plan above. It does not rewrite the 17-work-item
+decomposition (which remains the authoritative decomposition); it records the
+current state, supersedes the now-stale greenfield framing, and closes two
+verification-architecture gaps with append-only addenda to existing work items.
+
+### Current state
+
+- The 17 work items (WI-01..WI-17) remain the full decomposition of the
+  understood task and cover every request §45 acceptance criterion. The
+  "Work-Item Sequence" table and dependency order are unchanged. No work item was
+  added, removed, or renumbered (work-item numbers are never reused).
+- WI-01 (scaffold, 184d348) and WI-02 (player swim / terrain / meters / HUD /
+  debug, 6a21844) are implemented, reviewed, and approved at 7aa2435. The
+  current queue is WI-03..WI-17.
+- The game boots (`index.html` → `src/main.ts` → `Game`), runs a fixed 1/60 s
+  loop with the single `Game.update(FIXED_DT)` seam
+  (`src/game/Game.ts:85`), has the inertial player + O2/HP/depth meters,
+  circle-vs-segment terrain collision over `GREYBOX_WORLD`, a minimal HUD, and
+  the `?debug=1` teleport panel. Four Vitest suites (31 tests) cover the
+  movement integrator, meter math, terrain resolution, and seeded RNG;
+  `npm run build` exits 0.
+
+### Superseded greenfield framing
+
+"Existing Seam And Data Origins" and Assumption-Ledger row A-C1 were written
+when the project was greenfield. A-C1's falsification condition ("a product file
+exists that I must integrate with") has now been met: the skeleton (WI-01) and
+player core (WI-02) exist. The required response — re-plan the seams against the
+real code — has been taken: the refreshed `understanding.md` and each later work
+item attach to the existing seams (`Game.update` tick, `EquipmentDef`/
+`Capability`, `GREYBOX_WORLD`, `createRng`, `enableDebugPanel`, `Renderer`)
+rather than inventing parallel ones. A-C1's conclusion ("route to planner;
+re-plan") is recorded here as resolved; the row itself is retained unchanged as
+history.
+
+### Verification-architecture gap (closed this revision)
+
+Request §0 (executive directive) and §30/§70 require a headless TypeScript
+simulation shared by the browser and Node tests, exposed as a small
+`createSimulation(world, seed)` / `step(state, input, dt)` API, with a reusable
+Node scenario harness that advances the production simulation with normal player
+actions over production world data and the actual spawn. Confirmed not yet in the
+codebase at 3b12fa7: there is no `createSimulation`/`step` API and no scenario
+harness — WI-02's tests are per-function unit tests (integrator, meters,
+terrain) that are already Node-importable, which is the correct start but not the
+unified boundary. This is the primary way every later gameplay feature is verified
+(`understanding.md` "Open Questions And Risks"), so it is made explicit and
+testable here:
+
+- The §30 simulation boundary + §70 reusable scenario harness + the §70 9-step
+  continuous core-loop scenario (spawn → first resource → collect → return to
+  base → craft → verify capability → leave base → serialize + load → verify) +
+  separate headless vs. browser test commands are assigned to **WI-03**
+  (append-only addendum), the item that delivers the first full headless core
+  loop (base + resource + crafting + save).
+- The §70/§32 physical route scenarios (required gates / shortcuts / progression
+  materials, verified against production collision geometry at the capability
+  stage then available, paired with `simulateCriticalPath()`) are assigned to
+  **WI-08** (append-only addendum), the item that owns the critical-path
+  validator.
+
+No acceptance criterion from request §45 is left uncovered by the 17 work items
+plus these two addenda. The project note
+`agents/projects/hadal/notes/20260906-planner-replan-sim-boundary.md` records the
+exact seam for the WI-03 simulation core.
