@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "84b74b052f4c537d46fcab8fa89692862cec1566413a726e008b60a8562eb44d",
+  "behavior_count": 1,
+  "subsystems": ["world content data"],
+  "coverage": true,
+  "summary": "One focused, independently testable behavior: replace all remaining obvious debug geometry in the seven critical-path areas (five depth bands, base, final zone approach) with band-consistent structure, one named change responsibility (world content data, matching the project's established subsystem names). It is exactly the split boundary prescribed by the prior WI-06d split receipt, implemented faithfully: AC-art-geometry is carried verbatim from ST-06 and shared with WI-06d-b, with the geometry part's final proof owner named here and the juice part owned by WI-06d-b, matching the story plan's ownership table. The overlap with WI-06a/b/c's per-band scene dressing is explicitly bounded - the band items commit to leaving no obvious debug geometry in their own areas and name the rest WI-06d's job, so this leaf is the verification sweep plus any residual replacement, not a re-dress. depends_on WI-06a/b/c is correct (tuned against the settled band look) and contains no ancestor or descendant. Evidence is focused: one recorded browser inventory walk with before/after notes per area (internal ids only per the carried-over spoiler rule), headless suite/build green, section 34 performance spot-check at 1080p. The exposed-simulation-gap defect-report route and the no-new-content/no-gameplay-rules constraints keep the behavior single. Fresh-session handoff is complete and self-contained (story plan, ST-06 plan, request sections 14.3/34/70, the three band items, and a pointed inspection of the world content data). No blockers."
+}
