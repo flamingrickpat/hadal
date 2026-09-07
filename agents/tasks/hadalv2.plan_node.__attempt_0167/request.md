@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-03b2",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-03b/workitems/WI-03b2.md",
+      "specification": "---\nid: WI-03b2\nkind: work_item\nparent: WI-03b\nchildren: []\ndepends_on: [\"WI-03b1\"]\ncriteria:\n  AC-roster-count: \"At least 15 distinct implemented creature types are active in the production world data with their spawns, meeting the private roster's distribution\"\n  AC-roster-tests: \"Every implemented major species has a headless behavior test for its signature rule, and no creature name or secret description appears outside debug internals and the private content files\"\nbehavior: \"Land the tier-2 organisms in the production world: spawns at band density with section 34 caps, data-driven small/medium body shapes on the existing WI-02b renderer pipeline, and the tier's one browser spot-check\"\nsubsystems: [\"world content data\", \"procedural creature rendering\"]\nverification: \"World data check that tier-2 ids resolve and spawns sit in the designed band; tier-2 spoiler containment check; one browser spot-check of a representative tier-2 organism (preferably a friendly one) rendering, animating, and showing its interaction readably\"\n---\n\n# WI-03b2 — Tier 2: production spawns + data-driven rendering\n\n## Goal\n\nPut the tier-2 organisms that WI-03b1 defines into the production world:\nspawns in `src/world/worldData.ts` at band density (section 49) with\nsection 34 caps, new small/medium body shapes added as data-driven shape\nparameters on the existing WI-02b renderer pipeline (section 13\nsilhouette-recognizable in two seconds), and the tier's one browser\nspot-check.\n\n## Deliverables (checkable)\n\n- Spawns in `src/world/worldData.ts` for every tier-2 organism id that\n  WI-03b1 lands, at the density the band needs (section 49: dense\n  traversal, no empty corridors) with the section 34 caps; ids\n  debug-only (section 33) - they never appear in normal UI.\n- New small/medium body shapes for the tier added as data-driven shape\n  parameters on the existing WI-02b renderer pipeline; no new renderer\n  architecture. Section 13 bar: each silhouette is recognizable in two\n  seconds, and the wreck-incorporating organism (if the private roster\n  assigns it here) reads as found-object attachment per section 13.4.\n\n## Tests and checks\n\n- World data check: every tier-2 creature id resolves to a def and every\n  spawn sits in the band the private roster designed it for (a tier-2\n  portion of the roster-wide AC-roster-count check WI-03d finalizes).\n- Spoiler containment for this item's artifacts: no creature name or\n  secret description appears outside debug internals and the private\n  content files (the tier's AC-roster-tests half; the roster-wide audit\n  finalizes in WI-03d).\n\n## Browser spot-check (presentation only)\n\nOne representative tier-2 organism (preferably a friendly one) renders,\nanimates, and shows its interaction readably, without console errors; no\nbrowser reachability proof (section 70 layers).\n\n## Constraints, assumptions, non-goals\n\n- No new renderer architecture; no simulation rule changes - if the\n  spot-check exposes a behavior defect, fix it through the existing\n  fix-planning route, not here.\n- No predators (WI-03c), no large/colossal staging (WI-03d).\n- Spoiler rules (sections 0, 12, 68): internal ids only in identifiers,\n  tests, and commit messages (\"spawned the mid-depth useful fauna tier and\n  added its body shapes\" style).\n\n## Fresh-session handoff\n\nRead WI-03b/plan.md (decomposition; criteria assignment), request sections\n13, 13.4, 33, 34, 49, 68, 70, 74; WI-01b for the selected organism ids and\nband placement; WI-03b1 for the landed ids and shape parameters;\n`design_private/` is the source of truth. Depends on WI-03b1; do not start\nbefore WI-02a/b/c are accepted.\n",
+      "fingerprint": "5661a61a4ce4f42db8c9c848be112535cbcff1391d42bd8f18f6a0e5f4187529",
+      "base_rev": "11dfb74ece944593b1706b02cd46567183ba0611",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-03b2.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
