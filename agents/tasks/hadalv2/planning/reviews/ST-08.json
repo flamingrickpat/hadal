@@ -1,0 +1,8 @@
+{
+  "status": "split",
+  "fingerprint": "4efe274451b020dc9a71a5d78ef5264cac717a9e79f4ee1ce4ae987bd9cbce7b",
+  "behavior_count": 0,
+  "subsystems": ["verification and handoff", "debug telemetry", "save system"],
+  "coverage": false,
+  "summary": "ST-08 is empty: plan.md frontmatter lists children: [], the folder contains only plan.md (no workitems/), and the body declares itself UNEXPANDED. An empty story must be expanded before acceptance, and its 4 parent criteria have no leaf ownership. The spec's own scope inventory names three independently shippable behaviors that form a useful split: (1) WI for the section 70 fresh-save end-to-end pass (headless + browser + manual playthrough, re-verifying ST-06's AC-art-map/AC-art-a11y) owning AC-fin-run and AC-fin-checklist; (2) WI for the spoiler audit of commits, notes, screenshots, and agents/projects/hadal/ notes, owning AC-fin-spoiler as final proof owner; (3) WI for the section 69 README/developer-section finish and section 68 handoff message. AC-fin-mvp is cross-cutting evidence collection: assign it to the E2E item with the spoiler audit as final proof owner for the no-development-spoilers half. Each child must inherit depends_on [ST-07], keep the fix-planning-route boundary (verification and recording only; no feature fixes), and carry the relevant request sections (45, 68, 69, 70) and ST-06 criterion ids verbatim."
+}
