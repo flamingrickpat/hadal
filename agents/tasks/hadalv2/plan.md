@@ -53,8 +53,9 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 
 Execution order for leaves: WI-01a -> WI-01b -> WI-01c and WI-02a -> WI-02b ->
 WI-02c (independent chains), then ST-03 (WI-03a and the WI-03b story,
-WI-03b1 -> WI-03b2, in parallel, then the WI-03c story, WI-03c1 -> WI-03c2,
-then the WI-03d story, WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04
+WI-03b1 -> WI-03b2, in parallel, then the WI-03c story (the WI-03c1 story,
+WI-03c1a -> WI-03c1b, then WI-03c2 after WI-03c1b), then the WI-03d story,
+WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04
 (WI-04a, WI-04b and WI-04d in parallel, then WI-04c after WI-04a and
 WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), then ST-06
 (WI-06f after WI-04b in parallel; WI-06a, WI-06b and WI-06c in
@@ -121,8 +122,10 @@ table is valid.
 - `stories/ST-03/plan.md` + `stories/ST-03/workitems/WI-03a.md` — secret
   roster by size tier, expanded; WI-03b promoted to `stories/ST-WI-03b/`
   (`plan.md` + `workitems/WI-03b1.md`, `WI-03b2.md`), WI-03c promoted to
-  `stories/ST-WI-03c/` (`plan.md` + `workitems/WI-03c1.md`, `WI-03c2.md`)
-  and WI-03d promoted to `stories/ST-WI-03d/` (`plan.md` +
+  `stories/ST-WI-03c/` (`plan.md` + `workitems/WI-03c2.md`) with WI-03c1
+  further promoted to `stories/ST-WI-03c1/` (`plan.md` +
+  `workitems/WI-03c1a.md`, `WI-03c1b.md`), and WI-03d promoted to
+  `stories/ST-WI-03d/` (`plan.md` +
   `workitems/WI-03d1.md`, `WI-03d2.md`, `WI-03d3.md`).
 - `stories/ST-04/plan.md` + `stories/ST-04/workitems/WI-04a.md`, `WI-04b.md`,
   `WI-04c.md`, `WI-04d.md` — authored encounters and story layer, expanded.

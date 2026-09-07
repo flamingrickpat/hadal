@@ -59,7 +59,13 @@
   `workitems/WI-03b1.md`, `workitems/WI-03b2.md`.
 - `stories/ST-WI-03c/` — WI-03c promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03c) plus
-  `workitems/WI-03c1.md`, `workitems/WI-03c2.md`.
+  `workitems/WI-03c2.md`; WI-03c1 further promoted to
+  `stories/ST-WI-03c1/`.
+- `stories/ST-WI-03c1/` — WI-03c1 promoted from ST-WI-03c's work items to a
+  story after review split: `plan.md` (story node, id WI-03c1) plus
+  `workitems/WI-03c1a.md` (tier-3 CreatureDefs + section 10 damage model) and
+  `workitems/WI-03c1b.md` (per-predator controllers incl. non-chase + final
+  AC-roster-behavior proof).
 - `stories/ST-WI-03d/` — WI-03d promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03d) plus
   `workitems/WI-03d1.md`, `workitems/WI-03d2.md`, `workitems/WI-03d3.md`.
