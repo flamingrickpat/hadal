@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-06d-a",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-06d/workitems/WI-06d-a.md",
+      "specification": "---\nid: WI-06d-a\nkind: work_item\nparent: WI-06d\nchildren: []\ndepends_on: [\"WI-06a\", \"WI-06b\", \"WI-06c\"]\ncriteria:\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\nbehavior: \"Replace all obvious debug geometry in the critical-path areas with band-consistent real geometry, verified by a recorded inventory walk with before/after notes per area\"\nsubsystems: [\"world content data\"]\nverification: \"Recorded critical-path walk (browser) of all five bands plus the base and the final zone approach showing no obvious debug geometry remaining; before/after notes per area; headless suite and build stay green; performance spot-check per section 34\"\n---\n\n# WI-06d-a — Debug geometry replacement in all critical-path areas\n\n## Goal\n\nWalk every critical-path area (all five depth bands, the base, and the\nfinal zone approach) and replace the obvious debug geometry (placeholder\nboxes, wire frames, and other clearly-artificial stand-ins for real\nstructure) with geometry consistent with the dressed bands. The result:\na player traversing the critical path sees no \"placeholder\" geometry —\nevery visible surface is part of the intended band identity.\n\n## Deliverables (checkable)\n\n- A recorded inventory walk of every critical-path area with before/after\n  notes per area. Each note names the area (internal id), the debug\n  geometry found, the replacement applied, and the band-consistency\n  rationale (which section 14.3 factors the replacement aligns with).\n- If a replacement exposes a real simulation gap (e.g. the geometry\n  implies a collision surface or a gate that does not exist in the sim),\n  record it as a defect report with scene, reproduction steps, and\n  severity. Do not add gameplay rules to close it.\n- No new content beyond replacing existing placeholder geometry with\n  band-consistent structure. No new creatures, mechanics, or areas.\n\n## Tests\n\n- Browser (final proof owner of the AC-art-geometry geometry part):\n  critical-path walk recording all areas with no obvious debug geometry\n  remaining. The walk covers all five bands, the base, and the final\n  zone approach. Each area is captured before/after with notes.\n- Headless: suite and build stay green after the content data changes.\n- Performance spot-check per section 34: the walk is performed at 1080p\n  and frame rate is recorded per area; no area drops below the section 34\n  budget.\n\n## Constraints, assumptions, non-goals\n\n- Band identity is set by WI-06a/b/c; this item replaces geometry to\n  match the settled look, not to redefine it. If a band's settled look\n  makes a particular replacement ambiguous, note the assumption and\n  proceed with the most conservative choice.\n- No juice effects (WI-06d-b), no shake or widescreen work (WI-06d-c).\n- No new gameplay rules, no steering or balance changes, no new content.\n- Spoiler rules (sections 0, 12, 68, 70): late-game areas (final zone\n  approach and deep bands) are recorded with private fixtures and internal\n  ids only; no creature names or lore in evidence.\n- Restraint: replacements must not hurt readability at 1080p in motion\n  (section 14.3); the section 34 budgets apply.\n\n## Fresh-session handoff\n\nRead WI-06d/plan.md (story scope; criteria assignment; proof ownership),\nST-06/plan.md (band identity scope; section 14.3 factors), request\nsections 14.3, 34, 70. Read the three band items (WI-06a, WI-06b,\nWI-06c) for the settled band look and their recorded observations.\nInspect the world content data for critical-path areas (the five bands,\nbase, final zone approach) and identify all placeholder/debug geometry.\nRecord evidence in the browser; use internal ids only.\n",
+      "fingerprint": "84b74b052f4c537d46fcab8fa89692862cec1566413a726e008b60a8562eb44d",
+      "base_rev": "d2ac47b0e46c4e4abd099dd95e313358cae1d697",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06d-a.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
