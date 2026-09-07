@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-01a",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-01/workitems/WI-01a.md",
+      "specification": "---\nid: WI-01a\nkind: work_item\nparent: ST-01\nchildren: []\ndepends_on: []\ncriteria:\n  AC-cp-world: \"design_private/ holds three substantially different hidden-world interpretations, a written critique of each against the section 12 step B axes, and one selected world that hybridizes a single mechanism from a rejected candidate\"\n  AC-cp-spoiler: \"design_private/ stays out of the public surface, and no plan artifact, commit message, screenshot, or progress report names deep creatures, the lore truth, the MacGuffin, or the endings\"\nbehavior: \"Generate three competing hidden-world interpretations, critique each against the section 12 step B axes, and write the hybridized final selection with the private lore truth\"\nsubsystems: [\"private design documentation\"]\nverification: \"Read design_private/world_candidates.md and design_private/final_selected_world.md; confirm three distinct interpretations, a written critique per candidate, a rejected weakest candidate, and a single stolen mechanism from a rejected one\"\n---\n\n# WI-01a — Hidden world candidates, critique, hybrid selection\n\n## Goal\n\nWrite the three competing interpretations and the selection, privately.\nFiles: `design_private/world_candidates.md`, `design_private/final_selected_world.md`,\n`design_private/lore_truth.md`. Add `design_private/` to `.gitignore` if the\nenvironment exposes commits or diffs to the player; otherwise keep the\nequivalent data in `src/content/secret/` and never quote it in chat.\n\n## Deliverables (checkable)\n\n- Three interpretations that differ in what the deep ocean actually is, why\n  the installation failed, what the MacGuffin really is, how ecology connects\n  to the old infrastructure, and the ending's emotional tone.\n- A written critique per candidate on the step B axes: genre cliches,\n  exposition burden, whether the explanation erodes mystery, support for\n  visually weird creatures, deliverability in two hours, and whether the\n  final reveal reinterprets earlier content.\n- The rejected weakest candidate, explicitly named as rejected.\n- The selected candidate plus exactly one excellent mechanism stolen from a\n  rejected candidate (hybridize, do not average).\n- The private lore truth: the central event, the contradictions between\n  official records and observed reality (request section 22), and the 2-4\n  earlier traces each major late reveal must plant (section 51).\n\n## Constraints, assumptions, non-goals\n\n- Tone per section 57: restrained, bureaucratic, increasingly uneasy.\n- Assumption: the selected world must keep at least one largest-scale\n  implication unanswered at the end (section 22 lore rule); falsified if the\n  chosen truth requires a final exposition dump.\n- No code changes. Do not draft creatures here (WI-01b). Do not name any of\n  this content in the commit message; commit as \"creative pass: world\n  selection (private)\".\n\n## Fresh-session handoff\n\nRead request sections 2, 12 (steps A-C), 22, 37, 51, 57, 74. The coast band\nand the salvage premise are fixed (sections 2, 4.1); everything below the\nshelf is yours to invent. Reviewer checks structure and spoiler safety only.\n",
+      "fingerprint": "5c038efae4c9950c94e6498f2a857f2e4462e0d5998be806ea51aa284ddce7ab",
+      "base_rev": "40b7686547047d3fcd0c8109201d3df9d3bf2cdb",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-01a.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
