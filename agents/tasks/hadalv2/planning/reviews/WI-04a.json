@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "82adb7f0158ed071a539454504e139ae605db9b6556d3730a358bebd75ef2657",
+  "behavior_count": 1,
+  "subsystems": ["trigger system", "world content data", "headless scenario tests"],
+  "coverage": true,
+  "summary": "One focused behavior: the 5+ authored spectacle beats fire through the existing EncounterTrigger system inside live gameplay, each with authored timing, entrance, environmental reaction, and escape. AC-enc-beats is carried verbatim from ST-04, whose four-criterion union is preserved by its four children, and WI-04a is named final proof owner for the cross-child browser check. Changed responsibilities are three and concrete: world content data (primary - beats authored into production world data at WI-01c reveal-map slots), headless scenario tests (per-beat fresh-save scenarios plus once-semantics and determinism), and the trigger system only conditionally - verified against src/world/triggers.ts that every referenced action/condition (enterRegion, reachDepth, timeInRegion, creatureState, spawnEntity, despawnEntity, playAudio, alterAmbient, moveBackgroundCreature, lockPath, camera, setStoryFlag) already exists, so the gated minimal-extension clause is a real fallback, not hidden scope. Non-goals are explicit (no creature controller/AI changes with a report-as-defect escalation, no story payload, reactions, or puzzles), dependencies are correct (empty depends_on; ST-03 is the story-level dependency the leaf inherits), and the handoff names real, verifiable inputs (ST-04 plan, WI-01c's design_private beat slots, ST-03 roster ids, sections 3/11.4/36/61/67/70). Spoiler rules are carried into the leaf. Evidence is focused on the behavior rather than a whole-game delivery check."
+}
