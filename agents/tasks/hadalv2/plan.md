@@ -53,9 +53,10 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-08 | Final verification + spoiler-safe handoff (phase 9, sections 45, 69, 70) | ST-07 |
 
 Execution order for leaves: WI-01a -> WI-01b -> WI-01c and WI-02a -> WI-02b ->
-WI-02c (independent chains), then ST-03 (WI-03a and WI-03b in parallel, then
-WI-03c, then WI-03d), then ST-04, ST-05, ST-06, ST-07, ST-08. ST-01 and ST-02
-chains are parallel; any interleaving that respects the table is valid.
+WI-02c (independent chains), then ST-03 (WI-03a and the WI-03b story,
+WI-03b1 -> WI-03b2, in parallel, then WI-03c, then WI-03d), then ST-04,
+ST-05, ST-06, ST-07, ST-08. ST-01 and ST-02 chains are parallel; any
+interleaving that respects the table is valid.
 
 ## Verification strategy (request section 70)
 
@@ -107,8 +108,9 @@ chains are parallel; any interleaving that respects the table is valid.
   `WI-01c.md` — creative pass, expanded.
 - `stories/ST-02/plan.md` + `stories/ST-02/workitems/WI-02a.md`, `WI-02b.md`,
   `WI-02c.md` — creature framework, expanded.
-- `stories/ST-03/plan.md` + `stories/ST-03/workitems/WI-03a.md`, `WI-03b.md`,
-  `WI-03c.md`, `WI-03d.md` — secret roster by size tier, expanded.
+- `stories/ST-03/plan.md` + `stories/ST-03/workitems/WI-03a.md`, `WI-03c.md`,
+  `WI-03d.md` — secret roster by size tier, expanded; WI-03b promoted to
+  `stories/ST-WI-03b/` (`plan.md` + `workitems/WI-03b1.md`, `WI-03b2.md`).
 - `stories/ST-04/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
   tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.
