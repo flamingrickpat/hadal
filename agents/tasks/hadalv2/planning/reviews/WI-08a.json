@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "79cb156c77922511e48f86a8894500dd3f9f41291f219b4d9c9944ac8096092a",
+  "behavior_count": 1,
+  "subsystems": ["verification and handoff", "debug telemetry", "save system"],
+  "coverage": true,
+  "summary": "One focused behavior: run the section 70 final coverage checklist end to end from a fresh save (headless suite, shared browser harness, one fresh-profile playthrough to an ending) and record commands, exit statuses, and scenario names. The three evidence layers and the in-pass re-verification of ST-06's AC-art-map/AC-art-a11y are evidence of that single verification behavior, not extra behaviors; the leaf makes no product code changes and routes any defect to the fix-planning route, which is the required focused form of a whole-game delivery check. Three named concrete subsystems, at the leaf limit. AC-fin-run and AC-fin-checklist are fully owned here; shared AC-fin-mvp carries named final-proof owners per half (layer-evidence here, no-development-spoilers in WI-08b). The three children's criteria cover all four ST-08 criteria verbatim, and depends_on is empty, consistent with this leaf running first under the inherited ST-07 story dependency. Handoff is self-contained for a fresh implementer: verbatim ST-06 criteria embedded, request sections 45 and 70 named, concrete harnesses (src/sim/scenario.ts, shared browser harness) and the section 45 per-criterion layer-evidence table specified."
+}
