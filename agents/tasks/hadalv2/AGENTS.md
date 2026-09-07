@@ -10,8 +10,7 @@
   planning node).
 - `stories/ST-01/` … `stories/ST-08/` — one folder per story: `plan.md`
   (story node, YAML frontmatter) plus `workitems/WI-*.md` for the expanded
-  stories (ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07). ST-08 is an
-  unexpanded expansion task.
+  stories (ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08).
 - `stories/ST-04/` — expanded after review split: `plan.md` (story node,
   id ST-04) plus `workitems/WI-04a.md` (spectacle beats),
   `workitems/WI-04b.md` (four-channel story payload),
@@ -33,6 +32,11 @@
   and section 40 scarcity), `workitems/WI-07c.md` (numerical tuning toward
   the 90-120 / 55-75 target) and `workitems/WI-07d.md` (60 FPS verification
   and fix-forward).
+- `stories/ST-08/` — expanded after review split: `plan.md` (story node,
+  id ST-08) plus `workitems/WI-08a.md` (section 70 fresh-save end-to-end
+  verification and final coverage checklist), `workitems/WI-08b.md` (spoiler
+  audit, final gate) and `workitems/WI-08c.md` (section 69 README finish and
+  section 68 handoff message).
 - `stories/ST-WI-05c/` — WI-05c promoted from ST-05's work items to a story
   after review split: `plan.md` (story node, id WI-05c) plus
   `workitems/WI-05ca.md` (ending variants and full ending verification),
