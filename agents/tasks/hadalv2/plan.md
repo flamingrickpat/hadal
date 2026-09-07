@@ -33,9 +33,10 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 - The creative pass (ST-01) and the creature framework (ST-02) are independent
   and run first; the roster (ST-03) needs both. Everything downstream is
   linear: encounters -> endgame -> art/audio -> balance -> final handoff.
-- Stories ST-03..ST-08 are deliberately left with `children: []` as explicit
-  expansion tasks for the next planning sessions. Each carries enough criteria
-  and scope to be split alone; do not implement them before they are split.
+- Stories ST-07 and ST-08 remain with `children: []` as explicit
+  expansion tasks for the next planning sessions. Each carries enough
+  criteria and scope to be split alone; do not implement them before
+  they are split.
 - Scope discipline per the v2 contract: a work item is one independently
   testable behavior changing at most three named responsibilities.
 
@@ -48,7 +49,7 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-03 | Secret roster implementation (sections 11, 47) — expanded: WI-03a, WI-03b, WI-03c, WI-03d | ST-01, ST-02 |
 | ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) — expanded: WI-04a, WI-04b, WI-04c, WI-04d | ST-03 |
 | ST-05 | MacGuffin + non-arena endgame + two endings (sections 23, 24) — expanded: WI-05a, WI-05b, WI-05c | ST-03, ST-04 |
-| ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) | ST-04, ST-05 |
+| ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) — expanded: WI-06a, WI-06b, WI-06c, WI-06d, WI-06e, WI-06f, WI-06g | ST-04, ST-05 |
 | ST-07 | Balance + telemetry pass (phase 8, sections 53, 71) | ST-06 |
 | ST-08 | Final verification + spoiler-safe handoff (phase 9, sections 45, 69, 70) | ST-07 |
 
@@ -57,9 +58,11 @@ WI-02c (independent chains), then ST-03 (WI-03a and the WI-03b story,
 WI-03b1 -> WI-03b2, in parallel, then the WI-03c story, WI-03c1 -> WI-03c2,
 then the WI-03d story, WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04
 (WI-04a, WI-04b and WI-04d in parallel, then WI-04c after WI-04a and
-WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), ST-06, ST-07,
-ST-08. ST-01 and ST-02 chains are parallel; any interleaving that
-respects the table is valid.
+WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), then ST-06
+(WI-06f after WI-04b in parallel; WI-06a, WI-06b and WI-06c in
+parallel, then WI-06d and WI-06e, then WI-06g after WI-04b and
+WI-06d), ST-07, ST-08. ST-01 and ST-02 chains are parallel; any
+interleaving that respects the table is valid.
 
 ## Verification strategy (request section 70)
 
@@ -122,6 +125,13 @@ respects the table is valid.
 - `stories/ST-05/plan.md` + `stories/ST-05/workitems/WI-05a.md`,
   `WI-05b.md` — MacGuffin and endgame, expanded; WI-05c promoted to
   `stories/ST-WI-05c/` (`plan.md` + `workitems/WI-05ca.md`, `WI-05cb.md`).
-- `stories/ST-06/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
-  tasks with acceptance criteria and split hints.
+- `stories/ST-06/plan.md` + `stories/ST-06/workitems/WI-06a.md` (surface
+  + coast band art pass), `WI-06b.md` (mid bands art pass),
+  `WI-06c.md` (deep bands + final zone art pass), `WI-06d.md`
+  (debug-geometry replacement + section 48 juice + section 16 camera
+  feel), `WI-06e.md` (depth audio pass), `WI-06f.md` (section 26
+  bathymetry map overlay) and `WI-06g.md` (section 43 accessibility
+  controls) — full art/audio pass, expanded.
+- `stories/ST-07/plan.md`, `stories/ST-08/plan.md` — unexpanded
+  expansion tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.
