@@ -60,8 +60,9 @@ then the WI-03d story, WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04
 (WI-04a, WI-04b and WI-04d in parallel, then WI-04c after WI-04a and
 WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), then ST-06
 (WI-06f after WI-04b in parallel; WI-06a, WI-06b and WI-06c in
-parallel, then WI-06d and WI-06e, then WI-06g after WI-04b and
-WI-06d), ST-07, ST-08. ST-01 and ST-02 chains are parallel; any
+parallel, then the WI-06d story (WI-06d-a, WI-06d-b and
+WI-06d-c in parallel) and WI-06e, then WI-06g after WI-04b and the
+WI-06d story), ST-07, ST-08. ST-01 and ST-02 chains are parallel; any
 interleaving that respects the table is valid.
 
 ## Verification strategy (request section 70)
@@ -127,11 +128,11 @@ interleaving that respects the table is valid.
   `stories/ST-WI-05c/` (`plan.md` + `workitems/WI-05ca.md`, `WI-05cb.md`).
 - `stories/ST-06/plan.md` + `stories/ST-06/workitems/WI-06a.md` (surface
   + coast band art pass), `WI-06b.md` (mid bands art pass),
-  `WI-06c.md` (deep bands + final zone art pass), `WI-06d.md`
-  (debug-geometry replacement + section 48 juice + section 16 camera
-  feel), `WI-06e.md` (depth audio pass), `WI-06f.md` (section 26
-  bathymetry map overlay) and `WI-06g.md` (section 43 accessibility
-  controls) — full art/audio pass, expanded.
+  `WI-06c.md` (deep bands + final zone art pass), `WI-06e.md`
+  (depth audio pass), `WI-06f.md` (section 26 bathymetry map overlay)
+  and `WI-06g.md` (section 43 accessibility controls) — full art/audio
+  pass, expanded; WI-06d promoted to `stories/ST-WI-06d/` (`plan.md` +
+  `workitems/WI-06d-a.md`, `WI-06d-b.md`, `WI-06d-c.md`).
 - `stories/ST-07/plan.md`, `stories/ST-08/plan.md` — unexpanded
   expansion tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.

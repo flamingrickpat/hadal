@@ -33,6 +33,12 @@
   `workitems/WI-05ca.md` (ending variants and full ending verification),
   `workitems/WI-05cb.md` (save-schema extension and endgame autosave
   milestones).
+- `stories/ST-WI-06d/` — WI-06d promoted from ST-06's work items to a story
+  after review split: `plan.md` (story node, id WI-06d) plus
+  `workitems/WI-06d-a.md` (debug geometry replacement),
+  `workitems/WI-06d-b.md` (section 48 juice effects and cross-band
+  contrast walk), `workitems/WI-06d-c.md` (section 16 shake rules and
+  widescreen behavior).
 - `stories/ST-WI-03b/` — WI-03b promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03b) plus
   `workitems/WI-03b1.md`, `workitems/WI-03b2.md`.
