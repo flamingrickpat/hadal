@@ -1,0 +1,14 @@
+{
+  "status": "split",
+  "fingerprint": "3dd2c8c458bdfc8c22fa0cb0cf7034e2c32c97010866b339286f80b22bf6a012",
+  "behavior_count": 7,
+  "subsystems": [
+    "rendering - particle toolbox",
+    "rendering - postfx",
+    "ui - hud cue",
+    "presentation - camera nudge and impulse flag",
+    "rendering - school render path"
+  ],
+  "coverage": true,
+  "summary": "Oversized leaf. The body bundles seven independently testable behaviors: bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools, and the cross-band contrast walk, touching at least five distinct implementation responsibilities (particle toolbox, postfx path, src/ui/hud.ts cue seam, camera nudge plus the WI-06d-c impulse flag, school render-split path) - over the three-responsibility limit. The parent story already applied the same split logic to geometry/juice/camera but did not carry it into the juice bundle itself, and the frontmatter scope inventory is wrong: it claims a single 'rendering and materials' subsystem while the deliverables explicitly change src/ui/hud.ts and the school render path. Useful split boundary into WI-06d-b1..b6: (1) bubbles + silt particle systems with data-driven emission tables, (2) light sway in the section 35 postfx path, (3) depth-record HUD tick in src/ui/hud.ts, (4) distant-motion impulse trigger plus camera nudge feeding the WI-06d-c flag, (5) parting-schools render split without steering changes, (6) cross-band contrast walk as final proof owner of the AC-art-palettes union, depending on b1-b5 and the band items WI-06a/b/c. Each child keeps AC-art-geometry (1) verbatim for b1-b5 and AC-art-palettes (1) for b6, so every child has strictly fewer parent criteria and a strict subset of the changed subsystems; the current two-way split of the bundle is not enough because the six-effect half still exceeds the responsibility limit. Keep the WI-06d-c boundary (trigger and nudge here, low-frequency gate and amplitude budget there) and the WI-06e/f/g seam constraints verbatim in the children."
+}
