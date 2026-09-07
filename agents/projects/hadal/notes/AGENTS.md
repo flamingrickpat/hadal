@@ -20,3 +20,6 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260906-implementer-wi04-visual-language.md -->
 <!-- include: ./20260907-implementer-wi05-audio-system.md -->
 <!-- include: ./20260907-implementer-wi06-sonar-signal-bus.md -->
+<!-- include: ./20260907-implementer-wi06-sonar-render-size.md -->
+<!-- include: ./20260908-implementer-wi07-macro-world-chunks.md -->
+<!-- include: ./20260907-understander-wi07-baseline-remaining-scope.md -->
