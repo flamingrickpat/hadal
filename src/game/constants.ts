@@ -75,3 +75,11 @@ export const SONAR_NOISE_STRENGTH = 0.8; // the sonar's noise side-effect (reque
 export const TOOL_NOISE_STRENGTH = 0.5; // a used tool's noise signal strength
 export const BOOST_NOISE_STRENGTH = 0.7; // the boost's noise signal strength
 export const BOOST_SIGNAL_INTERVAL = 0.3; // throttle for the continuous boost noise
+
+// Currents (request §64): the player is carried by the local current, scaled by
+// how much they resist it. Without propulsion the player resists little (a
+// strong drift); with the mid-game `boost` mobility upgrade they resist most of
+// it (they handle the current noticeably better, request §64). The drift is a
+// per-step position offset: current * (1 - control) * dt.
+export const CURRENT_CONTROL_BASE = 0.2; // no propulsion: resist 20% of the current
+export const CURRENT_CONTROL_WITH_PROPULSION = 0.8; // `boost`: resist 80%

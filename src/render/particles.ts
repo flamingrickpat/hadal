@@ -20,7 +20,7 @@
  *   draw-range change (no per-frame allocation, request §34).
  */
 import * as THREE from 'three';
-import type { Vec2 } from '../util/math';
+import { vec2, type Vec2 } from '../util/math';
 import { createRng } from '../util/rng';
 import type { BandProfile } from './band';
 
@@ -44,16 +44,23 @@ export interface ParticleType {
  * the local current, with a small per-particle bob, then wrap around the
  * (camera-anchored) view box so the field always fills the view. Pure — reads
  * `state`, writes `type.positions`, allocates nothing.
+ *
+ * The local current comes from `currentAt(pos, time)` when supplied (the
+ * `CurrentSystem`'s `velocityAt`, request §64 — particles follow the same field
+ * that moves the player); otherwise it falls back to the per-band profile
+ * current (`profile.currentDir * currentSpeed`), the greybox behaviour.
  */
 export function stepParticleType(
   type: ParticleType,
   state: { center: Vec2; half: Vec2; time: number },
   dt: number,
   profile: BandProfile,
+  currentAt?: (pos: Vec2, time: number) => Vec2,
 ): void {
   const { center, half, time } = state;
-  const curX = profile.currentDir.x * profile.currentSpeed;
-  const curY = profile.currentDir.y * profile.currentSpeed;
+  const useField = currentAt !== undefined;
+  const profileCurX = profile.currentDir.x * profile.currentSpeed;
+  const profileCurY = profile.currentDir.y * profile.currentSpeed;
   const pos = type.positions;
   const seeds = type.seeds;
   const n = type.count;
@@ -65,10 +72,19 @@ export function stepParticleType(
   for (let i = 0; i < n; i += 1) {
     const s = seeds[i]!;
     const phase = time * 0.6 + s * 6.28318;
+    const px0 = pos[i * 3]!;
+    const py0 = pos[i * 3 + 1]!;
+    let curX = profileCurX;
+    let curY = profileCurY;
+    if (useField) {
+      const v = currentAt!(vec2(px0, py0), time);
+      curX = v.x;
+      curY = v.y;
+    }
     const vx = curX + Math.sin(phase) * sinkAmp * 0.25;
     const vy = -type.sink * profile.particleDrift * 0.4 + curY + Math.cos(phase) * sinkAmp * 0.15;
-    let px = pos[i * 3]! + vx * dt;
-    let py = pos[i * 3 + 1]! + vy * dt;
+    let px = px0 + vx * dt;
+    let py = py0 + vy * dt;
     px = minX + ((((px - minX) % boxW) + boxW) % boxW);
     py = minY + ((((py - minY) % boxH) + boxH) % boxH);
     pos[i * 3] = px;
@@ -144,14 +160,19 @@ export class ParticleField {
     ];
   }
 
-  update(dt: number, center: Vec2, half: Vec2, profile: BandProfile): void {
+  update(dt: number, center: Vec2, half: Vec2, profile: BandProfile, currentAt?: (pos: Vec2, time: number) => Vec2, ambientScale: number = 1): void {
     this.time += dt;
     const state = { center, half, time: this.time };
     const counts = [profile.snowCount, profile.siltCount, profile.moteCount];
     for (let i = 0; i < this.layers.length; i += 1) {
       const layer = this.layers[i]!;
-      layer.type.count = Math.max(0, Math.min(Math.round(counts[i]!), layer.type.positions.length / 3));
-      stepParticleType(layer.type, state, dt, profile);
+      // The active-chunks gate (request §17): no ambient work near the camera
+      // disables the ambient particles; otherwise the band counts scale by the
+      // local ambient intensity (deeper bands run sparser). Default 1 keeps the
+      // profile-only path (the coast-band tests and any non-ambient callers).
+      const target = ambientScale <= 0 ? 0 : Math.round(counts[i]! * ambientScale);
+      layer.type.count = Math.max(0, Math.min(target, layer.type.positions.length / 3));
+      stepParticleType(layer.type, state, dt, profile, currentAt);
       const attr = layer.points.geometry.getAttribute('position') as THREE.BufferAttribute;
       attr.needsUpdate = true;
       layer.points.geometry.setDrawRange(0, layer.type.count);

@@ -15,3 +15,14 @@ export const BASE_RETURN_LINES: readonly string[] = [
   'Dive log: hull breaches on the lower tiers. The crew went quiet at 4,200 m.',
   'Contract: salvage priority is the compact object. Leave the rest. — Coastline Salvage',
 ];
+
+/**
+ * Concise radio lines the encounter-trigger `showRadio` action reveals as the
+ * player descends (request §22, §36) — practical, sparse, spoiler-safe.
+ */
+export const TRIGGER_RADIO_LINES: Readonly<Record<string, string>> = {
+  'radio-descent-1': 'Signal: descent confirmed. The lower array stopped replying past 3,000 m.',
+  'radio-abyssal-1': 'Static. Then a pattern. Something down there is transmitting on our band.',
+  'radio-deep-1': 'Contract addendum: do not surface the compact object intact. — Coastline Salvage',
+  'radio-hadal-1': 'You are below the last logged depth. No one has come back from here.',
+};

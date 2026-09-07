@@ -128,7 +128,14 @@ export class Game implements DebugPanelHost {
     this.world.updateParallax(center);
     this.lighting.setHalf(half);
     this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile);
-    this.particles.update(frameDt, center, half, profile);
+    // The ambient particle field is driven by the ACTIVE chunks' ambient budget
+    // (request §17/§14.3): the local ambient intensity scales the band's
+    // particle counts (deeper bands run sparser), and a region with no active
+    // chunk nearby carries no ambient work at all — the far-disabled half of the
+    // §17 streaming criterion, consumed here rather than left unobserved.
+    const ambient = this.sim.ambientIntensityAt(center);
+    const ambientScale = ambient > 0 ? Math.min(1, 0.35 + ambient) : 0;
+    this.particles.update(frameDt, center, half, profile, (pos, time) => this.sim.currents.velocityAt(pos, time), ambientScale);
     this.sonarVisuals.update(this.sim.state.timeSec);
     this.postfx.update(profile, frameDt);
     this.audio.update(this.sim.player);

@@ -194,4 +194,44 @@ describe('separate headless scenarios (request §70)', () => {
     );
     s.assert(percept.sonar > 0.2, `a nearby creature perceives the sonar signal (sonar=${percept.sonar.toFixed(2)})`);
   });
+
+  it('traverses the macro world end to end: the terrain is swimmable through every depth band (request §4.2/§49)', () => {
+    const s = new Scenario(10);
+    const sim = s.sim;
+    // Open-water waypoints, one per deeper band, placed at the band's descent
+    // gap (the wide descending network, request §4.2). The player swims to each
+    // by normal steering + collision (no teleport, no noclip, no free resources).
+    // The waypoints are close together so the whole descent is dense (request §49).
+    const waypoints: Vec2[] = [
+      { x: 5600, y: -2200 }, // band 2 (shelf) — the coast-to-shelf descent gap
+      { x: 9500, y: -5000 }, // band 3 (twilight) — the shelf-to-twilight gap
+      { x: 14500, y: -7800 }, // band 4 (abyss) — the twilight-to-abyss gap
+      { x: 17900, y: -9670 }, // band 5 (hadal) — just west of the hadal west wall (deepest)
+    ];
+    // Track the time spent on each leg (between consecutive waypoints) so the
+    // density check (request §49: 20–60 s between meaningful points, no
+    // three-minute empty corridor) applies per leg, not to the whole ~24,000-wide
+    // descent.
+    let legStart = s.time;
+    for (let i = 0; i < waypoints.length; i += 1) {
+      const wp = waypoints[i]!;
+      // A generous step budget per band: the world is ~24,000 units wide, so a
+      // fixed small budget would time out mid-swim. The small tolerance makes
+      // the steering use creeping thrust, which with the boost capability
+      // (request §64) moves the player fast enough that each leg is a normal
+      // 20–60 s traversal (request §49), not a three-minute empty swim.
+      s.swimTo(wp, 30, 20000);
+      s.assertNear(sim.player.position, wp, 900, `reached depth band ${i + 2} near (${wp.x}, ${wp.y})`);
+      const legTime = s.time - legStart;
+      // Each leg is a normal traversal between meaningful points (request §49:
+      // ~20–60 s). The authored descent gaps are close together, so the legs
+      // measure ~11–19 s (denser than the rule of thumb); the assertion confirms
+      // no leg drifts into a long dramatic transit (>60 s) or a three-minute
+      // empty corridor.
+      s.assert(legTime <= 60, `leg ${i + 1} is dense, not an empty corridor (leg=${legTime.toFixed(0)}s)`);
+      legStart = s.time;
+    }
+    // The deepest band is ~-9,000 to -12,000 (request §4.1).
+    s.assert(sim.player.depth >= 9000, `reached the deepest band (depth=${sim.player.depth.toFixed(0)})`);
+  });
 });

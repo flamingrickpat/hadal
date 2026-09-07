@@ -25,6 +25,8 @@ import {
   BASE_RADIUS,
   BOOST_NOISE_STRENGTH,
   BOOST_SIGNAL_INTERVAL,
+  CURRENT_CONTROL_BASE,
+  CURRENT_CONTROL_WITH_PROPULSION,
   DEATH_RESOURCE_LOSS_FRACTION,
   HP_MAX,
   INTERACT_RADIUS,
@@ -35,7 +37,7 @@ import { GameState } from '../game/GameState';
 import type { SaveGameV1 } from '../game/save';
 import { findItem } from '../content/items';
 import { RECIPE_BY_ID } from '../content/recipes';
-import { BASE_RETURN_LINES } from '../content/dialogue';
+import { BASE_RETURN_LINES, TRIGGER_RADIO_LINES } from '../content/dialogue';
 import { applyStarterGear } from '../player/equipment';
 import { Player } from '../player/Player';
 import { PlayerController, type PlayerInput } from '../player/PlayerController';
@@ -47,16 +49,22 @@ import { vec2, type Vec2 } from '../util/math';
 import { buildTerrain, type Terrain } from '../world/terrain';
 import {
   BASE,
-  GREYBOX_WORLD,
+  MACRO_WORLD,
   PLAYER_START,
+  WORLD_CURRENT_FIELDS,
   type BaseDef,
   type ResourceNodeDef,
   type WorldChunkDef,
 } from '../world/worldData';
+import { computeActiveChunkIds, chunkContaining } from '../world/chunks';
+import { TriggerSystem, emptyTriggerState, type TriggerContext, type TriggerState } from '../world/triggers';
+import { CurrentSystem } from '../systems/CurrentSystem';
 
 export interface SimWorld {
   chunks: readonly WorldChunkDef[];
   base: BaseDef;
+  /** Authored current fields (request §64); absent worlds are current-free. */
+  currentFields?: readonly import('../systems/CurrentSystem').CurrentField[];
 }
 
 export interface ResourceNode extends ResourceNodeDef {
@@ -65,9 +73,9 @@ export interface ResourceNode extends ResourceNodeDef {
 
 export const DEFAULT_SEED = 0;
 
-/** The production world: the greybox chunks plus the surface base. */
+/** The production world: the full macro world (all five depth bands) plus the surface base. */
 export function makeSimWorld(): SimWorld {
-  return { chunks: GREYBOX_WORLD, base: BASE };
+  return { chunks: MACRO_WORLD, base: BASE, currentFields: WORLD_CURRENT_FIELDS };
 }
 
 export function emptyInput(): PlayerInput {
@@ -96,16 +104,34 @@ export class Simulation {
   readonly nodes: ResourceNode[];
   readonly signals: WorldSignalBus;
   readonly sonar: SonarSystem;
+  readonly triggers: TriggerSystem;
+  readonly triggerState: TriggerState;
+  readonly currents: CurrentSystem;
   discoveredChunks = new Set<string>();
+  activeChunks = new Set<string>();
+  /**
+   * Per-chunk ambient work budget (request §17): only the ACTIVE chunks carry a
+   * budget (their authored ambient intensity — the expensive per-chunk work:
+   * ambient particles now, creature AI in WI-10). A far chunk is absent, so its
+   * work is disabled. Consumed by the render (`Game`) to size the ambient
+   * particle field, and asserted headlessly (`ambient.test.ts`) — the
+   * "far chunks have expensive AI/particles disabled" half of §17.
+   */
+  readonly ambientWork = new Map<string, number>();
   storyFlags: string[] = [];
   collectedUniqueIds = new Set<string>();
   lastStoryLine: string | null = null;
+  lastRadioText: string | null = null;
   autosaveRequested = false;
   noclip = false;
   private wasAtBase: boolean;
   private wasSonar = false;
   private wasTool = false;
   private lastBoostSignal = -1;
+  private regionVisited = new Set<string>();
+  private regionReentered = new Set<string>();
+  private regionEntryTimes = new Map<string, number>();
+  private prevRegion: string | null = null;
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -128,8 +154,23 @@ export class Simulation {
       resource: true,
     }));
     this.sonar = new SonarSystem(this.signals, terrainPoints, objects);
+    // The encounter-trigger system (request §36): one state the sim owns (the
+    // `storyFlags` array is shared so fired flags persist in the save), and the
+    // current system (request §64) built from the world's authored fields.
+    this.triggerState = emptyTriggerState();
+    this.triggerState.storyFlags = this.storyFlags;
+    this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
+    this.currents = new CurrentSystem(world.currentFields ?? []);
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
+    this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
+    this.updateAmbientWork();
+    this.prevRegion = chunkContaining(this.chunks, this.player.position)?.id ?? null;
+  }
+
+  /** Flatten every authored chunk trigger into one trigger set (request §36). */
+  private collectTriggers(): import('../world/triggers').EncounterTrigger[] {
+    return this.chunks.flatMap((c) => c.triggers ?? []);
   }
 
   /** Advance the whole tick by `dt`, reading player actions from `input`. */
@@ -145,6 +186,7 @@ export class Simulation {
     c.input.altTool = input.altTool;
     this.state.tick(dt);
     c.update(dt);
+    this.applyCurrent(dt);
     this.emitPlayerSignals(input);
     if (input.sonar && !this.wasSonar && this.player.capabilities.has('sonar')) {
       this.sonar.fire(this.player.position, this.state.timeSec);
@@ -158,9 +200,103 @@ export class Simulation {
     this.handleBaseReturn();
     this.handleDeath();
     this.updateProgression();
+    this.updateActiveChunks();
+    const fired = this.triggers.update(this.buildTriggerContext());
+    if (fired.length > 0 && this.triggerState.radioText !== null) {
+      this.lastRadioText = TRIGGER_RADIO_LINES[this.triggerState.radioText] ?? this.triggerState.radioText;
+      this.lastStoryLine = this.lastRadioText;
+    }
     // Consume one-shot actions so a reused input object does not re-apply them.
     input.craftRequest = null;
     input.toolSelect = null;
+  }
+
+  /**
+   * The local current carries the player (request §64): a per-step position
+   * offset of `current * (1 - control) * dt`. Without propulsion the player
+   * resists little (a strong drift); with the mid-game `boost` mobility
+   * upgrade they resist most of it, so the current is noticeably weaker.
+   */
+  private applyCurrent(dt: number): void {
+    const cur = this.currents.velocityAt(this.player.position, this.state.timeSec);
+    const speed = Math.hypot(cur.x, cur.y);
+    if (speed < 1e-6) return;
+    const control = this.player.capabilities.has('boost') ? CURRENT_CONTROL_WITH_PROPULSION : CURRENT_CONTROL_BASE;
+    this.player.position.x += cur.x * (1 - control) * dt;
+    this.player.position.y += cur.y * (1 - control) * dt;
+  }
+
+  /** The chunks fully active around the player (request §17 chunk streaming). */
+  private updateActiveChunks(): void {
+    this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
+    this.updateAmbientWork();
+    const region = chunkContaining(this.chunks, this.player.position)?.id ?? null;
+    const now = this.state.timeSec;
+    if (region !== this.prevRegion) {
+      if (region !== null && this.regionVisited.has(region)) this.regionReentered.add(region);
+      if (region !== null) {
+        this.regionVisited.add(region);
+        if (!this.regionEntryTimes.has(region)) this.regionEntryTimes.set(region, now);
+      }
+      this.prevRegion = region;
+    }
+  }
+
+  /**
+   * Refresh the per-chunk ambient work budget from the active set (request
+   * §17): each ACTIVE chunk allocates its authored ambient particle intensity
+   * (the expensive per-chunk work — ambient particles now, creature AI in
+   * WI-10); a far chunk is removed so that work is disabled. The render reads
+   * `ambientIntensityAt` to size the ambient particle field, and the headless
+   * activation test asserts far chunks carry no budget.
+   */
+  private updateAmbientWork(): void {
+    for (const chunk of this.chunks) {
+      if (this.activeChunks.has(chunk.id)) {
+        this.ambientWork.set(chunk.id, chunk.ambient?.particleDensity ?? 0);
+      } else {
+        this.ambientWork.delete(chunk.id);
+      }
+    }
+  }
+
+  /**
+   * The ambient work active near a point (request §17/§14.3): the sum of the
+   * ambient budgets of the active chunks whose bounds come within a screen of
+   * it. The render scales its ambient particle field by this, so a region with
+   * no active chunk nearby carries no ambient work at all (the far-disabled
+   * half of §17) and deeper bands (a sparser authored density) run fewer
+   * particles.
+   */
+  ambientIntensityAt(pos: Vec2): number {
+    let total = 0;
+    for (const [id, intensity] of this.ambientWork) {
+      const chunk = this.chunks.find((c) => c.id === id);
+      if (chunk === undefined) continue;
+      const b = chunk.bounds;
+      const dx = Math.max(b.x - pos.x, 0, pos.x - (b.x + b.w));
+      const dy = Math.max(b.y - pos.y, 0, pos.y - (b.y + b.h));
+      if (Math.hypot(dx, dy) < 2000) total += intensity;
+    }
+    return total;
+  }
+
+  /** The player state the encounter-trigger conditions evaluate against (request §36). */
+  private buildTriggerContext(): TriggerContext {
+    return {
+      position: this.player.position,
+      depth: this.player.position.y < 0 ? -this.player.position.y : 0,
+      time: this.state.timeSec,
+      capabilities: this.player.capabilities,
+      collectedItemIds: new Set(this.player.equipmentIds),
+      // The scanner/codex (request §56) lands later; no objects are scanned yet.
+      scannedObjectIds: new Set<string>(),
+      storyFlags: new Set(this.storyFlags),
+      hasEnteredRegion: (r) => this.regionVisited.has(r),
+      regionTimeSeconds: (r) => (this.regionVisited.has(r) ? this.state.timeSec - (this.regionEntryTimes.get(r) ?? this.state.timeSec) : 0),
+      hasReturnedThrough: (r) => this.regionReentered.has(r),
+      creatureState: () => null,
+    };
   }
 
   /**
