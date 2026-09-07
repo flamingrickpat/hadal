@@ -25,9 +25,8 @@
   `workitems/WI-06b.md` (mid bands art pass), `workitems/WI-06c.md`
   (deep bands + final zone art pass), `workitems/WI-06d.md`
   (debug-geometry replacement, section 48 juice, section 16 camera feel),
-  `workitems/WI-06e.md` (depth audio pass), `workitems/WI-06f.md`
-  (section 26 bathymetry map overlay) and `workitems/WI-06g.md`
-  (section 43 accessibility controls).
+  `workitems/WI-06f.md` (section 26 bathymetry map overlay) and
+  `workitems/WI-06g.md` (section 43 accessibility controls).
 - `stories/ST-WI-05c/` — WI-05c promoted from ST-05's work items to a story
   after review split: `plan.md` (story node, id WI-05c) plus
   `workitems/WI-05ca.md` (ending variants and full ending verification),
@@ -39,6 +38,12 @@
   `workitems/WI-06d-b.md` (section 48 juice effects and cross-band
   contrast walk), `workitems/WI-06d-c.md` (section 16 shake rules and
   widescreen behavior).
+- `stories/ST-WI-06e/` — WI-06e promoted from ST-06's work items to a story
+  after review split: `plan.md` (story node, id WI-06e) plus
+  `workitems/WI-06e-a.md` (depth-based mixing),
+  `workitems/WI-06e-b.md` (creature sound profiles and pre-visibility
+  cues), `workitems/WI-06e-c.md` (sparse music and final AC-art-sound
+  proof).
 - `stories/ST-WI-03b/` — WI-03b promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03b) plus
   `workitems/WI-03b1.md`, `workitems/WI-03b2.md`.
