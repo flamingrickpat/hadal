@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "ca0c06e47f7efffcbfd41e78ed02c01c7488b83e2905bab440a3be482b9c20bb",
+  "behavior_count": 1,
+  "subsystems": ["creature simulation", "headless scenario tests"],
+  "coverage": true,
+  "summary": "One focused behavior: per-predator controllers over the WI-03c1a CreatureDefs and section 10 damage model, with the non-chase hunting strategy as a specific controller instance and the per-predator trigger-plus-control scenarios and FINAL PROOF roster check as its tests/evidence rather than separate behaviors. Two named changed subsystems (creature simulation, headless scenario tests), a strict subset of the parent's three. Boundaries are clean against WI-03c1a (no re-ownership of definitions or the damage table), WI-03c2 (no spawns, no renderer, no browser spot-check), and WI-03d (no staging, roster-wide spoiler audit deferred). Dependency on WI-03c1a is the correct local prerequisite; the WI-03b ordering for the final proof is inherited through the ST-WI-03c story, which declares depends_on [WI-03b]. Both parent criteria are retained verbatim and their union across the story's children covers both; this item is the explicit FINAL PROOF owner for AC-roster-behavior and owns the per-predator test half of AC-roster-tests, with the roster-wide audit named to WI-03d. Verification is focused headless evidence over production world data (no mocks of the rules, no whole-game defect-fixing promise), and the handoff carries the implementing constraints (section 19 ~120-line cap with generalize-instead-of-duplicate falsifier, section 11.2 anti-cliche and section 46 gates, spoiler rules) so a fresh implementer can proceed without reconstructing the project."
+}
