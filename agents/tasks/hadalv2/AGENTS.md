@@ -18,6 +18,9 @@
 - `stories/ST-WI-03c/` — WI-03c promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03c) plus
   `workitems/WI-03c1.md`, `workitems/WI-03c2.md`.
+- `stories/ST-WI-03d/` — WI-03d promoted from ST-03's work items to a story
+  after review split: `plan.md` (story node, id WI-03d) plus
+  `workitems/WI-03d1.md`, `workitems/WI-03d2.md`, `workitems/WI-03d3.md`.
 - `planning/` — reality-check result (`reality.json`) and, later,
   per-node review receipts (`reviews/ID.json`) from the planning roles.
 - other files and folders here are role artifacts. Each role adds
