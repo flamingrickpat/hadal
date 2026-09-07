@@ -33,10 +33,9 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 - The creative pass (ST-01) and the creature framework (ST-02) are independent
   and run first; the roster (ST-03) needs both. Everything downstream is
   linear: encounters -> endgame -> art/audio -> balance -> final handoff.
-- Stories ST-07 and ST-08 remain with `children: []` as explicit
-  expansion tasks for the next planning sessions. Each carries enough
-  criteria and scope to be split alone; do not implement them before
-  they are split.
+- ST-07 is expanded (WI-07a, WI-07b, WI-07c, WI-07d). ST-08 remains with
+  `children: []` as an explicit expansion task for a later planning session;
+  do not implement it before it is split.
 - Scope discipline per the v2 contract: a work item is one independently
   testable behavior changing at most three named responsibilities.
 
@@ -50,7 +49,7 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) — expanded: WI-04a, WI-04b, WI-04c, WI-04d | ST-03 |
 | ST-05 | MacGuffin + non-arena endgame + two endings (sections 23, 24) — expanded: WI-05a, WI-05b, WI-05c | ST-03, ST-04 |
 | ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) — expanded: WI-06a, WI-06b, WI-06c, WI-06d, WI-06e, WI-06f, WI-06g | ST-04, ST-05 |
-| ST-07 | Balance + telemetry pass (phase 8, sections 53, 71) | ST-06 |
+| ST-07 | Balance + telemetry + performance pass (phase 8, sections 32, 39, 40, 49, 53, 71) — expanded: WI-07a, WI-07b, WI-07c, WI-07d | ST-06 |
 | ST-08 | Final verification + spoiler-safe handoff (phase 9, sections 45, 69, 70) | ST-07 |
 
 Execution order for leaves: WI-01a -> WI-01b -> WI-01c and WI-02a -> WI-02b ->
@@ -63,8 +62,10 @@ WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), then ST-06
 parallel, then the WI-06d story (WI-06d-a, WI-06d-b and
 WI-06d-c in parallel) and the WI-06e story (WI-06e-a and WI-06e-b in
 parallel, then WI-06e-c, the final AC-art-sound proof), then WI-06g
-after WI-04b and the WI-06d story), ST-07, ST-08. ST-01 and ST-02 chains are parallel; any
-interleaving that respects the table is valid.
+after WI-04b and the WI-06d story), ST-07 (WI-07a and WI-07b in parallel,
+then WI-07d after WI-07a, and WI-07c after WI-07a and WI-07b), then ST-08.
+ST-01 and ST-02 chains are parallel; any interleaving that respects the
+table is valid.
 
 ## Verification strategy (request section 70)
 
@@ -136,6 +137,11 @@ interleaving that respects the table is valid.
   `WI-06d-b.md`, `WI-06d-c.md`) and WI-06e promoted to
   `stories/ST-WI-06e/` (`plan.md` + `workitems/WI-06e-a.md`,
   `WI-06e-b.md`, `WI-06e-c.md`).
-- `stories/ST-07/plan.md`, `stories/ST-08/plan.md` — unexpanded
-  expansion tasks with acceptance criteria and split hints.
+- `stories/ST-07/plan.md` + `stories/ST-07/workitems/WI-07a.md` (section 71
+  telemetry and headless export), `WI-07b.md` (section 32 reachability
+  validator and section 40 scarcity), `WI-07c.md` (numerical tuning toward
+  the 90-120 / 55-75 target) and `WI-07d.md` (60 FPS verification and
+  fix-forward) — balance, telemetry, and performance pass, expanded;
+  `stories/ST-08/plan.md` — unexpanded expansion task with acceptance
+  criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.
