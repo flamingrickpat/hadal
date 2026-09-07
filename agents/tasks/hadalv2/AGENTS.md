@@ -18,10 +18,13 @@
   `workitems/WI-04c.md` (flag-gated world reactions) and
   `workitems/WI-04d.md` (environmental puzzles).
 - `stories/ST-05/` — expanded after review split: `plan.md` (story node,
-  id ST-05) plus `workitems/WI-05a.md` (MacGuffin content and retrieval),
-  `workitems/WI-05b.md` (final descent sequence and win condition) and
-  `workitems/WI-05c.md` (ending variants, save milestones, ending
-  verification).
+  id ST-05) plus `workitems/WI-05a.md` (MacGuffin content and retrieval)
+  and `workitems/WI-05b.md` (final descent sequence and win condition).
+- `stories/ST-WI-05c/` — WI-05c promoted from ST-05's work items to a story
+  after review split: `plan.md` (story node, id WI-05c) plus
+  `workitems/WI-05ca.md` (ending variants and full ending verification),
+  `workitems/WI-05cb.md` (save-schema extension and endgame autosave
+  milestones).
 - `stories/ST-WI-03b/` — WI-03b promoted from ST-03's work items to a story
   after review split: `plan.md` (story node, id WI-03b) plus
   `workitems/WI-03b1.md`, `workitems/WI-03b2.md`.

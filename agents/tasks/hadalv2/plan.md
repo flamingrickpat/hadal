@@ -120,7 +120,8 @@ respects the table is valid.
 - `stories/ST-04/plan.md` + `stories/ST-04/workitems/WI-04a.md`, `WI-04b.md`,
   `WI-04c.md`, `WI-04d.md` — authored encounters and story layer, expanded.
 - `stories/ST-05/plan.md` + `stories/ST-05/workitems/WI-05a.md`,
-  `WI-05b.md`, `WI-05c.md` — MacGuffin and endgame, expanded.
+  `WI-05b.md` — MacGuffin and endgame, expanded; WI-05c promoted to
+  `stories/ST-WI-05c/` (`plan.md` + `workitems/WI-05ca.md`, `WI-05cb.md`).
 - `stories/ST-06/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
   tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.

@@ -1,31 +1,26 @@
 ---
-id: WI-05c
+id: WI-05ca
 kind: work_item
-parent: ST-05
+parent: WI-05c
 children: []
-depends_on: ["WI-05b"]
+depends_on: ["WI-05b", "WI-05cb"]
 criteria:
   AC-end-variants: "At least 2 ending variants are reachable from a single player decision, each producing a different final state, text, or shot, with credits and restart working"
-behavior: "Implement at least 2 ending variants branched from a single player decision inside the final sequence, the section-25 autosave schema extension (versioned migration, pre-descent and post-trigger points), and the full headless ending verification (one-shot trigger, save-reload at each milestone, restart, credits)"
-subsystems: ["save system", "simulation rules", "headless scenario tests"]
-verification: "Full fresh-save headless scenario: reach the final site, retrieve the MacGuffin, observe the changed return journey, enter the final sequence, make the player decision, trigger each of the 2+ ending variants, assert each produces a different final state/text/shot, reload at each milestone and continue, verify duplicate-trigger prevention, verify credits and restart work"
+behavior: "Implement at least 2 ending variants branched from a single player decision inside the final sequence, with one-shot trigger, credits flag, and restart; deliver the full headless ending verification as final proof owner"
+subsystems: ["simulation rules", "headless scenario tests"]
+verification: "Full fresh-save headless scenario: trigger each ending variant from the decision point, assert different final state/text/shot per variant, verify one-shot trigger, credits flag, restart to fresh state, save-reload at milestones (using WI-05cb's autosave points)"
 ---
 
-# WI-05c — Ending variants, save milestones, and ending verification
+# WI-05ca — Ending variants and full ending verification
 
 ## Goal
 
-Deliver the ending variants, the save-system extension for endgame
-milestones, and the comprehensive headless verification that the ending
-works correctly from a fresh save. The player faces a single decision
-point inside the final sequence (WI-05b); the decision branches to at
-least 2 different endings (section 24: "a decision plus different final
-state / text / shot is enough"). One variant is the section 72 cut
-candidate.
-
-The section 25 autosave requirements are implemented here: the save
-schema extends the existing versioned save (`src/game/save.ts`) with
-trivial migration to support pre-descent and post-trigger autosave points.
+Deliver the ending-variant simulation rules and the comprehensive headless
+verification that the ending works correctly from a fresh save. The player
+faces a single decision point inside the final sequence (WI-05b); the
+decision branches to at least 2 different endings (section 24: "a decision
+plus different final state / text / shot is enough"). One variant is the
+section 72 cut candidate.
 
 This item is the final proof owner of the complete fresh-save ending
 scenario (the full section 70 ending verification).
@@ -43,10 +38,6 @@ scenario (the full section 70 ending verification).
   supports a credits sequence (a state flag the browser reads to show
   credits) and a restart (resetting to a fresh save, clearing all
   progression). Both are verifiable headlessly.
-- Save schema extension: `src/game/save.ts` version bumps with a trivial
-  migration that adds the endgame-specific fields (ending variant chosen,
-  final sequence step, autosave milestone flags). Pre-descent and
-  post-trigger autosave points are implemented per section 25.
 - One-shot trigger: the ending trigger (set by WI-05b's win condition)
   fires exactly once; the section 70 duplicate-trigger check applies here.
 
@@ -63,14 +54,13 @@ scenario (the full section 70 ending verification).
   6. Repeat from step 5 with variant B: assert different final
      state/text/shot.
   7. At each milestone (pre-descent, post-trigger, post-ending),
-     save and reload; assert the state is preserved and the sequence
-     can continue or the ending can be re-presented.
+     save and reload (using WI-05cb's autosave points); assert the
+     state is preserved and the sequence can continue or the ending
+     can be re-presented.
 - Duplicate-trigger: after the ending fires, a second trigger attempt
   does not re-fire or change the variant.
 - Restart: after either ending, restart produces a completely fresh
   simulation (no residual endgame state).
-- Save migration: a pre-extension save loads correctly into the
-  extended schema (trivial migration adds defaults).
 - Determinism: same seed, same decision, same ending.
 
 ## Browser check (presentation)
@@ -87,19 +77,20 @@ scenario (the full section 70 ending verification).
   the sim stores text ids and shot ids, the browser renders them.
   Plan nodes and commit messages never quote the ending content.
 - No art/audio polish (ST-06). No balance tuning (ST-07).
-- The save migration is trivial: the extension adds optional fields with
-  defaults; no data transformation of existing fields.
 - One ending variant is the section 72 cut candidate; both must be
   implemented and tested, but one can be removed later without breaking
   the other.
 - Spoiler rules (sections 0, 12, 68): commit style "implemented two
-  ending variants and save milestones" (no ending names, no
-  mechanism details).
+  ending variants" (no ending names, no mechanism details).
+- The save schema extension (WI-05cb) provides the autosave points this
+  scenario uses for milestone save-reload; this item does not modify the
+  save schema itself.
 
 ## Fresh-session handoff
 
-Read ST-05/plan.md, request sections 23, 24, 25, 39, 45, 70, WI-01c
-(private ending content, by id only), WI-05a (retrieval and post-retrieval
-state), WI-05b (the final sequence and win condition), and `src/game/save.ts`
-(existing versioned save structure). The decision point is inside WI-05b's
-final sequence; the save extension wraps the sequence's milestones.
+Read WI-05c/plan.md (this story), ST-05/plan.md, request sections 23, 24,
+39, 45, 70, WI-01c (private ending content, by id only), WI-05a (retrieval
+and post-retrieval state), WI-05b (the final sequence and win condition),
+and WI-05cb (the save milestones this scenario consumes). The decision
+point is inside WI-05b's final sequence; all branching logic lives in the
+simulation.
