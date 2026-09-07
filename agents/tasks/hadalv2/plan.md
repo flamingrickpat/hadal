@@ -15,8 +15,9 @@ payload, and no win condition. This plan delivers:
 3. the secret roster implementation;
 4. authored encounters, the environmental story sequence, and the MacGuffin
    endgame with at least two ending variants;
-5. the full art/audio pass, the 90-120 minute balance pass, and the
-   spoiler-safe handoff.
+5. the full art/audio pass (including the section 26 map overlay and the
+   section 43 accessibility controls), the 90-120 minute balance pass, and
+   the spoiler-safe handoff.
 
 Nothing in this plan or any descendant artifact names deep creatures, the
 lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
@@ -47,7 +48,7 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-03 | Secret roster implementation (sections 11, 47) | ST-01, ST-02 |
 | ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) | ST-03 |
 | ST-05 | MacGuffin + non-arena endgame + two endings (sections 23, 24) | ST-03, ST-04 |
-| ST-06 | Full art/audio pass (phase 7, sections 14, 27, 48) | ST-04, ST-05 |
+| ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) | ST-04, ST-05 |
 | ST-07 | Balance + telemetry pass (phase 8, sections 53, 71) | ST-06 |
 | ST-08 | Final verification + spoiler-safe handoff (phase 9, sections 45, 69, 70) | ST-07 |
 
@@ -64,6 +65,10 @@ is valid.
   scenarios for required gates.
 - Browser layer: the shared browser harness for boot, input, HUD, storage
   round-trip, resize, audio-after-input; focused checks, no long swim routes.
+- Section 26 map overlay and section 43 accessibility controls are verified
+  in the browser layer under ST-06 (AC-art-map, AC-art-a11y), including
+  pause behavior, the absence of creature markers, and persistence through a
+  save round-trip; ST-08 re-verifies both in the final pass.
 - Visual/audio/performance claims: live browser inspection of representative
   scenes; the 60 FPS target is checked in the largest encounter (ST-07).
 - Fixture-based evidence is labeled and never implies fresh-save
@@ -86,6 +91,14 @@ is valid.
 - Creature counts (15+ implemented, 18-24 rostered) assume the private roster
   holds up under the section 46 quality bar; a smaller but stronger roster is
   acceptable only if section 45 minimums still hold.
+- The section 26 map overlay and section 43 accessibility controls are
+  presentation work owned by ST-06 (AC-art-map, AC-art-a11y): the baseline
+  already tracks `discoveredChunks` in the simulation and `masterVolume` in
+  the save settings, so the overlay reads existing state and the toggles
+  extend the versioned settings. Falsified if the map needs new gameplay
+  rules (e.g. mandatory beacon mechanics); a death beacon is displayed only
+  if a story adds section 25 beacon tracking, since section 25 makes it
+  optional.
 
 ## Layout
 

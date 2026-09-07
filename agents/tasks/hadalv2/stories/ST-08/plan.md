@@ -33,6 +33,9 @@ checklist); (2) README and developer-section finishing per section 69;
 - Section 70 final coverage checklist end to end: boot, core loop,
   progression, creatures, save, ending - with commands, exit statuses, and
   scenario names recorded in the role artifact.
+- Re-verify ST-06's map overlay (AC-art-map) and accessibility controls
+  (AC-art-a11y) in the final fresh-profile pass; failures go through the
+  fix-planning route, not into this story.
 - README per section 69: install, build, controls, browser requirements,
   expected playtime, save location, developer section; no creature list, no
   story synopsis beyond the starting premise.
@@ -50,15 +53,17 @@ checklist); (2) README and developer-section finishing per section 69;
 
 ## Constraints and non-goals
 
-- No feature work; only verification, documentation, and small
-  user-facing fixes (README, settings surface, accessibility toggles from
-  section 43 if missing).
+- No feature work; only verification, documentation, and small user-facing
+  fixes (README). The section 26 map overlay and the section 43
+  accessibility controls are owned by ST-06 (AC-art-map, AC-art-a11y);
+  ST-08 re-verifies them, it does not implement them.
 - Handoff message to the human per section 68: how to run, controls, save
   status, target playtime, technical limitations - nothing else.
 
 ## Fresh-session handoff for the expander
 
-Read request sections 43, 45, 68, 69, 70; the section 70 evidence layers for
-which claims need which proof; `understanding.md` for the baseline seams.
+Read request sections 26, 43, 45, 68, 69, 70; the section 70 evidence layers
+for which claims need which proof; ST-06's AC-art-map/AC-art-a11y for the
+re-verification; `understanding.md` for the baseline seams.
 The audit log is a normal (non-private) artifact; it lists artifacts
 checked, never their hidden content.
