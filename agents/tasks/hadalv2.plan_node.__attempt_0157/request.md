@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "ST-07",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-07/plan.md",
+      "specification": "---\nid: ST-07\nkind: story\nparent: null\nchildren: []\ndepends_on: [\"ST-06\"]\ncriteria:\n  AC-bal-timing: \"A debug-instrumented full playthrough records time to first upgrade, time to each depth band, deaths, resource shortages, time spent lost, repeated travel, and completion time, and is tuned so a blind first playthrough fits 90-120 minutes with an expert critical path of 55-75 minutes\"\n  AC-bal-perf: \"The 60 FPS performance target holds at 1080p in the browser during the largest encounter and in every band's representative scene\"\n  AC-bal-flow: \"The first 10 minutes follow the section 53 tutorial flow with the entire core loop understandable by minute 10, and the 3-6 minute pacing beat holds across all bands\"\n  AC-bal-scarcity: \"Every required permanent upgrade has 130-170 percent of critical materials in its first relevant area across at least 2 locations, verified by the section 32 validators paired with headless route scenarios\"\nbehavior: \"Run the balance and telemetry pass (request phase 8, sections 39, 40, 49, 53, 71): instrument, play full runs, tune toward the 90-120 minute target, and verify performance and pacing\"\nsubsystems: [\"balance tuning\", \"debug telemetry\", \"headless scenario tests\"]\nverification: \"Telemetry exports from at least two full instrumented playthroughs with the section 71 fields; the section 32 critical-path check plus physical route scenarios pass; browser performance observation in the largest encounter with recorded frame data\"\n---\n\n# ST-07 — Balance, telemetry, performance pass (UNEXPANDED)\n\n## Status\n\nExplicit expansion task. Split in a future planning session; natural split:\n(1) telemetry/debug instrumentation finishing (section 71); (2) full-run\nplaythroughs and numerical tuning (oxygen, currents, pressure gates,\nscarcity); (3) performance verification and fix-forward in the largest\nencounter.\n\n## Scope inventory (honest)\n\n- Telemetry per section 71 in the existing debug panel (`src/util/debug.ts`):\n  play time, zone, max depth, deaths, crafted upgrades, resources\n  collected/spent, time since last unlock, oxygen at surfacing, encounter\n  timestamps.\n- Difficulty curve per section 39: telegraphed early predators, oxygen as\n  route planning mid-game, ecology-and-navigation tension deep, altered\n  context in the finale (never just maxed damage).\n- Scarcity rules per section 40 verified with `simulateCriticalPath()`\n  paired with headless movement scenarios against production collision\n  geometry (section 32: adjacency is not reachability).\n- Density rules per section 49: 20-60 seconds between meaningful points,\n  shorter return trips via upgrades/shortcuts, no three-minute empty\n  corridors.\n- Performance per section 34 in the largest encounter; stutter is a hard\n  defect because it destroys large-creature reveals.\n\n## Dependencies and boundaries\n\n- Depends on ST-06 (content and presentation stable before numbers are\n  trusted).\n- Findings that require gameplay changes go through the normal\n  fix-planning route as fresh work items; this story tunes, it does not\n  redesign.\n- The final 90-120 minute claim is a playtest result, not a configuration:\n  record the evidence, do not assert it from headless math alone.\n\n## Constraints and non-goals\n\n- Do not artificially slow experts (section 3 pacing rule).\n- No new content additions beyond small resource/cache adjustments; if\n  balance says content is missing, file a defect.\n- No spoiler content in tuning reports (section 68).\n\n## Fresh-session handoff for the expander\n\nRead request sections 3, 32, 34, 39, 40, 49, 53, 71; the existing debug\npanel and scenario harness. Instrumentation must run headlessly so scenario\nruns emit the same telemetry fields.\n",
+      "fingerprint": "8dbfefa2ce100355ee76e01c0b5ca2315919a09dde515fb1de9c7b56003cb87e",
+      "base_rev": "34eac6ef5e203f314a449f945c9c750d23b0330d",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\ST-07.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
