@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "ST-04",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-04/plan.md",
+      "specification": "---\nid: ST-04\nkind: story\nparent: null\nchildren: []\ndepends_on: [\"ST-03\"]\ncriteria:\n  AC-enc-beats: \"At least 5 authored spectacle beats fire through the trigger system inside live gameplay, each with authored timing, entrance, environmental reaction, and an available escape path\"\n  AC-enc-story: \"The environmental story sequence is delivered through 8-12 radio messages, 10-16 short text fragments, 6-10 no-text story props, 3-5 major landmarks with visible history, and 1-2 deep discoveries contradicting the official timeline\"\n  AC-enc-reactions: \"World-state reactions alter at least three earlier zones after major milestones through story flags and spawn-table changes\"\n  AC-enc-puzzles: \"3-5 environmental puzzle moments exist near the critical path and are completable headlessly through the scenario harness\"\nbehavior: \"Author the encounter and story layer (request sections 22, 36, 38, 51, 60, 66): spectacle beats, the four-channel story delivery, world reactions, and environmental puzzles, all trigger-driven\"\nsubsystems: [\"trigger system\", \"world content data\", \"creature simulation\", \"headless scenario tests\"]\nverification: \"Node scenarios fire each beat, each puzzle, and each flag-gated reaction from a fresh save; browser checks confirm the beats read as authored moments; every fragment passes the section 38 keep-or-delete test\"\n---\n\n# ST-04 — Authored encounters, story sequence, world reactions (UNEXPANDED)\n\n## Status\n\nExplicit expansion task. Too broad for one work item; split in a future\nplanning session. Natural split: (1) the five spectacle beats as one or two\nitems with authored triggers; (2) the story channel content (radio,\nfragments, props, landmarks, contradictions); (3) world-state reactions and\npuzzles. Each child must own the cross-child proof explicitly (for example,\nthe beat item owns the browser check that its beats fire in sequence).\n\n## Scope inventory (honest)\n\n- Five+ spectacle beats (section 11.4 staging grammar; section 67: scripted\n  for timing/entrance/camera but preserving player control; no long\n  cutscenes). Each beat needs a trigger entry in\n  `src/world/triggers.ts` plus creature/event coordination from ST-03.\n- Story delivery on the four channels (section 22) within the section 38\n  budget; every written fragment must foreshadow gameplay, explain a human\n  decision, recontextualize a place, hint at hidden lore, or add emotional\n  texture - delete the rest.\n- Foreshadowing per section 51: 2-4 earlier traces per major late reveal,\n  none naming the reveal.\n- World-state reactions per section 60: cheap flag-driven changes so return\n  trips differ.\n- 3-5 environmental puzzles per section 66, no colored-symbol panels.\n\n## Dependencies and boundaries\n\n- Depends on ST-03: beats are staged around real roster organisms and their\n  stable ids/states.\n- Feeds ST-05: the final-zone approach content and the last foreshadow\n  traces land here, but the MacGuffin mechanics do not (ST-05 owns them).\n- The trigger system already exists (WI-07); extend it, do not rebuild it.\n\n## Constraints and non-goals\n\n- The most important moments are authored, not randomly spawned\n  (section 67 first paragraph; section 61 randomization bans).\n- Contradictions between official records and observed reality are allowed\n  (section 22) without unreliable-narrator abuse.\n- No ending content, no MacGuffin, no balance tuning (ST-05/ST-07).\n\n## Fresh-session handoff for the expander\n\nRead request sections 3, 11.4, 22, 36, 38, 51, 53, 60, 66, 67 and ST-03. The\nprivate reveal map from WI-01c is the source of truth for beat slots and\nforeshadow placement; plan nodes reference it by id only, never quote it.\n",
+      "fingerprint": "42a4cc2dafa05d53b939c4307638dfff10764adca117394aa656969f4e515881",
+      "base_rev": "e36b436a6e3b01405c0a3ca1a83c119e87dca602",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\ST-04.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
