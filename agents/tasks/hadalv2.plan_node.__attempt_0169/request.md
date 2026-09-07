@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-03c2",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-03c/workitems/WI-03c2.md",
+      "specification": "---\nid: WI-03c2\nkind: work_item\nparent: WI-03c\nchildren: []\ndepends_on: [\"WI-03c1\"]\ncriteria:\n  AC-roster-count: \"At least 15 distinct implemented creature types are active in the production world data with their spawns, meeting the private roster's distribution\"\n  AC-roster-tests: \"Every implemented major species has a headless behavior test for its signature rule, and no creature name or secret description appears outside debug internals and the private content files\"\nbehavior: \"Land the tier-3 predators in the production world: spawns on the section 39 bands with section 34 caps, data-driven predator body shapes plus pre-contact telegraph/commit visibility on the existing WI-02b renderer pipeline, and the tier's one browser spot-check\"\nsubsystems: [\"world content data\", \"procedural creature rendering\"]\nverification: \"World data check that tier-3 ids resolve and spawns sit in the designed band on the section 39 curve; tier-3 spoiler containment check; one browser spot-check of a representative tier-3 predator rendering, telegraphing, and committing visibly without console errors\"\n---\n\n# WI-03c2 — Tier 3: production spawns + data-driven rendering\n\n## Goal\n\nPut the tier-3 predators that WI-03c1 defines into the production world:\nspawns in `src/world/worldData.ts` placed so the section 39 difficulty curve\nholds by band with section 34 caps, new predator body shapes added as\ndata-driven shape parameters on the existing WI-02b renderer pipeline\n(section 13 silhouette-recognizable in two seconds) with the pre-contact\ntelegraph/commit readability (section 48), and the tier's one browser\nspot-check.\n\n## Deliverables (checkable)\n\n- Spawns in `src/world/worldData.ts` for every tier-3 organism id that\n  WI-03c1 lands, placed so the section 39 curve holds: early-band predators\n  telegraph clearly, mid-band forces learning one avoidance rule, deep-band\n  combinations of sonar/light/decoy/movement; dense traversal per section 49\n  (no empty corridors) with the section 34 caps; ids debug-only (section 33)\n  - they never appear in normal UI.\n- New predator body shapes for the tier added as data-driven shape parameters\n  on the existing WI-02b renderer pipeline; no new renderer architecture.\n  Section 13 bar: each silhouette is recognizable in two seconds; predators\n  visibly commit to an attack before contact (section 48).\n\n## Tests and checks\n\n- World data check: every tier-3 creature id resolves to a def and every\n  spawn sits in the band the private roster designed it for (a tier-3 portion\n  of the roster-wide AC-roster-count check WI-03d finalizes).\n- Spoiler containment for this item's artifacts: no creature name or secret\n  description appears outside debug internals and the private content files\n  (the tier's AC-roster-tests half; the roster-wide audit finalizes in\n  WI-03d).\n\n## Browser spot-check (presentation only)\n\nOne representative tier-3 predator renders, telegraphs, and commits visibly\nwithout console errors; no browser reachability proof (section 70 layers).\n\n## Constraints, assumptions, non-goals\n\n- No new renderer architecture; no simulation rule changes - if the spot-check\n  exposes a behavior defect, fix it through the existing fix-planning route,\n  not here.\n- No large/colossal staging (WI-03d), no authored beat triggers (ST-04).\n- Spoiler rules (sections 0, 12, 68): internal ids only in identifiers,\n  tests, and commit messages (\"spawned the mid-depth predator tier and added\n  its body shapes\" style).\n\n## Fresh-session handoff\n\nRead WI-03c/plan.md (decomposition; criteria assignment), request sections\n13, 33, 34, 39, 48, 49, 68, 70, 74; WI-01b for the selected organism ids and\nband placement; WI-03c1 for the landed ids and shape parameters;\n`design_private/` is the source of truth. Depends on WI-03c1 (and inherits\nWI-03b through the WI-03c story); do not start before WI-02a/b/c are\naccepted.\n",
+      "fingerprint": "4d3643619f9aafc449de71775993239b734cbe74426b8de8617bf9e3b259c23c",
+      "base_rev": "331182739f6ddad34b16ad645b18440450a7f2bd",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-03c2.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
