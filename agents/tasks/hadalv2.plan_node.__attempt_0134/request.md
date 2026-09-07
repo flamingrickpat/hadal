@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-02c",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-02/workitems/WI-02c.md",
+      "specification": "---\nid: WI-02c\nkind: work_item\nparent: ST-02\nchildren: []\ndepends_on: [\"WI-02a\", \"WI-02b\"]\ncriteria:\n  AC-cf-ecology: \"School behavior and cross-species reactions run headlessly through the world-signal bus and are verified by a node scenario\"\nbehavior: \"Implement the ecology illusion (section 20): schooling plus cross-species reactions (flee, scavenge, orient, hide, zone quiet before large events) driven by the world-signal bus, verified headlessly\"\nsubsystems: [\"creature simulation\", \"world signal bus\"]\nverification: \"Node scenario advances the production simulation: a predator signal makes nearby schools part, scavengers approach a kill event, and a zone quiets before a scheduled large event; browser check confirms schools are visible\"\n---\n\n# WI-02c — Schools and cross-species reactions\n\n## Goal\n\nCreate the illusion of an ecosystem with a few cross-species reactions\n(section 20), all simulated headlessly and driven by the bus - no\nomniscience, no direct player references.\n\n## Deliverables (checkable)\n\n- Schooling: aligned/flocking movement for the ambient school fixture,\n  schools part around the player (section 48), bounded local perception.\n- Reaction rules from section 20 that are cheap to run: small fauna flee\n  predator proximity; scavengers approach recent kills; filter feeders\n  orient to currents (existing current fields, section 64); animals hide\n  before a colossal event; predators occasionally attack ambient prey;\n  zones quiet temporarily before major events.\n- Every reaction keyed to a `WorldSignal` type or an existing sim event, so\n  ST-03's roster species can opt in via `CreatureDef.ecology` without new\n  mechanics.\n- Seeded, deterministic per section 61: school formation and idle variation\n  use the scenario seed; critical behavior is not randomized.\n\n## Tests (node)\n\n- One scenario covering at least three distinct cross-species reactions in a\n  single run, with state assertions and the standard failure trace.\n- Unit tests for the reaction predicates (distance/strength thresholds).\n- Performance: reaction cost stays within the throttling budget; a scenario\n  with capped ambient counts runs at simulation speed.\n\n## Constraints, assumptions, non-goals\n\n- This is the illusion, not an ecosystem simulator (section 20 first line).\n  No population dynamics, no food web model.\n- Assumption: existing signal types suffice; if one is missing, extend\n  `senses.ts` minimally. Falsified if a reaction needs a global state read\n  instead of a nearby signal.\n- Roster species, predator personalities, and authored set pieces belong to\n  ST-03/ST-04; here only the neutral fixtures demonstrate the layer.\n\n## Fresh-session handoff\n\nRead request sections 20, 48, 61, 63, 64 and the WI-02a/WI-02b notes. Extend\nthe existing scenario harness; do not create a second test rig.\n",
+      "fingerprint": "b44723a5be43a3a0ab156df1a495fa3072dd266a1a2257e1f5adea7a92917eea",
+      "base_rev": "44978b39dc9ff91e12bb3bfebf9edf66ca40e399",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-02c.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
