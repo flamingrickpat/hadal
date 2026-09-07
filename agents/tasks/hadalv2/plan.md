@@ -46,7 +46,7 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-01 | Private creative pass (section 12) — expanded: WI-01a, WI-01b, WI-01c | — |
 | ST-02 | Creature framework (sections 13, 19, 63) — expanded: WI-02a, WI-02b, WI-02c | — |
 | ST-03 | Secret roster implementation (sections 11, 47) — expanded: WI-03a, WI-03b, WI-03c, WI-03d | ST-01, ST-02 |
-| ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) | ST-03 |
+| ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) — expanded: WI-04a, WI-04b, WI-04c, WI-04d | ST-03 |
 | ST-05 | MacGuffin + non-arena endgame + two endings (sections 23, 24) | ST-03, ST-04 |
 | ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) | ST-04, ST-05 |
 | ST-07 | Balance + telemetry pass (phase 8, sections 53, 71) | ST-06 |
@@ -55,9 +55,10 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 Execution order for leaves: WI-01a -> WI-01b -> WI-01c and WI-02a -> WI-02b ->
 WI-02c (independent chains), then ST-03 (WI-03a and the WI-03b story,
 WI-03b1 -> WI-03b2, in parallel, then the WI-03c story, WI-03c1 -> WI-03c2,
-then the WI-03d story, WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04, ST-05,
-ST-06, ST-07, ST-08. ST-01 and ST-02 chains are parallel; any interleaving
-that respects the table is valid.
+then the WI-03d story, WI-03d1 -> WI-03d2 -> WI-03d3), then ST-04
+(WI-04a, WI-04b and WI-04d in parallel, then WI-04c after WI-04a and
+WI-04d), ST-05, ST-06, ST-07, ST-08. ST-01 and ST-02 chains are parallel;
+any interleaving that respects the table is valid.
 
 ## Verification strategy (request section 70)
 
@@ -115,6 +116,8 @@ that respects the table is valid.
   `stories/ST-WI-03c/` (`plan.md` + `workitems/WI-03c1.md`, `WI-03c2.md`)
   and WI-03d promoted to `stories/ST-WI-03d/` (`plan.md` +
   `workitems/WI-03d1.md`, `WI-03d2.md`, `WI-03d3.md`).
-- `stories/ST-04/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
+- `stories/ST-04/plan.md` + `stories/ST-04/workitems/WI-04a.md`, `WI-04b.md`,
+  `WI-04c.md`, `WI-04d.md` — authored encounters and story layer, expanded.
+- `stories/ST-05/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
   tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.
