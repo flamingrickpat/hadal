@@ -2,7 +2,7 @@
 id: ST-03
 kind: story
 parent: null
-children: []
+children: ["WI-03a", "WI-03b", "WI-03c", "WI-03d"]
 depends_on: ["ST-01", "ST-02"]
 criteria:
   AC-roster-count: "At least 15 distinct implemented creature types are active in the production world data with their spawns, meeting the private roster's distribution"
@@ -14,56 +14,87 @@ subsystems: ["creature simulation", "procedural creature rendering", "world cont
 verification: "Node scenarios per major species behavior plus a world data check that all creature ids resolve and spawns sit in the band they were designed for; browser spot-checks on one organism per size tier; spoiler audit of commits"
 ---
 
-# ST-03 — Secret roster implementation (UNEXPANDED)
+# ST-03 — Secret roster implementation (request sections 11, 47)
 
-## Status
+## Goal
 
-Explicit expansion task. This node is deliberately too broad to implement as
-one work item; a future planning session must split it before implementation.
-The criteria above are the acceptance floor from section 45 plus the roster
-quality bar; they are written so any split can partition them cleanly.
+Implement the private roster selected in WI-01b onto the ST-02 framework:
+every selected organism becomes real `CreatureDef` data plus behavior in the
+headless simulation, spawns in the production world data, a headless behavior
+test for its signature rule, and a renderer that reads the sim state. Spoiler
+content (names, lore, designs) stays in `design_private/` and
+`src/content/secret/`; plan nodes, evidence and commit messages reference
+organisms by internal id and size tier only (sections 0, 12, 68).
 
-## Scope inventory (honest)
+## Why this shape
 
-Implementing 15-24 organisms across four size tiers changes more than three
-responsibilities' worth of behavior. A useful first split is by size tier
-(ambient/schools, small/medium, predators/territorial, huge/colossal set
-pieces), each tier one behavior batch with its own scenario tests; the
-colossal tier may need a second split because its staging overlaps ST-04.
-Alternative split: by band of the macro world. Choose one; do not mix.
+The scope inventory said: split by size tier, each tier one behavior batch
+with its own scenario tests; do not mix with a band-based split. That gives
+four children, each strictly narrower than the parent in both criteria and
+implementation responsibilities:
 
-## What the children must carry
+- WI-03a: tier 1 — ambient/schooling fauna (5-7 tiny organisms).
+- WI-03b: tier 2 — small/medium useful/neutral fauna (4-6), including the
+  at-least-2 friendly species (section 21).
+- WI-03c: tier 3 — predator/territorial fauna (4-6), including the
+  non-chase hunting strategy.
+- WI-03d: tier 4 — huge ecological set pieces (2-4) plus colossal presences
+  (2-3); final roster proof owner.
 
-- Creature data in `src/content/secret/hiddenCreatures.ts` with ids that
-  never appear in normal UI (section 33: internal ids in debug only).
-- Behavior per the private rubric answers from WI-01b; if an answer proves
-  weak in code, redesign privately - do not ship a generic shark.
-- Every predator has at least one readable rule the player can learn by
-  observation (section 10); fairness per section 39.
-- Spawns in `src/world/worldData.ts` at the density the band needs
-  (section 49: dense traversal, capped ambient counts per section 34).
-- Friendly species per section 21: practical advantage, no questification.
+## Criteria assignment and proof ownership
 
-## Dependencies and boundaries
+Children carry parent criteria verbatim; the union covers all four.
 
-- Depends on ST-01 (roster content) and ST-02 (framework). Do not start a
-  tier before the framework's three work items are accepted.
-- ST-04's authored beats reference roster organisms; the ids and states they
-  need must be stable before ST-04 splits.
-- No ending content, no MacGuffin interaction in this story (ST-05).
+- AC-roster-count: all four children (each lands its tier in production
+  world data). Final proof owner: WI-03d — whole-roster world data check
+  (15+ distinct active types, distribution matches the private roster, all
+  creature ids resolve, every spawn sits in the band it was designed for).
+- AC-roster-behavior: WI-03b and WI-03c (their tiers are where the
+  non-pursuit behaviors and the friendly species live). Final proof owner:
+  WI-03c — headless check that at least 4 implemented species have signature
+  behaviors materially different from direct pursuit and at least 2 species
+  are beneficial. WI-03b owns the 2+ friendly floor evidence for its own
+  species.
+- AC-roster-large: WI-03d alone.
+- AC-roster-tests: all four children (per-species signature-rule tests for
+  their own tier). Final proof owner: WI-03d — roster-wide test-existence
+  check plus the spoiler audit of every ST-03 commit.
+
+## Dependency notes
+
+- The story depends on ST-01 (roster content, WI-01b answers) and ST-02
+  (framework, WI-02a/b/c). No child starts before the framework's three
+  work items are accepted.
+- WI-03b depends on nothing in-tier; WI-03a is independent of it. WI-03c
+  depends on WI-03b (its final AC-roster-behavior proof counts the friendly
+  species). WI-03d depends on all three previous tiers (whole-roster count
+  proof; its colossal "announced through other fauna" behavior needs other
+  species present in the world data).
+- ST-04's authored beats reference roster organisms: the ids and states each
+  child introduces must be stable before ST-04 splits. ST-04 owns the
+  authored spectacle beats (triggers, timing, camera staging); ST-03 owns
+  the creatures and their base behavior only.
 
 ## Constraints and non-goals
 
-- Section 46 quality bar applies per species; section 11.2 anti-cliche
-  constraints are hard gates.
-- No browser automation proof of reachability; headless scenarios only for
-  behavior, browser spot-checks for presentation.
+- Section 46 quality bar applies per species; section 11.2 anti-cliche list
+  is a hard gate. If a private rubric answer proves weak in code, redesign
+  privately - do not ship a generic shark.
+- No browser automation proof of reachability: headless scenarios for
+  behavior, browser spot-checks for presentation (one organism per tier).
+- No ending content, no MacGuffin interaction (ST-05); no authored beat
+  staging (ST-04).
 - Commit messages stay spoiler-safe ("implemented two mid-depth predator
   archetypes" style, section 68).
+- Organisms are named by internal id in every planning and evidence
+  artifact; normal UI shows no creature names (section 33: ids in debug
+  only).
 
-## Fresh-session handoff for the expander
+## Fresh-session handoff (for reviewers of the children)
 
-Read request sections 10, 11, 20, 21, 39, 46, 47, 52, 68, 74; ST-01/ST-02
-bodies; `understanding.md`. The private files under `design_private/` are
-the source of truth for what gets built - the expander reads them and keeps
-their content out of the plan nodes (name organisms by internal id only).
+Each child stands alone with its frontmatter plus this story. Read request
+sections 10, 11, 13, 20, 21, 33, 34, 39, 45, 46, 47, 49, 52, 68, 70, 74;
+ST-01/WI-01b (the rubric answers) and ST-02 (framework seams). The private
+files under `design_private/` are the source of truth for which organisms
+exist and what they do - reviewers may read them, but plan and evidence
+artifacts never quote them.

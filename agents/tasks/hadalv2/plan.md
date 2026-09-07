@@ -45,7 +45,7 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 |-------|----------------------|------------|
 | ST-01 | Private creative pass (section 12) — expanded: WI-01a, WI-01b, WI-01c | — |
 | ST-02 | Creature framework (sections 13, 19, 63) — expanded: WI-02a, WI-02b, WI-02c | — |
-| ST-03 | Secret roster implementation (sections 11, 47) | ST-01, ST-02 |
+| ST-03 | Secret roster implementation (sections 11, 47) — expanded: WI-03a, WI-03b, WI-03c, WI-03d | ST-01, ST-02 |
 | ST-04 | Authored encounters + environmental story + world reactions (sections 36, 22, 38, 51, 60, 66) | ST-03 |
 | ST-05 | MacGuffin + non-arena endgame + two endings (sections 23, 24) | ST-03, ST-04 |
 | ST-06 | Full art/audio pass + section 26 map overlay + section 43 accessibility (phase 7, sections 14, 26, 27, 43, 48) | ST-04, ST-05 |
@@ -53,9 +53,9 @@ lore truth, the MacGuffin's nature, or the endings (request sections 0, 12, 68).
 | ST-08 | Final verification + spoiler-safe handoff (phase 9, sections 45, 69, 70) | ST-07 |
 
 Execution order for leaves: WI-01a -> WI-01b -> WI-01c and WI-02a -> WI-02b ->
-WI-02c (independent chains), then ST-03, ST-04, ST-05, ST-06, ST-07, ST-08.
-ST-01 and ST-02 chains are parallel; any interleaving that respects the table
-is valid.
+WI-02c (independent chains), then ST-03 (WI-03a and WI-03b in parallel, then
+WI-03c, then WI-03d), then ST-04, ST-05, ST-06, ST-07, ST-08. ST-01 and ST-02
+chains are parallel; any interleaving that respects the table is valid.
 
 ## Verification strategy (request section 70)
 
@@ -107,6 +107,8 @@ is valid.
   `WI-01c.md` — creative pass, expanded.
 - `stories/ST-02/plan.md` + `stories/ST-02/workitems/WI-02a.md`, `WI-02b.md`,
   `WI-02c.md` — creature framework, expanded.
-- `stories/ST-03/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
+- `stories/ST-03/plan.md` + `stories/ST-03/workitems/WI-03a.md`, `WI-03b.md`,
+  `WI-03c.md`, `WI-03d.md` — secret roster by size tier, expanded.
+- `stories/ST-04/plan.md` .. `stories/ST-08/plan.md` — unexpanded expansion
   tasks with acceptance criteria and split hints.
 - `planning/` — created by the review role for receipts; not created here.
