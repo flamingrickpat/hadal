@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "f7013c7437df2c11fbaee98d8898c0646615549ef5b34ac6bbf05a9847e9c7a6",
+  "behavior_count": 1,
+  "subsystems": ["audio system"],
+  "coverage": true,
+  "summary": "One behavior: sparse procedural WebAudio moments per section 58 on the existing AudioSystem, fired from placement data authored on the audio-domain AUDIO_STOPS seam (src/util/audio.ts, verified present), reading existing trigger flags in src/world/triggers.ts (audioCues/playAudio seam verified) without changing world content - so changed subsystems are exactly ['audio system'], a strict subset of the parent's. The 'final full AC-art-sound proof' is the named final proof owner's evidence obligation for the shared criterion, not a second behavior; non-goals explicitly forbid sibling changes (no depth-mixing, creature-profile, visual, or a11y work), so the pass records evidence rather than promising arbitrary fixes, and findings route through the fix-planning path. AC-art-sound is retained verbatim from WI-06e and the three siblings' union covers it. depends_on [WI-06a, WI-06b, WI-06c, WI-06e-a, WI-06e-b] all exist, order the final proof after both siblings, and include no ancestor or descendant. Evidence is focused: browser sparse-music placement pass (internal ids only, no 90-second loop), master-volume seam through all layers, re-run of sibling scenarios, section 34 node-count spot check, suite/build green. Handoff names verified files and symbols (AudioSystem.ts playDepthMotif/scheduleEvents/setMasterVolume, audio.ts AUDIO_STOPS, triggers.ts), request sections, and sibling evidence, so a fresh implementer can proceed."
+}
