@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf",
+  "input": {
+    "selection": {
+      "id": "WI-01c",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-01/workitems/WI-01c.md",
+      "specification": "---\nid: WI-01c\nkind: work_item\nparent: ST-01\nchildren: []\ndepends_on: [\"WI-01a\", \"WI-01b\"]\ncriteria:\n  AC-cp-mapping: \"design_private/ assigns creature reveals and lore clues to the 90-120 minute pacing timeline, defines 3-5 recurring motifs, and fixes the MacGuffin truth and at least two ending variants\"\n  AC-cp-spoiler: \"design_private/ stays out of the public surface, and no plan artifact, commit message, screenshot, or progress report names deep creatures, the lore truth, the MacGuffin, or the endings\"\nbehavior: \"Map creature reveals, lore clues, motifs, the MacGuffin truth, and the ending variants onto the pacing timeline, then run the final spoiler audit over the whole creative pass\"\nsubsystems: [\"private design documentation\"]\nverification: \"Read design_private/encounter_beats.md and design_private/spoiler_map.md; confirm reveal assignment on the 3-6 minute pacing grid, 3-5 motifs with at least two connected by the final reveal, MacGuffin design meeting section 23, at least two ending variants meeting section 24, and a passed final spoiler audit\"\n---\n\n# WI-01c — Reveal mapping, MacGuffin, endings, final spoiler audit\n\n## Goal\n\nClose the creative pass. Files: `design_private/encounter_beats.md`,\n`design_private/spoiler_map.md`.\n\n## Deliverables (checkable)\n\n- Every roster reveal and lore clue assigned to the 90-120 minute timeline\n  with a 3-6 minute pacing beat (section 3); the best ideas are not all in\n  the first half; the five spectacle beats get their slots with staging\n  intent (section 11.4 grammar, not a literal checklist).\n- 3-5 recurring motifs (section 37) each listed with the contexts they appear\n  in; at least two motifs are connected by the final reveal without all of\n  them being explained.\n- The MacGuffin decision meeting section 23: visually memorable in simple\n  rendering, tied to at least two earlier environmental traces, retrieval\n  changes the environment or the return journey, forces one final decision,\n  and makes the final 5-10 minutes mechanically different.\n- At least two ending variants meeting section 24 (a decision plus different\n  final state, text, or shot is enough), each tagged as modest-scope.\n- `spoiler_map.md`: the list of every secret fact, the artifacts containing\n  it, and the public-surface ban list.\n\n## Final proof owner\n\nWI-01c is the final proof owner for AC-cp-spoiler: it audits every file in\n`design_private/`, the gitignore state, and the commit messages of this story\nfor leaks before the pass is declared done.\n\n## Constraints, assumptions, non-goals\n\n- Depends on WI-01a and WI-01b; do not change the selected world or roster\n  here - if something in the roster does not map, record it as a defect for\n  the reviewer instead of silently rewriting WI-01b's output.\n- Assumption: one ending variant may be the section 72 cut candidate if scope\n  balloons; both remain planned.\n- No code. Commit as \"creative pass: reveal map and spoiler audit (private)\".\n\n## Fresh-session handoff\n\nRead request sections 3, 11.4, 23, 24, 37, 51, 66, 67, 74 and the outputs of\nWI-01a/WI-01b. The ending must not be a glowing-orb fade to credits\n(section 23). Reviewer checks mapping completeness and spoiler safety.\n",
+      "fingerprint": "daa235c14a262a0a56037da9651c62a6dd0e2548e6d009a982d127bd4178f164",
+      "base_rev": "291f508a677ab3e9608d0a90fb59d14786ac9d3e",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-01c.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
