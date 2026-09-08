@@ -83,3 +83,8 @@ export const BOOST_SIGNAL_INTERVAL = 0.3; // throttle for the continuous boost n
 // per-step position offset: current * (1 - control) * dt.
 export const CURRENT_CONTROL_BASE = 0.2; // no propulsion: resist 20% of the current
 export const CURRENT_CONTROL_WITH_PROPULSION = 0.8; // `boost`: resist 80%
+
+// Creatures (request §34, §16): creature AI deactivates beyond this distance
+// from the player. It is a WORLD distance in world units — not a screen-edge
+// test (request §16) — so deactivation is stable and camera-independent.
+export const CREATURE_AI_RANGE = 3000; // world units; beyond it, the AI does not tick

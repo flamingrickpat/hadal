@@ -44,6 +44,9 @@ import { PlayerController, type PlayerInput } from '../player/PlayerController';
 import { createCargo } from '../player/inventory';
 import { canCraft, applyEquipment, type CraftResult } from '../systems/CraftingSystem';
 import { WorldSignalBus } from '../creatures/senses';
+import { Creature, type CreatureAudioEvent } from '../creatures/Creature';
+import { CREATURE_BY_ID } from '../creatures/fixtures';
+import { createRng } from '../util/rng';
 import { SonarSystem, type SonarObject } from '../systems/SonarSystem';
 import { vec2, type Vec2 } from '../util/math';
 import { buildTerrain, type Terrain } from '../world/terrain';
@@ -104,6 +107,14 @@ export class Simulation {
   readonly nodes: ResourceNode[];
   readonly signals: WorldSignalBus;
   readonly sonar: SonarSystem;
+  /** The live creatures, advanced on the same fixed step as the player (request §30, §19). */
+  readonly creatures: Creature[] = [];
+  /**
+   * The audio events emitted by creature state transitions this step
+   * (request §19 audio is data): the browser audio adapter consumes these;
+   * the sim never synthesizes sound.
+   */
+  readonly creatureAudioEvents: CreatureAudioEvent[] = [];
   readonly triggers: TriggerSystem;
   readonly triggerState: TriggerState;
   readonly currents: CurrentSystem;
@@ -161,6 +172,20 @@ export class Simulation {
     this.triggerState.storyFlags = this.storyFlags;
     this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
     this.currents = new CurrentSystem(world.currentFields ?? []);
+    // The creatures (request §19, §30): authored per chunk (`creatureSpawns`),
+    // resolved against the creature registry — an unknown id is an authored
+    // world error and fails loudly (request §32 "all creature IDs resolve").
+    const creatureRng = createRng((this.seed ^ 0x5eed) >>> 0);
+    for (const chunk of this.chunks) {
+      for (const spawn of chunk.creatureSpawns ?? []) {
+        const def = CREATURE_BY_ID[spawn.creature];
+        if (def === undefined) throw new Error(`unknown creature id: ${spawn.creature}`);
+        const count = spawn.count ?? 1;
+        for (let i = 0; i < count; i += 1) {
+          this.creatures.push(new Creature(def, spawn.position, this.signals, creatureRng));
+        }
+      }
+    }
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
     this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
@@ -193,6 +218,7 @@ export class Simulation {
     }
     this.wasSonar = input.sonar;
     this.sonar.update(dt, this.state.timeSec);
+    this.stepCreatures(dt);
     if (input.toolSelect !== null) this.controller.setToolIndex(input.toolSelect);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
@@ -224,6 +250,40 @@ export class Simulation {
     const control = this.player.capabilities.has('boost') ? CURRENT_CONTROL_WITH_PROPULSION : CURRENT_CONTROL_BASE;
     this.player.position.x += cur.x * (1 - control) * dt;
     this.player.position.y += cur.y * (1 - control) * dt;
+  }
+
+  /**
+   * Advance every creature on the fixed step (request §30, §19): sense →
+   * decide → steer, then resolve the creature's collision circles (the root
+   * and its chain circles, request §31) against the real terrain. Creatures
+   * deactivated by the offscreen cap (request §34) do nothing this step.
+   * Audio transitions are collected as data for the browser adapter.
+   */
+  private stepCreatures(dt: number): void {
+    this.creatureAudioEvents.length = 0;
+    const t = this.state.timeSec;
+    for (const c of this.creatures) {
+      c.update(dt, t, this.player.position);
+      if (!this.noclip) {
+        // The creature's collision circles (root + chain circles, request
+        // §31) against the real terrain, like the player's.
+        this.terrain.resolveCircle(c.position, c.def.body.radius, c.velocity);
+        for (const chain of c.def.body.chainCircles ?? []) {
+          const worldX = c.position.x + chain.offset.x;
+          const worldY = c.position.y + chain.offset.y;
+          const resolved = this.terrain.resolveCircle({ x: worldX, y: worldY }, chain.radius);
+          c.position.x += resolved.x - worldX;
+          c.position.y += resolved.y - worldY;
+        }
+      }
+      if (c.lastTransition !== null) {
+        const call = c.def.audio[c.lastTransition.to];
+        if (call !== undefined) {
+          this.creatureAudioEvents.push({ creatureId: c.def.id, state: c.lastTransition.to, call, time: t });
+        }
+        c.lastTransition = null;
+      }
+    }
   }
 
   /** The chunks fully active around the player (request §17 chunk streaming). */
@@ -295,7 +355,7 @@ export class Simulation {
       hasEnteredRegion: (r) => this.regionVisited.has(r),
       regionTimeSeconds: (r) => (this.regionVisited.has(r) ? this.state.timeSec - (this.regionEntryTimes.get(r) ?? this.state.timeSec) : 0),
       hasReturnedThrough: (r) => this.regionReentered.has(r),
-      creatureState: () => null,
+      creatureState: (creatureId) => this.creatures.find((c) => c.def.id === creatureId)?.state ?? null,
     };
   }
 

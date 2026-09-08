@@ -43,7 +43,7 @@ export interface ExitDef {
   requiredCapability?: string;
 }
 
-/** A creature spawn (request §19); creatures resolve in WI-10. */
+/** A creature spawn (request §19); resolved against the creature registry by the simulation. */
 export interface CreatureSpawnDef {
   id: string;
   creature: string;
