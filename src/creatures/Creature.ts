@@ -26,6 +26,7 @@
  *   spawn ids.
  */
 import { vec2, type Vec2 } from '../util/math';
+import { FLEE_THRESHOLD, SCAVENGE_THRESHOLD, fleeSignalStrength, quietStrength, scavengeSignalStrength } from './ecology';
 import { SIGNAL_RANGE_REF, WorldSignalBus, type Percept, type SignalType, type WorldSignal } from './senses';
 import { CREATURE_STATES, type CreatureDef, type CreatureState } from './CreatureDef';
 import { settle, steerAway, steerToward } from './steering';
@@ -79,6 +80,8 @@ export class Creature {
   target: Vec2 | null = null;
   /** False while the AI is deactivated beyond the world distance cap (request §34). */
   active = true;
+  /** True after a predator kill removes the creature from the ambient pool (§20). */
+  dead = false;
   /**
    * The transition made this tick, so the simulation can emit the audio event
    * data (request §19); the simulation nulls it after consuming it.
@@ -243,6 +246,52 @@ export class Creature {
     const pos = this.position;
     const vel = this.velocity;
     const m = this.def.movement;
+    // Hold before a major event (request §20, §63): when a quiet-tagged
+    // signal on the bus reaches this species' `ecology.quiet` tolerance,
+    // state-driven steering is suppressed this step and the animal stays
+    // put — even mid-stalk. Motion reactions (flee/scavenge) are layered on
+    // by the sim's ecology pass after this, preserving their priority over
+    // the hold.
+    const eco = this.def.ecology;
+    if (
+      eco !== undefined &&
+      eco.quiet !== undefined &&
+      quietStrength(this.bus, pos.x, pos.y, this.time, this.queryOut) >= eco.quiet
+    ) {
+      return;
+    }
+    // Flee hold (request §20, §63): when a predator-tagged signal on the bus
+    // is loud enough for the ecology flee reaction, state-driven steering is
+    // suppressed this step so it cannot steer the prey back toward the
+    // predator while the sim's ecology pass steers it away (same pattern as
+    // the quiet hold). Predators (combat) never hold for their own tag.
+    if (
+      this.def.combat === undefined &&
+      fleeSignalStrength(this.bus, pos.x, pos.y, this.time, this.queryOut) >= FLEE_THRESHOLD
+    ) {
+      return;
+    }
+    // Scavenge hold (request §20, §63): when a scavenger has a loud kill-tagged
+    // signal nearby, state-driven steering — its generic `investigate` of the
+    // loudest noise, which often points at the predator that made the kill —
+    // is suppressed this step so the sim's ecology pass steers it toward the
+    // kill unopposed (same pattern as the flee hold).
+    if (
+      eco !== undefined &&
+      eco.scavenge === true &&
+      scavengeSignalStrength(this.bus, pos.x, pos.y, this.time, this.queryOut) >= SCAVENGE_THRESHOLD
+    ) {
+      return;
+    }
+    // Filter-feeder hold (request §20, §64): a filter feeder's motion is owned
+    // by the sim's ecology pass, which orients it along the local current
+    // field. Its generic forage/wander steering settles velocity toward home
+    // every step and would undo that nudge, so it is suppressed entirely —
+    // the feeder drifts wherever the current carries it (same pattern as the
+    // other ecology holds).
+    if (eco !== undefined && eco.filterFeeder === true) {
+      return;
+    }
     switch (this.state) {
       case 'wander':
       case 'forage':

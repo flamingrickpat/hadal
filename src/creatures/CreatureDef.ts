@@ -118,6 +118,15 @@ export interface CombatDef {
 export interface EcologyDef {
   /** A schooling type reacts as a group member (request §20, §11). */
   school: boolean;
+  /** Approaches recent kill signals tagged `KILL_TAG` (request §20 scavenge). */
+  scavenge?: boolean;
+  /**
+   * Hides (holds) while a `QUIET_TAG` signal's perceived strength is at or
+   * above this threshold (request §20: zones quiet before major events).
+   */
+  quiet?: number;
+  /** Orients along the local current field while feeding (request §20, §64). */
+  filterFeeder?: boolean;
 }
 
 /**

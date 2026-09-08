@@ -34,7 +34,14 @@ describe('fixture organisms (framework test fixtures, not roster content)', () =
     expect(schooler.combat).toBeUndefined(); // neutral
     expect(forager.id).toBe('fixture-forager');
     expect(forager.combat).toBeUndefined(); // neutral
-    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(2); // no roster content
+  });
+
+  // WI-02c revision: the ecology illusion added three more neutral fixtures
+  // (scavenger, predator, filter feeder). The WI-02a count of 2 above
+  // remains valid for those two; the registry now holds the five fixtures.
+  it('the registry holds the five framework fixtures and no roster content', () => {
+    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(5);
+    expect(Object.keys(CREATURE_BY_ID).every((id) => id.startsWith('fixture-'))).toBe(true);
   });
 });
 

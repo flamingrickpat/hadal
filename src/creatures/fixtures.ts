@@ -49,8 +49,57 @@ export const FORAGER: CreatureDef = {
   audio: { investigate: 'forager-attention', flee: 'forager-flee' },
 };
 
+// A scavenger: it drifts home-patch style and does NOT generically react to
+// noise — it approaches recent kills only via the ecology `scavenge` reaction
+// keyed to the `kill` bus tag (request §20, driven purely by the bus). Keeping
+// `senses` empty is deliberate: it makes the scavenger's approach to a kill a
+// clean demonstration of the scavenge path (a generic `investigate` of the kill
+// noise would otherwise be indistinguishable from it).
+export const SCAVENGER: CreatureDef = {
+  id: 'fixture-scavenger',
+  body: { radius: 26 },
+  movement: { maxSpeed: 90, accel: 280, dragRate: 3 },
+  senses: {},
+  behavior: { startState: 'forage', wanderRadius: 300 },
+  ecology: { school: false, scavenge: true },
+  audio: { investigate: 'scavenger-attention' },
+};
+
+// A predator: the generic engine's combat path makes it alert → stalk →
+// attack on signals; `ecology.quiet` makes it hold before major events too.
+export const PREDATOR: CreatureDef = {
+  id: 'fixture-predator',
+  body: { radius: 50, chainCircles: [{ offset: vec2(-50, 0), radius: 26 }] },
+  movement: { maxSpeed: 120, accel: 300, dragRate: 2.5 },
+  senses: { noise: 0.15, light: 0.15 },
+  behavior: { startState: 'wander', wanderRadius: 500 },
+  combat: { damage: 20 },
+  ecology: { school: false, quiet: 0.1 },
+  audio: { alert: 'predator-alert', attack: 'predator-lunge' },
+};
+
+// A filter feeder: it orients along the local current field while foraging
+// (request §20, §64) — no signal involved, the current is the driver.
+// `senses` is deliberately empty: with any noise sense the kill / predator
+// tags from the hunt (perceived ~0.67 at ~1300u) pull it into `investigate`,
+// whose steering fights the current orientation the fixture exists to show.
+// With no senses it stays in `forage` forever and only the filter-feeder
+// nudge moves it — the §64 reaction, isolated.
+export const FEEDER: CreatureDef = {
+  id: 'fixture-feeder',
+  body: { radius: 30 },
+  movement: { maxSpeed: 60, accel: 180, dragRate: 2 },
+  senses: {},
+  behavior: { startState: 'forage', wanderRadius: 200 },
+  ecology: { school: false, filterFeeder: true },
+  audio: { investigate: 'feeder-attention' },
+};
+
 /** The id → def registry the simulation resolves `creatureSpawns` against. */
 export const CREATURE_BY_ID: Record<string, CreatureDef> = {
   [SCHOOLER.id]: SCHOOLER,
   [FORAGER.id]: FORAGER,
+  [SCAVENGER.id]: SCAVENGER,
+  [PREDATOR.id]: PREDATOR,
+  [FEEDER.id]: FEEDER,
 };

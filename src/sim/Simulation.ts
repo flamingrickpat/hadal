@@ -43,9 +43,26 @@ import { Player } from '../player/Player';
 import { PlayerController, type PlayerInput } from '../player/PlayerController';
 import { createCargo } from '../player/inventory';
 import { canCraft, applyEquipment, type CraftResult } from '../systems/CraftingSystem';
-import { WorldSignalBus } from '../creatures/senses';
+import { WorldSignalBus, type WorldSignal } from '../creatures/senses';
 import { Creature, type CreatureAudioEvent } from '../creatures/Creature';
 import { CREATURE_BY_ID } from '../creatures/fixtures';
+import {
+  FLEE_RADIUS,
+  FLEE_THRESHOLD,
+  KILL_TAG,
+  PREDATOR_ATTACK_RANGE,
+  PREDATOR_KILL_DIST,
+  PREDATOR_SIGNAL_STRENGTH,
+  PREDATOR_TAG,
+  SCAVENGE_RADIUS,
+  SCAVENGE_THRESHOLD,
+  fleeSignalStrength,
+  flockForce,
+  quietStrength,
+  scavengeSignalStrength,
+  strongestTaggedPos,
+} from '../creatures/ecology';
+import { settle, steerAway, steerToward, steerVelocity } from '../creatures/steering';
 import { createRng } from '../util/rng';
 import { SonarSystem, type SonarObject } from '../systems/SonarSystem';
 import { vec2, type Vec2 } from '../util/math';
@@ -143,6 +160,21 @@ export class Simulation {
   private regionReentered = new Set<string>();
   private regionEntryTimes = new Map<string, number>();
   private prevRegion: string | null = null;
+  // The ecology illusion layer (request §20, §63): bus signals are the only
+  // cross-species channel — predators/kill/quiet are tagged `noise` signals
+  // on the world-signal bus, and no creature reads global state or the player
+  // directly. The school member list is fixed after construction (creatures
+  // are immutable after spawn); the scratch slots are reused every frame
+  // (request §34).
+  private scheduledSignals: { time: number; signal: WorldSignal }[] = [];
+  /** Sim time of the last PREDATOR_TAG emission (the tag refreshes at 1 Hz while hunting). */
+  private lastPredatorSignal = -Infinity;
+  private readonly schoolMembers: Creature[] = [];
+  private lastKill: { prey: Creature; time: number } | null = null;
+  private readonly ecologyScratch: WorldSignal[] = [];
+  private readonly ecologyTarget = vec2(0, 0);
+  private readonly flockOut = vec2(0, 0);
+  private readonly desiredOut = vec2(0, 0);
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -186,6 +218,9 @@ export class Simulation {
         }
       }
     }
+    for (const c of this.creatures) {
+      if (c.def.ecology?.school) this.schoolMembers.push(c);
+    }
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
     this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
@@ -196,6 +231,19 @@ export class Simulation {
   /** Flatten every authored chunk trigger into one trigger set (request §36). */
   private collectTriggers(): import('../world/triggers').EncounterTrigger[] {
     return this.chunks.flatMap((c) => c.triggers ?? []);
+  }
+
+  /**
+   * Emit a world-signal on the bus at a future sim time (request §20, §63):
+   * the scheduling seam for event-driven signals the simulation itself
+   * produces — a zone quiets before a scheduled major event (a `QUIET_TAG`
+   * noise at the zone), a colossal event lands (a loud noise), and so on.
+   * Emissions drain in time order during the creature step, so reactions
+   * keyed to them fire the same step the signal lands.
+   */
+  scheduleSignal(time: number, signal: WorldSignal): void {
+    this.scheduledSignals.push({ time, signal });
+    this.scheduledSignals.sort((a, b) => a.time - b.time);
   }
 
   /** Advance the whole tick by `dt`, reading player actions from `input`. */
@@ -258,12 +306,22 @@ export class Simulation {
    * and its chain circles, request §31) against the real terrain. Creatures
    * deactivated by the offscreen cap (request §34) do nothing this step.
    * Audio transitions are collected as data for the browser adapter.
+   *
+   * The ecology illusion (request §20) runs alongside: scheduled bus signals
+   * drain, hunting predators emit their tagged signals and register kills,
+   * and after each update the data-driven reaction pass (`applyEcology`)
+   * steers each ecology creature — flee, scavenge, quiet, school, current
+   * orientation — purely from nearby bus signals and the current fields,
+   * never from global state or the player (request §63).
    */
   private stepCreatures(dt: number): void {
     this.creatureAudioEvents.length = 0;
     const t = this.state.timeSec;
+    this.drainScheduledSignals(t);
+    this.emitPredatorSignals(t);
     for (const c of this.creatures) {
       c.update(dt, t, this.player.position);
+      if (c.active && c.def.ecology !== undefined) this.applyEcology(c, dt, t);
       if (!this.noclip) {
         // The creature's collision circles (root + chain circles, request
         // §31) against the real terrain, like the player's.
@@ -282,6 +340,143 @@ export class Simulation {
           this.creatureAudioEvents.push({ creatureId: c.def.id, state: c.lastTransition.to, call, time: t });
         }
         c.lastTransition = null;
+      }
+    }
+  }
+
+  /**
+   * Emit the scheduled world signals whose sim time has come (request §20,
+   * §63): event-driven signals the simulation itself produces (a zone quiets
+   * before a scheduled major event, a colossal event lands) drain here in
+   * time order and land on the bus, so reactions keyed to them fire the same
+   * step the signal lands.
+   */
+  private drainScheduledSignals(t: number): void {
+    while (this.scheduledSignals.length > 0 && this.scheduledSignals[0]!.time <= t) {
+      const due = this.scheduledSignals.shift()!;
+      this.signals.emit(due.signal, t);
+    }
+  }
+
+  /**
+   * The hunting side of the ecology (request §20): an active predator in a
+   * hunting state (alert/stalk/attack) emits a tagged `PREDATOR_TAG` noise so
+   * nearby schools and small fauna can flee it from the bus — no direct
+   * references. Within kill distance of the nearest ambient prey the kill is
+   * registered: a `KILL_TAG` noise lands at the prey (feeding scavenge) and
+   * the prey is removed from the ambient pool, so a hunt is a bounded
+   * event. Deterministic (request §61).
+   */
+  private emitPredatorSignals(t: number): void {
+    let killed: Creature | null = null;
+    for (const p of this.creatures) {
+      if (!p.active || !p.def.combat || !this.isHuntingState(p.state)) continue;
+      // Refresh the tag at most once a second: the 3 s signal lifetime keeps
+      // it perceivable throughout a hunt without flooding the 64-slot pool.
+      if (t - this.lastPredatorSignal >= 1.0) {
+        this.lastPredatorSignal = t;
+        this.signals.emit({ type: 'noise', pos: p.position, strength: PREDATOR_SIGNAL_STRENGTH, tag: PREDATOR_TAG }, t);
+      }
+      let nearest: Creature | null = null;
+      let nearestDist = PREDATOR_ATTACK_RANGE;
+      for (const o of this.creatures) {
+        if (o === p || !o.active || o.dead || o.def.combat !== undefined) continue;
+        const d = Math.hypot(o.position.x - p.position.x, o.position.y - p.position.y);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearest = o;
+        }
+      }
+      if (nearest !== null && nearestDist <= PREDATOR_KILL_DIST) {
+        this.signals.emit({ type: 'noise', pos: nearest.position, strength: 1.0, tag: KILL_TAG }, t);
+        nearest.dead = true;
+        killed = nearest;
+        this.lastKill = { prey: nearest, time: t };
+      }
+    }
+    if (killed !== null) {
+      const ci = this.creatures.indexOf(killed);
+      if (ci >= 0) this.creatures.splice(ci, 1);
+      const si = this.schoolMembers.indexOf(killed);
+      if (si >= 0) this.schoolMembers.splice(si, 1);
+    }
+  }
+
+  /** A predator's hunting states (combat §19): the signal side is on in any of them. */
+  private isHuntingState(s: Creature['state']): boolean {
+    return s === 'alert' || s === 'stalk' || s === 'attack';
+  }
+
+  /**
+   * The per-creature data-driven reaction pass (request §20, §63): every
+   * reaction is keyed to a nearby `WorldSignal` on the bus or an existing
+   * field — no global state read, no direct player reference (the player
+   * enters only through the school's own parting, §48). Priority is fixed:
+   * flee beats scavenge, scavenge beats quiet, quiet beats schooling, and
+   * the current orientation is the weakest nudge (filter feeder only). The
+   * pass reuses scratch slots (request §34) and is cheap: bounded-radius bus
+   * queries plus a local school scan (request §20 "cheap to run").
+   */
+  private applyEcology(c: Creature, dt: number, t: number): void {
+    const eco = c.def.ecology;
+    if (eco === undefined) return;
+    const x = c.position.x;
+    const y = c.position.y;
+    const m = c.def.movement;
+    const scratch = this.ecologyScratch;
+    const out = this.ecologyTarget;
+
+    // Flee the strongest nearby predator (small fauna, §20). A predator never
+    // flees: the tag is emitted by predators (possibly itself), so the reaction
+    // only applies to prey (no combat).
+    if (
+      c.def.combat === undefined &&
+      fleeSignalStrength(this.signals, x, y, t, scratch) >= FLEE_THRESHOLD
+    ) {
+      if (strongestTaggedPos(this.signals, PREDATOR_TAG, x, y, t, FLEE_RADIUS, scratch, out)) {
+        steerAway(c.position, c.velocity, out, m, dt);
+      }
+      return;
+    }
+
+    // Scavenge: approach the strongest recent kill (§20).
+    if (eco.scavenge && scavengeSignalStrength(this.signals, x, y, t, scratch) >= SCAVENGE_THRESHOLD) {
+      if (strongestTaggedPos(this.signals, KILL_TAG, x, y, t, SCAVENGE_RADIUS, scratch, out)) {
+        steerToward(c.position, c.velocity, out, m, dt);
+      }
+      return;
+    }
+
+    // Quiet: hold before a scheduled major event (per-species tolerance).
+    if (eco.quiet !== undefined && quietStrength(this.signals, x, y, t, scratch) >= eco.quiet) {
+      settle(c.position, c.velocity, m, dt);
+      return;
+    }
+
+    // Schooling: bounded-local flock with the player parting it (§20, §48).
+    // The flock force is a normalized-ish direction; scaled to the
+    // creature's max speed so the drag model in `steerVelocity` does the rest.
+    if (eco.school && this.schoolMembers.length > 1) {
+      flockForce(this.schoolMembers, c, this.player.position, this.flockOut);
+      const fLen = Math.hypot(this.flockOut.x, this.flockOut.y);
+      if (fLen > 1e-6) {
+        const scale = m.maxSpeed / fLen;
+        this.desiredOut.x = this.flockOut.x * scale;
+        this.desiredOut.y = this.flockOut.y * scale;
+        steerVelocity(c.position, c.velocity, this.desiredOut, m, dt);
+      }
+    }
+
+    // Filter feeder: orient along the existing current field (§64) — the
+    // weakest nudge, applied on top of anything above. Desired velocity
+    // along the current, scaled to the creature's max speed.
+    if (eco.filterFeeder) {
+      const cur = this.currents.velocityAt(c.position, t);
+      const speed = Math.hypot(cur.x, cur.y);
+      if (speed > 4) {
+        this.desiredOut.x = (cur.x / speed) * m.maxSpeed;
+        this.desiredOut.y = (cur.y / speed) * m.maxSpeed;
+        steerVelocity(c.position, c.velocity, this.desiredOut, m, dt);
       }
     }
   }
