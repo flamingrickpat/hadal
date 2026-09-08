@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "3a2b55c999491be47902b2a084a5d6a8d0ac6d98a9e9bc49999b256abb397a50",
+  "behavior_count": 1,
+  "subsystems": ["rendering - verification and evidence"],
+  "coverage": true,
+  "summary": "WI-06d-b6 is a focused final-proof leaf: one behavior — run the cross-band contrast walk in the browser, re-trigger all six section 48 juice effects, and record per-band identity factors, the walk evidence, and per-band frame-rate logs from one scripted harness pass. It names exactly two changed responsibilities (the shared browser harness walk scenario and the harness-side frame-rate log), both inside the single named subsystem 'rendering - verification and evidence', with no product art, render or game code changes; discovered defects are explicitly routed through fix-planning rather than fixed inline, so verification stays bounded. Both parent criteria are retained verbatim with b6 as named final proof owner (juice-part union of AC-art-geometry; sole owner of the AC-art-palettes walk), and AC-perf-walk is a child-local criterion adding the section 34 spot-check without replacing a parent criterion. Dependencies are correct and explicit: inherits WI-06a/b/c from the story and lists WI-06d-b1..b5 so the union is recorded only after every effect exists; no ancestor or descendant edges. Handoff is fresh-session ready: it points at WI-06d-b/plan.md, the three band items for the identity factors, the shared harness, and request sections 14.1, 14.3, 34, 48 and 70, all verified present in the root request."
+}
