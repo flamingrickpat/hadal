@@ -1,0 +1,52 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "ST-06",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-06/plan.md",
+      "specification": "---\nid: ST-06\nkind: story\nparent: null\nchildren: [\"WI-06a\", \"WI-06b\", \"WI-06c\", \"WI-06d\", \"WI-06e\", \"WI-06f\", \"WI-06g\"]\ndepends_on: [\"ST-04\", \"ST-05\"]\ncriteria:\n  AC-art-palettes: \"Every depth band has a distinct palette family, particle profile, light attenuation, and background silhouette in the browser, with the section 14.1 graphic-novel/sonar/cut-paper hybrid reading at 1080p\"\n  AC-art-sound: \"Depth audio changes with depth (high-frequency roll-off, low-frequency pressure rumble, altered reverb) and major creatures are audible well before visible, with sparse music per section 58\"\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\n  AC-art-contrast: \"The surface zone reads as a cozy baseline and returning to it after a deep dive creates relief, per section 59\"\n  AC-art-map: \"The section 26 bathymetry map opens on Tab and pauses the game; it shows the player position, explored chunk silhouettes from the tracked discoveredChunks state, the base, discovered major landmarks, and a death beacon only if one is tracked, and it never shows creature locations; verified in the browser\"\n  AC-art-a11y: \"The section 43 accessibility controls work and persist through a save round-trip: master volume slider, screen shake toggle, reduced flashing toggle, and text subtitles for radio messages, plus a high-contrast sonar option if easy or a recorded cut; verified in the browser\"\nbehavior: \"Run the full art and audio pass (request phase 7, sections 14, 15, 26, 27, 43, 48, 58, 59) across all critical-path areas, keeping restraint with post-processing\"\nsubsystems: [\"rendering and materials\", \"audio system\", \"world content data\", \"UI overlays and settings\"]\nverification: \"Live browser inspection per band and per major encounter (composition, readability, atmosphere, audio) with recorded observations; browser checks for the Tab map overlay (contents, pause behavior, no creature markers) and for the section 43 toggles persisting through a save round-trip; headless suite and build stay green; performance spot-checks per section 34\"\n---\n\n# ST-06 — Full art/audio pass\n\n## Goal\n\nRun the full art and audio pass (request phase 7) across all critical-path\nareas on the stable ST-04/ST-05 content: per-band visual identity (sections\n14, 15, 59), debug-geometry replacement plus the section 48 juice list,\ndepth audio (sections 27, 58), the section 26 bathymetry map overlay, and\nthe section 43 accessibility controls. Restraint on post-processing; no new\ngameplay rules, no balance tuning.\n\n## Why this shape (review split)\n\nThe review split this empty story. Presentation work is inherently per-scene,\nso each child names its scenes/bands and the inspection evidence it records.\nEvery child carries strictly fewer than the parent's six criteria and a\nstrict subset of its four subsystems:\n\n- WI-06a: surface + coast band identity (sections 14.3, 15) and the\n  section 59 cozy surface baseline and return relief.\n- WI-06b: mid bands identity (sections 14.3, 15).\n- WI-06c: deep bands + final zone identity (sections 14.3, 15);\n  inspected under the section 70 spoiler rule. The section 16\n  scale-reveal zoom for select colossal encounters is owned by each band\n  item for the encounters staged in its own bands (if any).\n- WI-06d: debug-geometry replacement in all critical-path areas, the\n  section 48 juice list, and the section 16 low-frequency shake rules and\n  widescreen behavior.\n- WI-06e: depth audio (sections 27, 58): depth-based mixing, creature\n  sound vocabulary, sparse music.\n- WI-06f: section 26 bathymetry map overlay.\n- WI-06g: section 43 accessibility controls with save persistence.\n\n## Criteria assignment and proof ownership\n\nChildren carry parent criteria verbatim; the union covers all six.\n\n- AC-art-palettes: WI-06a, WI-06b, WI-06c (each proves its own bands in\n  the browser). Final proof owner: WI-06d - after all three band passes it\n  walks every critical-path area and records the cross-band contrast\n  (each band distinct in at least two identity factors, section 14.1\n  hybrid reading at 1080p). No other child re-asserts the cross-band part.\n- AC-art-contrast: WI-06a alone. Final proof owner: WI-06a.\n- AC-art-geometry: WI-06d alone. Final proof owner: WI-06d.\n- AC-art-sound: WI-06e alone. Final proof owner: WI-06e.\n- AC-art-map: WI-06f alone. Final proof owner: WI-06f.\n- AC-art-a11y: WI-06g alone. Final proof owner: WI-06g.\n\n## Dependencies and execution order\n\n- The story depends on ST-04/ST-05 so there is stable content to dress;\n  do not art a band whose encounters are still moving.\n- WI-06a, WI-06b, WI-06c are parallel.\n- WI-06d depends on WI-06a, WI-06b, WI-06c: geometry replacement and juice\n  must be tuned against the settled band look, and it owns the AC-art-\n  palettes cross-band proof.\n- WI-06e depends on WI-06a, WI-06b, WI-06c: the \"audible well before\n  visible\" lead time is measured against the final band visibility and\n  attenuation, which the band passes set.\n- WI-06f depends on WI-04b (ST-04's landmark ids feed the\n  discovered-landmark markers); its other inputs (explored chunks, base,\n  player position) already exist in the baseline simulation. It can run in\n  parallel with the band chain.\n- WI-06g depends on WI-04b (radio-message content for the subtitles) and\n  WI-06d (the shake rules it must gate); it finishes last among the\n  story's leaves.\n- Feeds ST-07: this story keeps the section 34 budgets but does not own\n  the balance numbers; ST-07 measures the largest encounter.\n\n## Scope inventory (honest, carried into the children)\n\n- Band identity per section 14.3: water color, visibility, particle size,\n  light attenuation, background silhouettes, debris density, current\n  direction, ambient motion - at least two differ per band (section 1.1 is\n  the design pillar).\n- Flashlight behavior per section 15: no pure-black screens; biological\n  sources reveal geometry from behind.\n- Audio per sections 27 and 58: procedural WebAudio layers, depth-based\n  mixing, creature sound vocabulary (clicks, sub-bass, scraping, resonant\n  harmonics - not everything roaring), sparse music, no 90-second loop.\n  Extend `src/systems/AudioSystem.ts`; do not rebuild it.\n- Juice per section 48; the section 35 effects toolbox already partially\n  exists in `src/render/` (particles, postfx, sonar) - extend, do not\n  rebuild.\n- Camera polish per section 16: scale-reveal zoom (WI-06c), low-frequency\n  shake rules and widescreen behavior (WI-06d).\n- Map overlay per section 26: Tab-bound, pauses the game, rough\n  explored-space silhouettes (not a GPS chart), player position, base,\n  discovered major landmarks, optional death beacon, never creature\n  locations. The baseline tracks `discoveredChunks` in the simulation\n  (`Simulation.ts`, saved in `save.world.discoveredChunks`), so the\n  overlay reads existing state; landmark discovery tracking comes from\n  WI-04b; a death beacon is shown only if a story (section 25) adds beacon\n  tracking. The stale \"(WI-15)\" comment in `src/ui/hud.ts` refers to this\n  overlay.\n- Accessibility per section 43: master volume slider (exists since the\n  baseline WI-05 audio work - that is a baseline work item, not the ST-05\n  story - `save.settings.masterVolume`), screen shake toggle, reduced\n  flashing toggle, subtitles/text for radio messages, high-contrast sonar\n  option if easy. New setting fields extend the versioned save settings;\n  the section 42 migration stays trivial.\n\n## Constraints and non-goals\n\n- Restraint on post-processing (section 14.3); readability at 1920x1080 in\n  motion is the bar.\n- No new gameplay rules in this story; the map overlay and accessibility\n  toggles read or track presentation state only (the same pattern as\n  `discoveredChunks`). If art work exposes a real simulation gap, file it\n  as a defect, not a scope grab.\n- No balance tuning, no new content (sections 44 phase 7 scope only).\n- Spoiler rule for inspection: late-game presentation is inspected with\n  private fixtures and reported without names (section 70).\n\n## Fresh-session handoff (for reviewers of the children)\n\nEach child stands alone with its frontmatter plus this story. Read request\nsections 14, 15, 16, 26, 27, 35, 43, 48, 58, 59; `src/render/`, `src/ui/`\n(hud.ts, menu.ts), `src/systems/AudioSystem.ts`, and the save settings\nschema in `src/game/save.ts`; `understanding.md` for the existing visual\nlanguage baseline. Inspect in the real browser; record defects with scene\nand reproduction steps.\n",
+      "fingerprint": "87303f1aba775d057a889c5d38717e09e1391bab4b00f14a564cddf342737210",
+      "base_rev": "8f648be1b04bd7a2e6767f5820336470179f01dd",
+      "children": [
+        {
+          "id": "WI-06a",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-06\\workitems\\WI-06a.md"
+        },
+        {
+          "id": "WI-06b",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-06\\workitems\\WI-06b.md"
+        },
+        {
+          "id": "WI-06c",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-06\\workitems\\WI-06c.md"
+        },
+        {
+          "id": "WI-06d",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-WI-06d\\plan.md"
+        },
+        {
+          "id": "WI-06e",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-WI-06e\\plan.md"
+        },
+        {
+          "id": "WI-06f",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-06\\workitems\\WI-06f.md"
+        },
+        {
+          "id": "WI-06g",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-06\\workitems\\WI-06g.md"
+        }
+      ],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\ST-06.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
