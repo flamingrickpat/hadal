@@ -1,14 +1,15 @@
 {
-  "status": "split",
-  "fingerprint": "3dd2c8c458bdfc8c22fa0cb0cf7034e2c32c97010866b339286f80b22bf6a012",
-  "behavior_count": 7,
+  "status": "accepted",
+  "fingerprint": "126e2fbccde0e1a15b6bfeb2fee40933b0d30f4b9ab4c1938c0d5bcdb3b2524e",
+  "behavior_count": 6,
   "subsystems": [
     "rendering - particle toolbox",
-    "rendering - postfx",
+    "rendering - band lighting and postfx",
     "ui - hud cue",
-    "presentation - camera nudge and impulse flag",
-    "rendering - school render path"
+    "rendering - camera nudge and impulse flag",
+    "rendering - school render path",
+    "rendering - verification and evidence"
   ],
   "coverage": true,
-  "summary": "Oversized leaf. The body bundles seven independently testable behaviors: bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools, and the cross-band contrast walk, touching at least five distinct implementation responsibilities (particle toolbox, postfx path, src/ui/hud.ts cue seam, camera nudge plus the WI-06d-c impulse flag, school render-split path) - over the three-responsibility limit. The parent story already applied the same split logic to geometry/juice/camera but did not carry it into the juice bundle itself, and the frontmatter scope inventory is wrong: it claims a single 'rendering and materials' subsystem while the deliverables explicitly change src/ui/hud.ts and the school render path. Useful split boundary into WI-06d-b1..b6: (1) bubbles + silt particle systems with data-driven emission tables, (2) light sway in the section 35 postfx path, (3) depth-record HUD tick in src/ui/hud.ts, (4) distant-motion impulse trigger plus camera nudge feeding the WI-06d-c flag, (5) parting-schools render split without steering changes, (6) cross-band contrast walk as final proof owner of the AC-art-palettes union, depending on b1-b5 and the band items WI-06a/b/c. Each child keeps AC-art-geometry (1) verbatim for b1-b5 and AC-art-palettes (1) for b6, so every child has strictly fewer parent criteria and a strict subset of the changed subsystems; the current two-way split of the bundle is not enough because the six-effect half still exceeds the responsibility limit. Keep the WI-06d-c boundary (trigger and nudge here, low-frequency gate and amplitude budget there) and the WI-06e/f/g seam constraints verbatim in the children."
+  "summary": "Story decomposes the six section-48 juice effects plus the cross-band contrast walk into six focused leaves, each one behavior and exactly one named subsystem (a strict subset of the parent's six). Responsibilities stay within the three limit per leaf: WI-06d-b1 (bubbles+silt particle layers, 2 owners), b2 (light sway, 2), b3 (depth-record HUD cue, 1-2), b4 (distant-motion impulse, exactly 3: camera nudge + presentation flag + trigger params), b5 (parting schools render-split, 2), b6 (verification-only, 2: browser-harness walk + perf log). The prior oversized leaf (7 behaviors / >=5 responsibilities) is fully split; no child re-bundles effects. Criteria preserved verbatim and covered: AC-art-geometry retained by all six with WI-06d-b6 named final proof owner of the juice part (re-triggers all six in one recorded pass, so the six-effect union is asserted once, not per child), AC-art-palettes retained only by WI-06d-b6 which owns the cross-band walk; child-local criteria (AC-juice-*, AC-perf-walk) add focused verification without replacing parent text. Both retained criteria match WI-06d verbatim, so no parent criterion is dropped or renamed. Dependencies are acyclic and correct: b1-b5 inherit [WI-06a,b,c] and are parallel; b6 adds [b1..b5] plus the bands (records the union only after every effect exists); no child depends on an ancestor or descendant. Cross-child proof is explicit: the b4 flag -> WI-06d-c shake-gate interplay is assigned to WI-06d-c, and the WI-06g reduced-flashing gate is deferred downstream, so b4 stays focused on trigger+nudge+flag. Verification is focused, not whole-game-fix: WI-06d-b6 changes only harness/evidence and routes any defect (too-similar band, missed section-34 budget) through the fix-planning route rather than inline art changes. No empty node, no hidden scope, no contradictory boundaries."
 }
