@@ -1,0 +1,8 @@
+{
+  "status": "accepted",
+  "fingerprint": "0d0fae71c6641d636e86fe4fb3ed65852d3e5ea64b8803bbd9d17cf93e713ffa",
+  "behavior_count": 1,
+  "subsystems": ["ui - hud cue"],
+  "coverage": true,
+  "summary": "One focused behavior: a one-shot HUD-adjacent depth-record tick cue in the src/ui/hud.ts depth readout, presentation only. Scope inventory verified against source: the sim already owns the record state and comparison (player.maxDepth maintained in Simulation.updateProgression), the HUD has a per-frame depth readout seam, and no 'record just set' signal exists, which matches the spec's conditional second allowed owner (a behavior-neutral read-only sim accessor); total named owners <= 2, under the limit. Parent criterion AC-art-geometry is retained verbatim and AC-juice-depthtick is a focused child-local addition. depends_on [WI-06a, WI-06b, WI-06c] inherits the story's band-settled dependencies with no ancestor or descendant edge. Verification is focused on exactly this cue (scenario test proving it fires exactly once on a new record and not on shallower/equal depth; local in-band clip; headless suite and build green) and explicitly delegates the six-effect juice browser union to the named final proof owner WI-06d-b6. Constraints bound the item: no new gameplay logic or sim state, no changes to sibling juice items, a single-boolean reduced-flashing suppression seam for WI-06g, and spoiler-safe recording."
+}
