@@ -161,7 +161,7 @@ export function strongestTaggedPos(
 // player (the throttling focus) within PART_RADIUS is repelled.
 const FLOCK_RADIUS = 220; // bounded local perception (request §20)
 const FLOCK_SEPARATION_RADIUS = 60; // personal space
-const PART_RADIUS = 300; // the player parts the school (request §48)
+export const PART_RADIUS = 300; // the player parts the school (request §48)
 const FLOCK_SPEED_REF = 140; // terminal speed the steering model expects
 
 /**

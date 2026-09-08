@@ -1,0 +1,9 @@
+t=0s player=(2340,-801) center=(2713,-809) minD=310 maxD=446 factor=1
+t=1s player=(2340,-798) center=(2713,-807) minD=310 maxD=446 factor=1
+t=2s player=(2340,-798) center=(2714,-806) minD=312 maxD=447 factor=1
+t=3s player=(2340,-798) center=(2713,-806) minD=311 maxD=446 factor=1
+t=4s player=(2340,-798) center=(2712,-806) minD=310 maxD=445 factor=1
+t=5s player=(2340,-798) center=(2710,-806) minD=307 maxD=443 factor=1
+t=6s player=(2340,-798) center=(2706,-806) minD=305 maxD=439 factor=1
+t=7s player=(2340,-798) center=(2709,-809) minD=306 maxD=443 factor=1
+t=8s player=(2340,-798) center=(2709,-809) minD=307 maxD=443 factor=1

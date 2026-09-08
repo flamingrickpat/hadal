@@ -19,6 +19,7 @@
  *   registry — the `Simulation` constructor throws.
  */
 import { vec2 } from '../util/math';
+import { HIDDEN_CREATURES } from '../content/secret/hiddenCreatures';
 import type { CreatureDef } from './CreatureDef';
 
 // A schooling type: small, quick, and spooked by noise and light.
@@ -102,4 +103,5 @@ export const CREATURE_BY_ID: Record<string, CreatureDef> = {
   [SCAVENGER.id]: SCAVENGER,
   [PREDATOR.id]: PREDATOR,
   [FEEDER.id]: FEEDER,
+  ...Object.fromEntries(HIDDEN_CREATURES.map((d) => [d.id, d])),
 };

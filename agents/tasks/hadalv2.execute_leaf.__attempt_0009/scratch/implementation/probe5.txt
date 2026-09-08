@@ -1,0 +1,9 @@
+settled  t=8.0 spread=87.8 minD=928.9 p=(1300,-100) center=(2002,-814)
+swimTo took 167 steps
+at-swimTo t=10.8 spread=75.0 minD=139.1 p=(1942,-699) center=(2035,-853)
+  reformed  t=10.8 spread=75.0 minD=139.1 p=(1942,-699) center=(2035,-853)
+reform+5 t=15.8 spread=81.4 minD=257.4 p=(2017,-769) center=(2182,-1011)
+reform+10 t=20.8 spread=77.9 minD=285.3 p=(2017,-769) center=(2210,-1035)
+reform+15 t=25.8 spread=77.8 minD=288.7 p=(2017,-769) center=(2212,-1036)
+reform+20 t=30.8 spread=77.8 minD=289.1 p=(2017,-769) center=(2210,-1038)
+reformed2 t=30.8 spread=77.8 minD=289.1 p=(2017,-769) center=(2210,-1038)

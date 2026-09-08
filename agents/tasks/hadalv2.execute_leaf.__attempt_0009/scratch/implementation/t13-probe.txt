@@ -1,0 +1,3 @@
+t=0.016666666666666666 size=1 queryNear(1500) n=0
+strongestSignalPos(noise)=null
+strongestSignalPos(noise) again=null

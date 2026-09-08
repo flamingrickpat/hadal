@@ -39,9 +39,11 @@ describe('fixture organisms (framework test fixtures, not roster content)', () =
   // WI-02c revision: the ecology illusion added three more neutral fixtures
   // (scavenger, predator, filter feeder). The WI-02a count of 2 above
   // remains valid for those two; the registry now holds the five fixtures.
-  it('the registry holds the five framework fixtures and no roster content', () => {
-    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(5);
-    expect(Object.keys(CREATURE_BY_ID).every((id) => id.startsWith('fixture-'))).toBe(true);
+  // WI-03a revision: the tier-1 roster content (T-01…T-13, internal ids
+  // only) is merged into the same registry — eleven entries now.
+  it('the registry holds the five framework fixtures plus the tier-1 roster', () => {
+    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(11);
+    expect(Object.keys(CREATURE_BY_ID).filter((id) => id.startsWith('fixture-'))).toHaveLength(5);
   });
 });
 

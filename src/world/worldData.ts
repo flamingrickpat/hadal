@@ -258,6 +258,14 @@ const shelf: WorldChunkDef = {
     { id: 'shelf-pocket', kind: 'pocket', position: vec2(5600, -4600) },
     { id: 'shelf-interior', kind: 'interior', position: vec2(11800, -3900), interior: true },
   ],
+  // Tier-1 ambient/schooling fauna (internal ids only, request §33): dense
+  // open-water schooling, clear of the landmark and the wreck interior.
+  creatureSpawns: [
+    { id: 't01-shelf', creature: 'T-01', position: vec2(7000, -3500), count: 6 },
+    { id: 't02-shelf', creature: 'T-02', position: vec2(8000, -3000), count: 3 },
+    { id: 't03-shelf', creature: 'T-03', position: vec2(9500, -3500), count: 3 },
+    { id: 't13-shelf', creature: 'T-13', position: vec2(11000, -2500), count: 2 },
+  ],
   ambient: { particleDensity: 0.6, light: 0.5 },
 };
 
@@ -308,6 +316,16 @@ const twilight: WorldChunkDef = {
       actions: [{ type: 'setStoryFlag', flag: 'abyssal-reached' }, { type: 'showRadio', textId: 'radio-abyssal-1' }],
     },
   ],
+  // Tier-1 ambient fauna (internal ids only, request §33): the hanging feeder
+  // hovers just above the facility interior, near the vent field; the rest ride
+  // open water.
+  creatureSpawns: [
+    { id: 't02-twilight', creature: 'T-02', position: vec2(10000, -5500), count: 3 },
+    { id: 't03-twilight', creature: 'T-03', position: vec2(11000, -5000), count: 3 },
+    { id: 't05-twilight', creature: 'T-05', position: vec2(12500, -5800), count: 3 },
+    { id: 't06-twilight', creature: 'T-06', position: vec2(14000, -5500), count: 3 },
+    { id: 't13-twilight', creature: 'T-13', position: vec2(16000, -5000), count: 2 },
+  ],
   ambient: { particleDensity: 0.5, light: 0.35 },
 };
 
@@ -350,6 +368,13 @@ const abyss: WorldChunkDef = {
       condition: { type: 'reachDepth', depth: 8500 },
       actions: [{ type: 'setStoryFlag', flag: 'deep-reached' }, { type: 'showRadio', textId: 'radio-deep-1' }],
     },
+  ],
+  // Tier-1 ambient fauna (internal ids only, request §33), clear of the
+  // landmark block and the facility interior.
+  creatureSpawns: [
+    { id: 't03-abyss', creature: 'T-03', position: vec2(15500, -8000), count: 3 },
+    { id: 't06-abyss', creature: 'T-06', position: vec2(17000, -7800), count: 4 },
+    { id: 't13-abyss', creature: 'T-13', position: vec2(22500, -8000), count: 2 },
   ],
   ambient: { particleDensity: 0.45, light: 0.25 },
 };
@@ -395,6 +420,9 @@ const hadal: WorldChunkDef = {
       actions: [{ type: 'setStoryFlag', flag: 'hadal-reached' }, { type: 'showRadio', textId: 'radio-hadal-1' }],
     },
   ],
+  // Tier-1 ambient fauna (internal ids only, request §33): a sparse drifter
+  // ribbon in the deepest band, west of the installation.
+  creatureSpawns: [{ id: 't06-hadal', creature: 'T-06', position: vec2(19500, -9650), count: 2 }],
   ambient: { particleDensity: 0.4, light: 0.15 },
 };
 

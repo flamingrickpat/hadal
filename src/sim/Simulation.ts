@@ -54,6 +54,7 @@ import {
   PREDATOR_KILL_DIST,
   PREDATOR_SIGNAL_STRENGTH,
   PREDATOR_TAG,
+  PART_RADIUS,
   SCAVENGE_RADIUS,
   SCAVENGE_THRESHOLD,
   fleeSignalStrength,
@@ -126,6 +127,13 @@ export class Simulation {
   readonly sonar: SonarSystem;
   /** The live creatures, advanced on the same fixed step as the player (request §30, §19). */
   readonly creatures: Creature[] = [];
+  /**
+   * The dense-medium factor for the player this step (request §48): 1 in open
+   * water, or the densest `ecology.density` of a dense school with an active
+   * member within the parting radius — applied as extra drag on the player's
+   * velocity. Read by the browser HUD/debug, asserted headlessly.
+   */
+  denseMediumFactor = 1;
   /**
    * The audio events emitted by creature state transitions this step
    * (request §19 audio is data): the browser audio adapter consumes these;
@@ -342,6 +350,29 @@ export class Simulation {
         c.lastTransition = null;
       }
     }
+    // The dense-medium drag (request §48): while the player is inside the
+    // parting radius of a dense school's active member, the school damps the
+    // player's speed by that species' `ecology.density` factor — swimming
+    // through the school is harder than open water.
+    const factor = this.denseMediumAt(this.player.position);
+    this.denseMediumFactor = factor;
+    if (factor < 1) {
+      const drag = Math.exp(-Math.log(1 / factor) * dt);
+      this.player.velocity.x *= drag;
+      this.player.velocity.y *= drag;
+    }
+  }
+
+  /** The densest `ecology.density` over active members within `PART_RADIUS` of `pos`, or 1. */
+  private denseMediumAt(pos: Vec2): number {
+    let factor = 1;
+    for (const c of this.creatures) {
+      const density = c.def.ecology?.density;
+      if (c.active && density !== undefined && density < factor) {
+        if (Math.hypot(c.position.x - pos.x, c.position.y - pos.y) < PART_RADIUS) factor = density;
+      }
+    }
+    return factor;
   }
 
   /**

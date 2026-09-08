@@ -105,6 +105,16 @@ export class Creature {
     this.rng = rng;
   }
 
+  /**
+   * Enter `flee` steering away from `from` — the public seam bespoke
+   * controllers (request §19) use to flee a sensed source the generic
+   * engine would not (it `investigate`s plain noise).
+   */
+  fleeFrom(from: Vec2): void {
+    this.fleePoint = from;
+    this.setState('flee');
+  }
+
   /** Set the state, recording the transition for audio emission (request §19). */
   setState(next: CreatureState): void {
     if (next === this.state) return;
@@ -325,10 +335,11 @@ export class Creature {
 
   /**
    * The strongest signal of one channel within the sense range, or null —
-   * queried only on transitions, so the per-signal allocation in
+   * queried on transitions by the generic engine, and per-frame by bespoke
+   * controllers (request §19) to find a source; the per-signal allocation in
    * `queryNear` stays off the hot path (request §34).
    */
-  private strongestPos(type: SignalType): Vec2 | null {
+  strongestPos(type: SignalType): Vec2 | null {
     const range = this.def.senses.range ?? SIGNAL_RANGE_REF;
     const n = this.bus.queryNear(this.position.x, this.position.y, range, this.time, this.queryOut);
     let best = -1;

@@ -127,6 +127,12 @@ export interface EcologyDef {
   quiet?: number;
   /** Orients along the local current field while feeding (request §20, §64). */
   filterFeeder?: boolean;
+  /**
+   * A dense school: while the player is within the school's parting radius of
+   * an active member, the player's speed is damped by this factor (request
+   * §48: swimming through the school is harder than open water).
+   */
+  density?: number;
 }
 
 /**
