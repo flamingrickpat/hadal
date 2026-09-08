@@ -1,0 +1,23 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "WI-06d-b5",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-06d-b/workitems/WI-06d-b5.md",
+      "specification": "---\nid: WI-06d-b5\nkind: work_item\nparent: WI-06d-b\nchildren: []\ndepends_on: [\"WI-06a\", \"WI-06b\", \"WI-06c\"]\ncriteria:\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\n  AC-juice-schools: \"Schools visually part when the player enters their proximity and re-form after, as a render-only split with data-driven split parameters; a Node scenario proves the split state toggles without changing steering outcomes\"\nbehavior: \"Implement parting schools: the school render splits around the player and re-forms, render behavior only\"\nsubsystems: [\"rendering - school render path\"]\nverification: \"Node scenario passes: split state toggles around the player and steering outcomes are unchanged; browser clip or screenshot of a school parting around the player; headless suite and build stay green\"\n---\n\n# WI-06d-b5 — Parting schools\n\n## Goal\n\nImplement the section 48 parting-schools juice effect: when the player\nenters a school's proximity, the school visually parts around the\nplayer, then re-forms after the player leaves. Render behavior only —\na visual split state on the school render path, not a steering-rule\nchange.\n\n## Changed responsibilities (the only owners that change)\n\n1. The school render path in the ST-02/ST-03 creature renderer — add a\n   per-school split state (whole / parting / re-forming) that offsets\n   rendered members around the player's position; the underlying\n   steering outcomes are untouched.\n2. The split parameters — a data module (proximity radius, parting\n  spread, re-form time) as pure data, Node-testable.\n\nTests do not count as additional responsibilities.\n\n## Deliverables (checkable)\n\n- Split: a visual effect — school members render offset/avoiding the\n  player within the proximity radius, re-forming after departure.\n- No steering-rule changes: the sim-side school positions/velocities\n  are exactly what the existing steering produces.\n\n## Tests\n\n- Node scenario (via the shared scenario harness): a school near the\n  player — assert the render-split state toggles on entering/leaving\n  proximity, and that the steering outcomes (sim positions/velocities\n  after the same input) are bit-identical to the no-split baseline.\n- Browser (local proof): clip or screenshot of a school parting\n  around the player in an early/fixture area. The final proof owner of\n  the AC-art-geometry juice-part browser union is WI-06d-b6 — do not\n  re-assert the six-effect union here.\n\n## Constraints, assumptions, non-goals\n\n- Render only: no steering-rule changes, no creature AI, no balance\n  changes, no new content.\n- No changes to particles (WI-06d-b1), lighting (WI-06d-b2), HUD\n  (WI-06d-b3) or camera (WI-06d-b4); no audio.\n- Spoiler rules (sections 0, 12, 68, 70): record with early bands or\n  private fixtures and internal ids only.\n\n## Fresh-session handoff\n\nRead WI-06d-b/plan.md (story scope and proof ownership). Inspect the\nschool render path in the ST-02/ST-03 creature renderer (the school\nmember draw call and where per-member render offsets can be applied),\nand the shared scenario harness for the steering-outcome comparison.\nRequest sections: 14.3, 34, 35, 48, 70.\n",
+      "fingerprint": "531ed1eda532db67dedafb60dbb61e78967ab42425b3e980b654b9bde8c846e5",
+      "base_rev": "2aeb865c7bdab5c8049a6d8c4c46a4eac3c44a6a",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06d-b5.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
