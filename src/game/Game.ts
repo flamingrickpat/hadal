@@ -27,6 +27,7 @@ import { createSimulation, makeSimWorld, type Simulation } from '../sim/Simulati
 import { loadFromStorage, resetSave, saveToStorage } from './save';
 import { PLAYER_PLANE_Z } from './constants';
 import { Lighting } from '../render/lighting';
+import { CreatureRenderer } from '../render/creatureRender';
 import { ParticleField } from '../render/particles';
 import { PostFX } from '../render/postfx';
 import { SonarVisuals } from '../render/sonar';
@@ -44,6 +45,7 @@ export class Game implements DebugPanelHost {
   private readonly menu: CraftingMenu;
   private readonly world: World;
   private readonly lighting: Lighting;
+  private readonly creatureRenderer: CreatureRenderer;
   private readonly particles: ParticleField;
   private readonly postfx: PostFX;
   private readonly sonarVisuals: SonarVisuals;
@@ -62,6 +64,7 @@ export class Game implements DebugPanelHost {
     this.world = new World(renderer.scene, this.sim.chunks);
     renderer.setWorldBounds(this.world.bounds);
     this.lighting = new Lighting(renderer.scene);
+    this.creatureRenderer = new CreatureRenderer(renderer.scene);
     this.particles = new ParticleField(renderer.scene);
     this.sonarVisuals = new SonarVisuals(renderer.scene, this.sim.sonar);
     const buffer = new THREE.Vector2();
@@ -84,6 +87,7 @@ export class Game implements DebugPanelHost {
     window.addEventListener('touchstart', unlockAudio, { once: true });
     if (new URLSearchParams(window.location.search).has('debug')) {
       (window as unknown as Record<string, unknown>).__HADAL_AUDIO__ = this.audio;
+      (window as unknown as Record<string, unknown>).__HADAL_GAME__ = this;
     }
     this.radio = document.createElement('div');
     this.radio.className = 'radio-message';
@@ -136,6 +140,10 @@ export class Game implements DebugPanelHost {
     const ambient = this.sim.ambientIntensityAt(center);
     const ambientScale = ambient > 0 ? Math.min(1, 0.35 + ambient) : 0;
     this.particles.update(frameDt, center, half, profile, (pos, time) => this.sim.currents.velocityAt(pos, time), ambientScale);
+    // Creatures are a pure render view of the sim state (request §30): the
+    // procedural bodies (request §13) are redrawn from the creature list
+    // every frame, driven by the simulation clock.
+    this.creatureRenderer.update(this.sim.creatures, this.sim.state.timeSec, profile);
     this.sonarVisuals.update(this.sim.state.timeSec);
     this.postfx.update(profile, frameDt);
     this.audio.update(this.sim.player);
