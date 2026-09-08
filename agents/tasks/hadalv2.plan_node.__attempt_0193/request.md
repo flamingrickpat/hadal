@@ -1,0 +1,40 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "plan_node",
+  "configured_task_id": "hadalv2.plan_node",
+  "input": {
+    "selection": {
+      "id": "ST-04",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "path": "agents/tasks/hadalv2/stories/ST-04/plan.md",
+      "specification": "---\nid: ST-04\nkind: story\nparent: null\nchildren: [\"WI-04a\", \"WI-04b\", \"WI-04c\", \"WI-04d\"]\ndepends_on: [\"ST-03\"]\ncriteria:\n  AC-enc-beats: \"At least 5 authored spectacle beats fire through the trigger system inside live gameplay, each with authored timing, entrance, environmental reaction, and an available escape path\"\n  AC-enc-story: \"The environmental story sequence is delivered through 8-12 radio messages, 10-16 short text fragments, 6-10 no-text story props, 3-5 major landmarks with visible history, and 1-2 deep discoveries contradicting the official timeline\"\n  AC-enc-reactions: \"World-state reactions alter at least three earlier zones after major milestones through story flags and spawn-table changes\"\n  AC-enc-puzzles: \"3-5 environmental puzzle moments exist near the critical path and are completable headlessly through the scenario harness\"\nbehavior: \"Author the encounter and story layer (request sections 22, 36, 38, 51, 60, 66): spectacle beats, the four-channel story delivery, world reactions, and environmental puzzles, all trigger-driven\"\nsubsystems: [\"trigger system\", \"world content data\", \"creature simulation\", \"headless scenario tests\"]\nverification: \"Node scenarios fire each beat, each puzzle, and each flag-gated reaction from a fresh save; browser checks confirm the beats read as authored moments; every fragment passes the section 38 keep-or-delete test\"\n---\n\n# ST-04 — Authored encounters, story sequence, world reactions\n\n## Goal\n\nAuthor the encounter and story layer on the WI-07 baseline: the five+\nspectacle beats, the four-channel environmental story payload, the\nflag-gated world-state reactions, and the 3-5 environmental puzzles, all\ndata-driven through the existing `EncounterTrigger` system\n(`src/world/triggers.ts`) and the production world data\n(`src/world/worldData.ts`). Beats stage around stable ST-03 roster ids.\nNothing here names deep creatures, the lore truth, or the MacGuffin\n(sections 0, 12, 68); the private reveal map from WI-01c is the source of\ntruth and is referenced by id only, never quoted.\n\n## Why this shape (review split)\n\nThe review split this empty story (15+ distinct deliverable behaviors).\nEach child carries exactly one parent criterion (strictly fewer than the\nparent's four) and at most three named changed responsibilities:\n\n- WI-04a: the five+ authored spectacle beats (section 11.4 staging grammar,\n  section 67 staging rules).\n- WI-04b: the section 22 four-channel story payload inside the section 38\n  budget, plus the section 51 foreshadow placement.\n- WI-04c: the section 60 flag-gated world-state reactions.\n- WI-04d: the 3-5 section 66 environmental puzzle moments.\n\n## Criteria assignment and proof ownership\n\nChildren carry parent criteria verbatim; the union covers all four.\n\n- AC-enc-beats: WI-04a alone. Final proof owner: WI-04a - one headless\n  scenario per beat fired from a fresh save, plus the browser check that\n  the beats read as authored moments in sequence (the cross-child proof of\n  \"inside live gameplay\"; no other child re-asserts it).\n- AC-enc-story: WI-04b alone. Final proof owner: WI-04b - the section 38\n  budget check across all four channels, the keep-or-delete classification\n  of every written fragment, and the section 51 foreshadow coverage check\n  (2-4 earlier traces per major late reveal, none naming the reveal).\n- AC-enc-reactions: WI-04c alone. Final proof owner: WI-04c - fresh-save\n  scenarios that hit the authored milestone, physically return to at least\n  three earlier zones, and assert the flag-gated spawn-table and\n  world-state changes.\n- AC-enc-puzzles: WI-04d alone. Final proof owner: WI-04d - one headless\n  scenario per puzzle completed through the scenario harness from a fresh\n  save, asserting the completion flag is set.\n\n## Dependency notes\n\n- The story depends on ST-03: beats reference stable roster organism ids\n  and states; puzzle types that lure creatures reuse ST-03 behavior.\n- WI-04a, WI-04b and WI-04d are parallel. WI-04c depends on WI-04a and\n  WI-04d: reaction gates read the completion story flags their triggers\n  set (the \"major milestones\" of section 60), and its scenarios must hit\n  those milestones from a fresh save.\n- Feeds ST-05: the final-zone approach content and the last foreshadow\n  traces land in WI-04a/WI-04b, but the MacGuffin mechanics do not\n  (ST-05 owns them). ST-06's section 26 map overlay consumes WI-04b's\n  landmark ids.\n\n## Constraints and non-goals\n\n- The most important moments are authored, not randomly spawned (section\n  67; section 61 randomization bans). Partial scripting is allowed per\n  section 67; player control is preserved; no long cutscenes.\n- Contradictions between official records and observed reality are allowed\n  (section 22) without unreliable-narrator abuse.\n- Reactions stay cheap: a few flags and spawn-table changes (section 60).\n- No colored-symbol puzzle panels (section 66).\n- Extend the trigger system, do not rebuild it (WI-07 baseline).\n- No ending content, no MacGuffin, no balance tuning (ST-05/ST-07).\n\n## Fresh-session handoff (for reviewers of the children)\n\nEach child stands alone with its frontmatter plus this story. Read request\nsections 3, 11.4, 22, 36, 38, 51, 53, 60, 66, 67 and ST-03. The private\nreveal map from WI-01c is the source of truth for beat slots and foreshadow\nplacement; plan nodes reference it by id only, never quote it.\n",
+      "fingerprint": "684de5584adb9cffdd77a337cc8539de3a96ae0843a507a2b2b322287f1d9492",
+      "base_rev": "5106b6de9a47aa961bb857c30ae222ed29f6fcb4",
+      "children": [
+        {
+          "id": "WI-04a",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-04\\workitems\\WI-04a.md"
+        },
+        {
+          "id": "WI-04b",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-04\\workitems\\WI-04b.md"
+        },
+        {
+          "id": "WI-04c",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-04\\workitems\\WI-04c.md"
+        },
+        {
+          "id": "WI-04d",
+          "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\stories\\ST-04\\workitems\\WI-04d.md"
+        }
+      ],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\ST-04.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
