@@ -1,0 +1,26 @@
+﻿=== T-ID classification (tracked public tree, 702 files) ===
+REAL agents/projects/hadal/notes/20260907-implementer-wi01b-creature-roster.md:L51 [T-01] -> ...gend line also mentions the marker word. - The selected roster is 22 (T-01,02,03,05,06,08,09,10,11,13,14,15,16,17,18, 19,20,22,23,25,27,31); T...
+REAL agents/projects/hadal/notes/20260907-implementer-wi01b-creature-roster.md:L52 [T-04] -> ...1,02,03,05,06,08,09,10,11,13,14,15,16,17,18, 19,20,22,23,25,27,31); T-04,07,12,21,24,26,28,29,30,32 are the recorded rejections (including t...
+REAL agents/projects/hadal/notes/20260907-implementer-wi01b-creature-roster.md:L53 [T-26] -> ...e recorded rejections (including the deliberate anti-cliche rejects T-26/T-29/T-30). - Creative-pass commits are bare: `creative pass: <what> ...
+REAL agents/projects/hadal/notes/20260907-implementer-wi01b-creature-roster.md:L53 [T-29] -> ...orded rejections (including the deliberate anti-cliche rejects T-26/T-29/T-30). - Creative-pass commits are bare: `creative pass: <what> (priv...
+REAL agents/projects/hadal/notes/20260907-implementer-wi01b-creature-roster.md:L53 [T-30] -> ... rejections (including the deliberate anti-cliche rejects T-26/T-29/T-30). - Creative-pass commits are bare: `creative pass: <what> (private)`...
+REAL agents/tasks/hadalv2.execute_leaf.__attempt_0004/reviews/WI-01b-review.md:L33 [T-26] -> ...ichés were generated as scored candidates and rejected on the record (T-26 / T-29 / T-30), so the gate is demonstrably applied rather than asser...
+REAL agents/tasks/hadalv2.execute_leaf.__attempt_0004/reviews/WI-01b-review.md:L33 [T-29] -> ...ere generated as scored candidates and rejected on the record (T-26 / T-29 / T-30), so the gate is demonstrably applied rather than asserted. | ...
+REAL agents/tasks/hadalv2.execute_leaf.__attempt_0004/reviews/WI-01b-review.md:L33 [T-30] -> ...erated as scored candidates and rejected on the record (T-26 / T-29 / T-30), so the gate is demonstrably applied rather than asserted. | | §47 p...
+T-ID: real=8 substring-collisions=1026
+
+=== T-ID classification (all commit messages, git log --all) ===
+T-ID commits: real=0
+
+=== Forbidden token hits, tracked public tree (file:line, token INDEX, context) ===
+F agents/templates/mermaid.min.js:L562 #48 -> d&&Pae(e,"end",t.arrowTypeEnd,r,i,n,a,s)},"addEdgeMarkers"),Yqe={arrow_cross:{type:"cross",fill:!1},arrow_p
+F agents/templates/mermaid.min.js:L565 #48 -> (e,t,r,i)=>{t.forEach(n=>{EUe[n](e,r,i)})},"insertMarkers"),nUe=o((e,t,r)=>{Z.trace("Making markers for ",r
+F agents/templates/mermaid.min.js:L571 #48 -> Cluster:wg,insertEdge:K4,insertEdgeLabel:j4,insertMarkers:Z4,insertNode:Sg,interpolateToCurve:EM,labelHelpe
+F agents/templates/mermaid.min.js:L894 #48 -> ertCluster:r,insertEdge:i,insertEdgeLabel:n,insertMarkers:a,insertNode:s,log:l,positionEdgeLabel:u},{algori
+F agents/templates/mermaid.min.js:L2422 #48 -> h").attr("d","M 19,7 L9,13 L14,7 L9,1 Z")},"insertMarkers"),tkt=o(function(e,t,r,i){Co=ge().state;let n=ge(
+F agents/templates/mermaid.min.js:L3094 #48 -> (e,t,r,i)=>{t.forEach(n=>{DSt[n](e,r,i)})},"insertMarkers"),bSt=o((e,t,r)=>{Z.trace("Making markers for ",r
+F agents/templates/mermaid.min.js:L3094 #48 -> peEnd&&v8e(e,"end",t.arrowTypeEnd,r,i,n)},"addEdgeMarkers"),MSt={arrow_cross:"cross",arrow_point:"point",ar
+forbidden-tree-hits=7
+
+=== Forbidden token hits, all commit messages ===
+forbidden-commit-hits=0
