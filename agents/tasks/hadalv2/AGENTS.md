@@ -44,9 +44,9 @@
   milestones).
 - `stories/ST-WI-06d/` — WI-06d promoted from ST-06's work items to a story
   after review split: `plan.md` (story node, id WI-06d) plus
-  `workitems/WI-06d-a.md` (debug geometry replacement) and
-  `workitems/WI-06d-c.md` (section 16 shake rules and widescreen
-  behavior); WI-06d-b further promoted to `stories/ST-WI-06d-b/`.
+  `workitems/WI-06d-a.md` (debug geometry replacement); WI-06d-b
+  further promoted to `stories/ST-WI-06d-b/` and WI-06d-c further
+  promoted to `stories/ST-WI-06d-c/`.
 - `stories/ST-WI-06d-b/` — WI-06d-b promoted from ST-WI-06d's work items to a
   story after review split: `plan.md` (story node, id WI-06d-b; section 48
   juice effects and cross-band contrast walk) plus
@@ -56,6 +56,13 @@
   impulse and shake-gate flag), `workitems/WI-06d-b5.md` (parting
   schools) and `workitems/WI-06d-b6.md` (cross-band contrast walk and
   final juice proof).
+- `stories/ST-WI-06d-c/` — WI-06d-c promoted from ST-WI-06d's work items to a
+  story after review split: `plan.md` (story node, id WI-06d-c; section 16
+  shake rules and widescreen behavior) plus
+  `workitems/WI-06d-c-a.md` (low-frequency shake rules: single flag-gated
+  path, amplitude budget, presentation flag for WI-06g) and
+  `workitems/WI-06d-c-b.md` (widescreen composition, no letterboxed dead
+  zones).
 - `stories/ST-WI-06e/` — WI-06e promoted from ST-06's work items to a story
   after review split: `plan.md` (story node, id WI-06e) plus
   `workitems/WI-06e-a.md` (depth-based mixing),

@@ -61,8 +61,9 @@ WI-04d), then ST-05 (WI-05a, then WI-05b, then WI-05c), then ST-06
 (WI-06f after WI-04b in parallel; WI-06a, WI-06b and WI-06c in
 parallel, then the WI-06d story (WI-06d-a, the WI-06d-b story (WI-06d-b1,
 WI-06d-b2, WI-06d-b3, WI-06d-b4 and WI-06d-b5 in parallel, then
-WI-06d-b6, the cross-band walk and final juice proof) and WI-06d-c in
-parallel) and the WI-06e story (WI-06e-a and WI-06e-b in
+WI-06d-b6, the cross-band walk and final juice proof), and the
+WI-06d-c story (WI-06d-c-b after the band pass, and WI-06d-c-a after
+WI-06d-b4) in parallel) and the WI-06e story (WI-06e-a and WI-06e-b in
 parallel, then WI-06e-c, the final AC-art-sound proof), then WI-06g
 after WI-04b and the WI-06d story), ST-07 (WI-07a and WI-07b in parallel,
 then WI-07d after WI-07a, and WI-07c after WI-07a and WI-07b), then ST-08
@@ -140,9 +141,11 @@ table is valid.
   (section 26 bathymetry map overlay) and `WI-06g.md` (section 43
   accessibility controls) — full art/audio pass, expanded; WI-06d
   promoted to `stories/ST-WI-06d/` (`plan.md` + `workitems/WI-06d-a.md`,
-  `WI-06d-c.md`, with WI-06d-b further promoted to
+  with WI-06d-b further promoted to
   `stories/ST-WI-06d-b/` (`plan.md` + `workitems/WI-06d-b1.md` …
-  `WI-06d-b6.md`)) and WI-06e promoted to
+  `WI-06d-b6.md`) and WI-06d-c further promoted to
+  `stories/ST-WI-06d-c/` (`plan.md` + `workitems/WI-06d-c-a.md`,
+  `WI-06d-c-b.md`)) and WI-06e promoted to
   `stories/ST-WI-06e/` (`plan.md` + `workitems/WI-06e-a.md`,
   `WI-06e-b.md`, `WI-06e-c.md`).
 - `stories/ST-07/plan.md` + `stories/ST-07/workitems/WI-07a.md` (section 71
