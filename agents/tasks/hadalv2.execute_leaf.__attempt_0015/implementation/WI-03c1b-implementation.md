@@ -160,3 +160,32 @@ WI-03c1a `CreatureDef`s and section 10 damage model:
 - Player-creature damage now exists (tier-3 rules only). The generic
   `attack` state still does not damage the player — unchanged from before
   this item; out of scope here.
+
+## Revision (attempt 3, 2026-09-09) — reviewer finding fixed
+
+The work-item reviewer (`reviews/WI-03c1b-review.md`) raised one finding:
+`t16Controller` and `t17Controller` in `hiddenCreatures.ts` were
+byte-identical bodies, which falsifies the work item's own anti-duplication
+assumption ("Falsified if two predators need the same bespoke controller —
+generalize it instead of duplicating").
+
+**Correction to the Shrink/Flatten report above (lines 95-99):** the claim
+that the T-14/T-16/T-17 pin controllers are "3-line state pins with
+different armed states, not copies of one controller" is factually wrong for
+T-16/T-17 — both used the armed state `custom`, so the two controllers were
+copies of one controller. T-14's pin (armed `alert`) was not a copy.
+
+**Fix (this commit):** extracted the one parameterized rest-state pin
+`pinRestExcept(armed: CreatureState): CreatureController` in
+`hiddenCreatures.ts`; `t14Controller = pinRestExcept('alert')`,
+`t16Controller = t17Controller = pinRestExcept('custom')`. Behavior is
+unchanged (the pin body is byte-identical to the old bodies).
+
+**Verification (re-run after the change):**
+
+- `npx tsc --noEmit` → exit 0.
+- `npx vitest run src/sim/tier3Scenario.test.ts` → **21 passed (21)**.
+- `npx vitest run` (full suite) → **231 passed (231)** (29 files).
+
+No test, def, or rule behavior changed; the change is purely the
+de-duplication the work item's contract required.

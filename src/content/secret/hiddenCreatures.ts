@@ -30,7 +30,7 @@
  *   `Simulation` constructor throws on registry resolution (request §32).
  */
 import { vec2 } from '../../util/math';
-import type { CreatureController, CreatureDef } from '../../creatures/CreatureDef';
+import type { CreatureController, CreatureDef, CreatureState } from '../../creatures/CreatureDef';
 
 // T-01 — the dense school (bands: shelf). Its signature: the school parts
 // around the moving player (request §48) and a player inside the flock
@@ -381,13 +381,18 @@ export const T31: CreatureDef = {
 // pool). The arm thresholds the controllers read are the def's own sense
 // values (WI-03c1a data), so the rule and the data cannot drift apart.
 
-// T-14 holds the post: anything but the armed (alert) state is the held post.
-const t14Controller: CreatureController = (creature) => {
-  if (creature.state !== 'alert') {
+// The rest-state pin: everything but the organism's armed state is the held
+// rest — one parameterized controller with three real users (the armed state
+// differs per organism: alert vs custom), so the pin body exists once.
+const pinRestExcept = (armed: CreatureState): CreatureController => (creature) => {
+  if (creature.state !== armed) {
     creature.state = 'idle';
     creature.target = null;
   }
 };
+
+// T-14 holds the post: anything but the armed (alert) state is the held post.
+const t14Controller: CreatureController = pinRestExcept('alert');
 
 // T-15's whole machine — the burst cycle and the cornered charge — runs
 // simulation-side (it needs the player and the ambient pool), so the hook
@@ -398,20 +403,10 @@ const t15Controller: CreatureController = () => {
 };
 
 // T-16 is buried: anything but the strike (custom) state is inert geology.
-const t16Controller: CreatureController = (creature) => {
-  if (creature.state !== 'custom') {
-    creature.state = 'idle';
-    creature.target = null;
-  }
-};
+const t16Controller: CreatureController = pinRestExcept('custom');
 
 // T-17 holds its frame: anything but the silk (custom) state is a still colony.
-const t17Controller: CreatureController = (creature) => {
-  if (creature.state !== 'custom') {
-    creature.state = 'idle';
-    creature.target = null;
-  }
-};
+const t17Controller: CreatureController = pinRestExcept('custom');
 
 // T-14 — the territorial guardian (band: deep 4). Signature (private
 // roster): it never chases — it holds a fixed post around a landmark, and
