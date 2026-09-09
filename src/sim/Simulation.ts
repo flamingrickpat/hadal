@@ -114,6 +114,29 @@ export function emptyInput(): PlayerInput {
   };
 }
 
+// Tier-2 interaction tuning (request §21 — the mid-depth useful/neutral
+// fauna; WI-03b1). Each value is the single number that makes one signature
+// rule hold headlessly; the rules themselves live in `applyTier2Interactions`.
+const T08_TRADE_MATERIAL = 'salvage';
+const T08_TRADE_GIVE = 1; // carried units the player must hand over
+const T08_TRADE_YIELD = 2; // banked units the player receives
+const T09_HERD_RADIUS = 450; // how far the herder's herding reach extends
+const T09_HERD_DRIFT = 0.6; // fraction of the local current a herded member rides
+const T10_SEEK_RADIUS = 400; // how far a sweeper will seek a node to work
+const T10_ACQ_RADIUS = 250; // within this the sweeper is "working" the node
+const T10_WORK_SECONDS = 20; // a full sweep takes this long to expose yield
+const T10_BOOST = 2; // a finished sweep exposes this much extra yield
+const T11_LIFT_RADIUS = 250; // the pocket's lift reach
+const T11_LIFT_ACCEL = 30; // upward (toward-surface) accel on a nearby player
+const T27_RIDE_RADIUS = 150; // the chain's ride reach
+const T27_RIDE_SPEED = 35; // westward position drift on a nearby player (units/s)
+// T-31's depth-tiered drift speed (units/s along the lane axis): the one
+// constant maxSpeed cannot express three cruising speeds, so the depth tier
+// sets the drift directly (request §30).
+const T31_SHALLOW_DRIFT = 55; // y > -500
+const T31_MID_DRIFT = 30; // -500..-1500
+const T31_DEEP_DRIFT = 8; // y < -1500
+
 export class Simulation {
   readonly player: Player;
   readonly controller: PlayerController;
@@ -183,6 +206,10 @@ export class Simulation {
   private readonly ecologyTarget = vec2(0, 0);
   private readonly flockOut = vec2(0, 0);
   private readonly desiredOut = vec2(0, 0);
+  // Tier-2 per-creature working state (request §21): the film sweeper's
+  // accumulated sweep time per node and the nodes it has already finished.
+  // Creatures are stable objects, so keying by instance is safe.
+  private readonly tier2Sweep = new Map<Creature, { work: number; finished: Set<string> }>();
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -275,6 +302,7 @@ export class Simulation {
     this.wasSonar = input.sonar;
     this.sonar.update(dt, this.state.timeSec);
     this.stepCreatures(dt);
+    this.applyTier2Interactions(input, dt);
     if (input.toolSelect !== null) this.controller.setToolIndex(input.toolSelect);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
@@ -510,6 +538,176 @@ export class Simulation {
         steerVelocity(c.position, c.velocity, this.desiredOut, m, dt);
       }
     }
+  }
+
+  /**
+   * The tier-2 signature interactions (request §21, WI-03b1), resolved
+   * against the player's real input and inventory each step. These are the
+   * useful/neutral fauna rules the generic state machine cannot express:
+   * the feeding trade (T-08) fires on `interact`, the herder (T-09) drives
+   * the nearest congregation along the local current, the film sweeper
+   * (T-10) works a node until a finished sweep exposes more yield, the
+   * gas-pocket (T-11) gives a nearby player a passive lift, and the living
+   * cable (T-27) carries a nearby player along its axis. None is hostile and
+   * none mocks a rule — every one runs through this production simulation.
+   */
+  private applyTier2Interactions(input: PlayerInput, dt: number): void {
+    const p = this.player;
+    const t = this.state.timeSec;
+    if (input.interact) {
+      const feeder = this.nearestCreatureOf('T-08', p.position, INTERACT_RADIUS);
+      if (feeder !== null) this.doT08Trade();
+    }
+    for (const c of this.creatures) {
+      if (!c.active) continue;
+      const id = c.def.id;
+      if (id === 'T-09') this.herdT09(c, dt, t);
+      else if (id === 'T-10') this.sweepT10(c, dt);
+      else if (id === 'T-11') this.liftT11(c, dt);
+      else if (id === 'T-27') this.rideT27(c, dt);
+      else if (id === 'T-31') this.driftT31(c, dt);
+    }
+  }
+
+  /**
+   * The depth-tiered drift (T-31, request §11.1): the same organism cruises
+   * fastest near the surface, slower in mid-water, and barely at all in the
+   * deep. Applied as a position drift along the lane axis (the sanctioned
+   * mechanism for current/herd/ride motion, request §64) so a headless
+   * observer measures three distinct straight-line speeds from one species.
+   */
+  private driftT31(c: Creature, dt: number): void {
+    const y = c.position.y;
+    const speed = y > -500 ? T31_SHALLOW_DRIFT : y > -1500 ? T31_MID_DRIFT : T31_DEEP_DRIFT;
+    c.position.x -= speed * dt;
+  }
+
+  /** The nearest active creature of `id` within `radius` of `pos`, or null. */
+  private nearestCreatureOf(id: string, pos: Vec2, radius: number): Creature | null {
+    let best: Creature | null = null;
+    let bestD = radius;
+    for (const c of this.creatures) {
+      if (!c.active || c.def.id !== id) continue;
+      const d = Math.hypot(c.position.x - pos.x, c.position.y - pos.y);
+      if (d <= bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * The feeding trade (T-08, request §21): one carried salvage unit in, two
+   * banked out. It fires only while the player actually carries a unit to
+   * give (carried first, then banked), so there is nothing to "press E to
+   * befriend" — the material is the whole contract.
+   */
+  private doT08Trade(): void {
+    const p = this.player;
+    const mat = T08_TRADE_MATERIAL;
+    if ((p.inventory[mat] ?? 0) + (p.banked[mat] ?? 0) < T08_TRADE_GIVE) return;
+    let left = T08_TRADE_GIVE;
+    const fromCarried = Math.min(p.inventory[mat] ?? 0, left);
+    p.inventory[mat] = (p.inventory[mat] ?? 0) - fromCarried;
+    if (p.inventory[mat] <= 0) delete p.inventory[mat];
+    left -= fromCarried;
+    if (left > 0) {
+      p.banked[mat] = (p.banked[mat] ?? 0) - left;
+      if (p.banked[mat] <= 0) delete p.banked[mat];
+    }
+    p.banked[mat] = (p.banked[mat] ?? 0) + T08_TRADE_YIELD;
+    this.updateCargo();
+  }
+
+  /**
+   * The herder (T-09, request §21): it drives toward the nearest
+   * congregation (T-03) and herds the members near it along the local
+   * current. Following the herder leads a player down the lane — the
+   * signature is a guide, not a predator.
+   */
+  private herdT09(herder: Creature, dt: number, t: number): void {
+    let nearest: Creature | null = null;
+    let nearestD = Infinity;
+    for (const m of this.creatures) {
+      if (!m.active || m.def.id !== 'T-03') continue;
+      const d = Math.hypot(m.position.x - herder.position.x, m.position.y - herder.position.y);
+      if (d < nearestD) {
+        nearestD = d;
+        nearest = m;
+      }
+    }
+    if (nearest === null) return;
+    herder.target = vec2(nearest.position.x, nearest.position.y);
+    const cur = this.currents.velocityAt(herder.position, t);
+    for (const m of this.creatures) {
+      if (!m.active || m.def.id !== 'T-03') continue;
+      const d = Math.hypot(m.position.x - herder.position.x, m.position.y - herder.position.y);
+      if (d <= T09_HERD_RADIUS) {
+        m.position.x += cur.x * T09_HERD_DRIFT * dt;
+        m.position.y += cur.y * T09_HERD_DRIFT * dt;
+      }
+    }
+  }
+
+  /**
+   * The film sweeper (T-10, request §21): it seeks a node and, once within
+   * working range, accrues sweep time; a finished sweep (once per node)
+   * exposes more yield on that node. The "not before" half holds because the
+   * accrual starts only while it is actually at the node.
+   */
+  private sweepT10(c: Creature, dt: number): void {
+    let node: ResourceNode | null = null;
+    let nodeD = T10_SEEK_RADIUS;
+    for (const n of this.nodes) {
+      if (n.harvested) continue;
+      const d = Math.hypot(n.position.x - c.position.x, n.position.y - c.position.y);
+      if (d <= nodeD) {
+        nodeD = d;
+        node = n;
+      }
+    }
+    if (node === null) {
+      c.target = null;
+      return;
+    }
+    c.target = vec2(node.position.x, node.position.y);
+    if (nodeD > T10_ACQ_RADIUS) return; // seeking, not yet working
+    let st = this.tier2Sweep.get(c);
+    if (st === undefined) {
+      st = { work: 0, finished: new Set() };
+      this.tier2Sweep.set(c, st);
+    }
+    if (st.finished.has(node.id)) return;
+    st.work += dt;
+    if (st.work >= T10_WORK_SECONDS) {
+      node.amount += T10_BOOST;
+      st.finished.add(node.id);
+      st.work = 0;
+    }
+  }
+
+  /**
+   * The gas-pocket lift (T-11, request §21): a player drifting inside the
+   * pocket's reach gets a steady upward (toward-surface) nudge — a passive
+   * lift that costs nothing and needs no input.
+   */
+  private liftT11(c: Creature, dt: number): void {
+    const p = this.player;
+    const d = Math.hypot(c.position.x - p.position.x, c.position.y - p.position.y);
+    if (d <= T11_LIFT_RADIUS) p.velocity.y += T11_LIFT_ACCEL * dt;
+  }
+
+  /**
+   * The living-cable ride (T-27, request §21): a player inside the chain's
+   * reach is carried along its axis (west) as a position drift — the same
+   * mechanism the local current uses on the player (request §64), so a
+   * headless player moves with no input.
+   */
+  private rideT27(c: Creature, dt: number): void {
+    const p = this.player;
+    const d = Math.hypot(c.position.x - p.position.x, c.position.y - p.position.y);
+    if (d <= T27_RIDE_RADIUS) p.position.x -= T27_RIDE_SPEED * dt;
   }
 
   /** The chunks fully active around the player (request §17 chunk streaming). */

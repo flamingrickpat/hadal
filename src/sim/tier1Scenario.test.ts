@@ -79,8 +79,8 @@ describe('tier-1 roster data (WI-03a)', () => {
     expect(spawns).toBeGreaterThanOrEqual(30);
   });
 
-  it('tier-1 bodies are distinct: no two share a body and movement fingerprint (§46)', () => {
-    expect(HIDDEN_CREATURES).toHaveLength(6);
+  it('bodies are distinct: no two share a body and movement fingerprint (§46)', () => {
+    expect(HIDDEN_CREATURES).toHaveLength(12); // tier-1 (6) + tier-2 (6)
     const seen = new Set<string>();
     for (const def of HIDDEN_CREATURES) {
       const chains = (def.body!.chainCircles ?? [])
