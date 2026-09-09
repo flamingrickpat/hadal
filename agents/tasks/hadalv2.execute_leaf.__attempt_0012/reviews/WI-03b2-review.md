@@ -168,3 +168,93 @@ Probes I designed independently (not the implementer's tests):
   treated it as the established value rather than re-deriving a number (the
   request gives "cap ambient creature counts" as a rule of thumb, not a fixed
   value); all tier-2 counts are far below it regardless.
+
+## Re-review — attempt 3 (post-fix, commit `d93c720`)
+
+Reviewed the fix commit `d93c720` layered over the implementation `e78a1f8`,
+against the accepted baseline `f4aeed3` ("Prepare execution of WI-03b2"). The
+implementer addressed both prior findings; I re-verified the current (fixed)
+state independently rather than trusting the fix's own test.
+
+Status: pass
+
+The work product meets every criterion; both prior findings are resolved and
+independently verified. One non-blocking observation is recorded at the end of
+this section (a spoiler-name leak confined to the *prior attempt-2 prose of
+this same report file*, not the work product).
+
+### What the fix changed (`d93c720`)
+- `src/world/worldData.ts`: relocated the twilight drifter spawn (T-31) from the
+  position that sat inside the `twilight-landmark` slab to `(18200, -5300)`, open
+  water above the landmark.
+- `src/sim/tier2Scenario.test.ts`: corrected the roster-floor comment (prior
+  Finding 2) and added a regression test, "no tier-2 spawn sits inside a closed
+  terrain slab (§49 open-water placement)".
+- Re-ran the T-11 browser spot-check probe (`out/result.json` + both PNGs
+  refreshed).
+
+### Prior findings — resolution
+1. **t31-twilight box-walk (prior Finding 1) — RESOLVED.** My independent probe
+   (`scratch/work-item-reviewer/clearance/probe-try3.ts`) confirms the new spawn
+   `(18200, -5300)` is strictly outside all **47** closed slabs (every chunk),
+   `buildTerrain(...).resolveCircle(r=12)` does **not** move it (so it is not
+   inside a solid), and in the live `createSimulation(makeSimWorld(),1)` the
+   twilight drifter drifts west monotonically from x=18200 to x=17240 over 120 s
+   (~8 u/s, the deep-tier `T31_DEEP_DRIFT`), staying out of every slab — no
+   box-walk. The landmark's top edge is at y=-5600; the spawn at y=-5300 is 300
+   units above it, and the drift is purely horizontal (`position.x -= speed*dt`),
+   so it keeps clearing the landmark as it traverses open twilight (band 3).
+2. **Roster-floor comment (prior Finding 2) — RESOLVED.** The comment now states
+   that only the 12 implemented hidden types are asserted active here and the
+   15+ floor is WI-03d's to prove — no longer implying the framework fixtures
+   clear the floor.
+
+### Acceptance criteria (current, fixed state)
+| Criterion | Verdict | Evidence checked |
+|---|---|---|
+| AC-roster-count (tier-2 portion: ids resolve, spawns in the designed band) | pass | 206/206 suite (band-coverage test still green). My probe: all 15 tier-2 spawns strictly outside every closed slab; the T-31 twilight spawn sits in the `twilight` chunk (band 3), matching `TIER2_BANDS['T-31']` which includes 3. |
+| §34 ambient caps | pass | Suite green; per prior readout every tier-2 count is 1–2, far below the 16/chunk/type cap. The fix only moved a spawn position (count stays 1); it cannot raise a per-type count. |
+| AC-roster-tests (headless signature-rule tests) | pass | 206/206 suite (the T-08/09/10/11/27/31 signature tests still run green). |
+| AC-roster-tests (tier-2 spoiler containment) | pass (work product) | My own whole-tree token sweep over the deliverable found zero hits (see Observation for the one reviewer-note leak, which is out of the item's check scope). |
+| Data-driven small/medium shapes, no new renderer architecture | pass | `git diff --name-only f4aeed3 HEAD -- src/render/` is empty. The tier-2 bodies are `chainCircles` data on the existing WI-02b spine-pipeline dispatch (verified in attempt 2; the fix did not touch `hiddenCreatures.ts`). |
+| Browser spot-check (one friendly tier-2 organism) | pass | The implementer re-ran the real Playwright probe; `out/result.json` is 9/9 (`failed: 0`): T-11 present at (14500,-5900), reactivates in AI range, rises to its -5600 hold, `kind=spine nodes=4`, sim clock advances, alive at hold (moved 24.9u/2.5s), player lifted 98u/6s, no page exceptions, no console errors. Both PNGs present (~2.5 MB each). |
+
+### Impact check (delta for `d93c720`)
+The fix touches exactly: the `t31-twilight` spawn position (`worldData.ts`), the
+test file, and the implementer's scratch probe output. It does not touch
+`hiddenCreatures.ts`, any other spawn, any `src/render/` file, or `state.md`.
+Consumers of the changed spawn are the `Simulation` constructor (resolves the id,
+unchanged) and the world-data test (re-derived band, unchanged). No new caller is
+introduced.
+
+### Independent adversarial probes (attempt 3)
+1. **Clearance + box-walk probe** (`scratch/work-item-reviewer/clearance/probe-try3.ts`,
+   `npx tsx` against the real `buildTerrain` + `makeSimWorld` + `Simulation`):
+   - NEW `(18200,-5300)` → not trapped in any closed slab; `resolveCircle` no-op.
+   - OLD `(17000,-5700)` → trapped in the `twilight-landmark` slab (this proves the
+     added regression test's containment logic is not vacuous — it catches the exact
+     defect that was fixed).
+   - Live sim: T-31 twilight x 18200 → 17240 over 120 s, monotonically west, never
+     inside a closed slab, never box-walking.
+2. **Full suite** — `npx vitest run`: 27 files / **206/206 pass** (the +1 over
+   attempt 2's 205 is the new regression test).
+3. **Type-check + bundle** — `npm run build`: exit 0 (only the informational
+   >500 kB three.js chunk notice).
+
+### Observation (non-blocking; deferred to WI-03d's whole-tree audit)
+A whole-tree, case-insensitive, word-boundary sweep of the secret name tokens
+(from `design_private/_spoiler_tokens.txt`, with the legal `T-\d\d` ids excluded)
+over the work product, the implementer's `implementation/` note, and this item's
+`scratch/` found **zero** hits in any deliverable. The **only** hits were four
+tier-2 secret name tokens inside the *prior attempt-2 prose of this same report
+file* (in its spoiler-containment explanation). That prior section is a reviewer
+meta-artifact, not the work product and not the implementer's deliverables, and it
+is outside WI-03b2's own executable check (which scans `src/sim`, `src/creatures`,
+`src/content`, `src/world`, and the implementation dirs — all green). It does not
+gate this item and is not implementer-fixable; a whole-artifact sweep is WI-03d's
+scope. This re-review section uses internal ids only and names no secret tokens.
+
+### What I could not verify (carried from attempt 2)
+- Live browser rendering of the four other tier-2 silhouettes (T-08/T-09/T-10/T-27)
+  beyond the one representative spot-check the item requires (T-11 — verified).
+- The 15+ roster-wide floor (WI-03d's scope; only 12 creatures exist here).
