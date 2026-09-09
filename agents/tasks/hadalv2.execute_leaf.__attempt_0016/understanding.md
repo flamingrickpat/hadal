@@ -1,0 +1,77 @@
+# Understanding
+
+This child implements one independently reviewed work item from C:\Temp\hadal-v2\agents\tasks\hadalv2.
+
+---
+id: WI-03c2
+kind: work_item
+parent: WI-03c
+children: []
+depends_on: ["WI-03c1"]
+criteria:
+  AC-roster-count: "At least 15 distinct implemented creature types are active in the production world data with their spawns, meeting the private roster's distribution"
+  AC-roster-tests: "Every implemented major species has a headless behavior test for its signature rule, and no creature name or secret description appears outside debug internals and the private content files"
+behavior: "Land the tier-3 predators in the production world: spawns on the section 39 bands with section 34 caps, data-driven predator body shapes plus pre-contact telegraph/commit visibility on the existing WI-02b renderer pipeline, and the tier's one browser spot-check"
+subsystems: ["world content data", "procedural creature rendering"]
+verification: "World data check that tier-3 ids resolve and spawns sit in the designed band on the section 39 curve; tier-3 spoiler containment check; one browser spot-check of a representative tier-3 predator rendering, telegraphing, and committing visibly without console errors"
+---
+
+# WI-03c2 — Tier 3: production spawns + data-driven rendering
+
+## Goal
+
+Put the tier-3 predators that WI-03c1 defines into the production world:
+spawns in `src/world/worldData.ts` placed so the section 39 difficulty curve
+holds by band with section 34 caps, new predator body shapes added as
+data-driven shape parameters on the existing WI-02b renderer pipeline
+(section 13 silhouette-recognizable in two seconds) with the pre-contact
+telegraph/commit readability (section 48), and the tier's one browser
+spot-check.
+
+## Deliverables (checkable)
+
+- Spawns in `src/world/worldData.ts` for every tier-3 organism id that
+  WI-03c1 lands, placed so the section 39 curve holds: early-band predators
+  telegraph clearly, mid-band forces learning one avoidance rule, deep-band
+  combinations of sonar/light/decoy/movement; dense traversal per section 49
+  (no empty corridors) with the section 34 caps; ids debug-only (section 33)
+  - they never appear in normal UI.
+- New predator body shapes for the tier added as data-driven shape parameters
+  on the existing WI-02b renderer pipeline; no new renderer architecture.
+  Section 13 bar: each silhouette is recognizable in two seconds; predators
+  visibly commit to an attack before contact (section 48).
+
+## Tests and checks
+
+- World data check: every tier-3 creature id resolves to a def and every
+  spawn sits in the band the private roster designed it for (a tier-3 portion
+  of the roster-wide AC-roster-count check WI-03d finalizes).
+- Spoiler containment for this item's artifacts: no creature name or secret
+  description appears outside debug internals and the private content files
+  (the tier's AC-roster-tests half; the roster-wide audit finalizes in
+  WI-03d).
+
+## Browser spot-check (presentation only)
+
+One representative tier-3 predator renders, telegraphs, and commits visibly
+without console errors; no browser reachability proof (section 70 layers).
+
+## Constraints, assumptions, non-goals
+
+- No new renderer architecture; no simulation rule changes - if the spot-check
+  exposes a behavior defect, fix it through the existing fix-planning route,
+  not here.
+- No large/colossal staging (WI-03d), no authored beat triggers (ST-04).
+- Spoiler rules (sections 0, 12, 68): internal ids only in identifiers,
+  tests, and commit messages ("spawned the mid-depth predator tier and added
+  its body shapes" style).
+
+## Fresh-session handoff
+
+Read WI-03c/plan.md (decomposition; criteria assignment), request sections
+13, 33, 34, 39, 48, 49, 68, 70, 74; WI-01b for the selected organism ids and
+band placement; WI-03c1 for the landed ids and shape parameters;
+`design_private/` is the source of truth. Depends on WI-03c1 (and inherits
+WI-03b through the WI-03c story); do not start before WI-02a/b/c are
+accepted.
+
