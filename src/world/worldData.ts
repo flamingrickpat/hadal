@@ -346,6 +346,13 @@ const twilight: WorldChunkDef = {
     // The drifter's mid stage: placed above the landmark (which caps the band's
     // upper water) so its westward drift traverses open twilight, not a solid.
     { id: 't31-twilight', creature: 'T-31', position: vec2(18200, -5300), count: 1 },
+    // Tier-3 predator/territorial fauna (ids debug-only, request §33): the deep
+    // band the roster centers this tier on (request §39 deep: combine sonar,
+    // light, decoy, movement). The burst interceptor works open water west of
+    // the facility interior, and the silk colony frames its strands against the
+    // facility struts just east of that interior.
+    { id: 't15-twilight', creature: 'T-15', position: vec2(9500, -6100), count: 1 },
+    { id: 't17-twilight', creature: 'T-17', position: vec2(13400, -6600), count: 1 },
   ],
   ambient: { particleDensity: 0.5, light: 0.35 },
 };
@@ -401,6 +408,15 @@ const abyss: WorldChunkDef = {
     { id: 't08-abyss', creature: 'T-08', position: vec2(18700, -8900), count: 1 },
     { id: 't09-abyss', creature: 'T-09', position: vec2(17200, -8200), count: 1 },
     { id: 't31-abyss', creature: 'T-31', position: vec2(15500, -8300), count: 1 },
+    // Tier-3 predator/territorial fauna (ids debug-only, request §33), all in
+    // the deep band the roster designs them for (request §39 deep). The
+    // post-holder keeps a post just off the landmark; the buried boulder sits
+    // in the open floor west of the facility; the field herder works near the
+    // small schooling prey; the burst interceptor ranges the upper water.
+    { id: 't14-abyss', creature: 'T-14', position: vec2(22600, -8300), count: 1 },
+    { id: 't15-abyss', creature: 'T-15', position: vec2(22500, -7900), count: 1 },
+    { id: 't16-abyss', creature: 'T-16', position: vec2(15500, -9560), count: 1 },
+    { id: 't18-abyss', creature: 'T-18', position: vec2(16200, -8100), count: 1 },
   ],
   ambient: { particleDensity: 0.45, light: 0.25 },
 };

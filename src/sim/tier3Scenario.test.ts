@@ -122,7 +122,7 @@ describe('tier-3 roster data (WI-03c1a)', () => {
   });
 });
 
-describe('tier-3 defs resolve in the production world data (no spawns yet)', () => {
+describe('tier-3 production world data (WI-03c2: spawns on the §39 bands)', () => {
   it('the production world constructs and every tier-3 id resolves through its registry', () => {
     // The production Simulation resolves every authored spawn id against
     // CREATURE_BY_ID and throws on an unknown one (request §32) — so a clean
@@ -144,13 +144,89 @@ describe('tier-3 defs resolve in the production world data (no spawns yet)', () 
     }
   });
 
-  it('no tier-3 id is spawned in the production world data yet (WI-03c2 owns spawns)', () => {
+  it('every tier-3 spawn resolves, sits in a designed band, and every tier-3 id appears in every band it was designed for (§49 dense traversal)', () => {
+    const bandsById = new Map<string, Set<number>>();
+    let tier3Spawns = 0;
+    const active = new Set<string>();
     for (const chunk of makeSimWorld().chunks) {
       for (const spawn of chunk.creatureSpawns ?? []) {
+        const def = CREATURE_BY_ID[spawn.creature];
+        expect(def, `spawn ${spawn.id} references unknown creature ${spawn.creature}`).toBeDefined();
+        const inBounds =
+          spawn.position.x >= chunk.bounds.x &&
+          spawn.position.x <= chunk.bounds.x + chunk.bounds.w &&
+          spawn.position.y >= chunk.bounds.y &&
+          spawn.position.y <= chunk.bounds.y + chunk.bounds.h;
+        expect(inBounds, `spawn ${spawn.id} outside chunk ${chunk.id} bounds`).toBe(true);
+        active.add(spawn.creature);
+        if (!TIER3_IDS.includes(spawn.creature)) continue; // other tiers' content
+        const allowed = TIER3_BANDS[spawn.creature];
+        expect(allowed, `spawn ${spawn.id} for ${spawn.creature} has no designed bands`).toBeDefined();
         expect(
-          TIER3_IDS,
-          `chunk ${chunk.id} spawns tier-3 id ${spawn.creature} before WI-03c2`,
-        ).not.toContain(spawn.creature);
+          allowed!.has(chunk.band),
+          `${spawn.creature} in chunk ${chunk.id} band ${chunk.band} (designed ${[...allowed!].join(',')})`,
+        ).toBe(true);
+        if (!bandsById.has(spawn.creature)) bandsById.set(spawn.creature, new Set());
+        bandsById.get(spawn.creature)!.add(chunk.band);
+        tier3Spawns += spawn.count ?? 1;
+      }
+    }
+    // Every tier-3 organism appears in every band the roster designed it for,
+    // so no band is an empty corridor for this tier (§49).
+    for (const id of TIER3_IDS) {
+      const placed = bandsById.get(id) ?? new Set<number>();
+      const bands = TIER3_BANDS[id]!;
+      for (const band of bands) {
+        expect(placed.has(band), `${id} is missing from band ${band} in the production world data`).toBe(true);
+      }
+    }
+    expect(tier3Spawns, 'the tier-3 carries authored production spawns').toBeGreaterThanOrEqual(5);
+    // Landing the tier-3 brings the active roster to 17 distinct types (>= 15)
+    // in the production data: the tier-3 portion of the AC-roster-count floor
+    // that WI-03d finalizes roster-wide.
+    expect(active.size, 'the active roster spans the implemented tiers').toBeGreaterThanOrEqual(15);
+  });
+
+  it('no tier-3 spawn sits inside a closed terrain slab (§49 open-water placement)', () => {
+    // A spawn whose center is strictly inside a solid slab is trapped there:
+    // the terrain resolve only pushes a circle out near an edge, so a body
+    // deep inside a closed slab is never pushed out, drifts to the nearest
+    // interior wall, and box-walks it — never contributing to the band's
+    // dense traversal. Every closed authored slab is an axis-aligned
+    // rectangle, so strict bounding-box containment is exact.
+    const slabs = makeSimWorld().chunks.flatMap((c) => c.terrain).filter((s) => s.closed);
+    const trappedBy = (p: Vec2): string[] =>
+      slabs
+        .filter((s) => {
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          for (const pt of s.points) {
+            minX = Math.min(minX, pt.x); maxX = Math.max(maxX, pt.x);
+            minY = Math.min(minY, pt.y); maxY = Math.max(maxY, pt.y);
+          }
+          return p.x > minX && p.x < maxX && p.y > minY && p.y < maxY;
+        })
+        .map((s) => s.id);
+    let checked = 0;
+    for (const chunk of makeSimWorld().chunks) {
+      for (const spawn of chunk.creatureSpawns ?? []) {
+        if (!TIER3_IDS.includes(spawn.creature)) continue; // tier-3 only
+        checked += 1;
+        const hits = trappedBy(spawn.position);
+        expect(hits, `tier-3 spawn ${spawn.id} is trapped inside a solid slab: ${hits.join(', ')}`).toEqual([]);
+      }
+    }
+    expect(checked, 'expected the loop to cover the tier-3 spawns').toBeGreaterThanOrEqual(5);
+  });
+
+  it('keeps per-chunk per-type tier-3 counts under the §34 cap', () => {
+    const CAP = 16; // §34 ambient creature count cap per chunk (per type, matching the other tiers' checks)
+    for (const chunk of makeSimWorld().chunks) {
+      for (const id of TIER3_IDS) {
+        let n = 0;
+        for (const spawn of chunk.creatureSpawns ?? []) {
+          if (spawn.creature === id) n += spawn.count ?? 1;
+        }
+        expect(n, `chunk ${chunk.id} exceeds the ambient cap for ${id} (${n} > ${CAP})`).toBeLessThanOrEqual(CAP);
       }
     }
   });
@@ -636,9 +712,17 @@ describe('spoiler containment for this work item (§0/§12/§68)', () => {
       }
     }
     scanFile(join(here, '..', '..', 'src', 'content', 'secret', 'hiddenCreatures.ts'));
+    // WI-03c2 artifacts: the production world data (the tier-3 spawn
+    // comments) and this tier's render verification test.
+    scanFile(join(here, '..', '..', 'src', 'world', 'worldData.ts'));
+    scanFile(join(here, '..', '..', 'src', 'render', 'tier3Render.test.ts'));
     // The implementation artifacts of the tier-3 execution attempts
-    // (WI-03c1a landed in attempt 14; WI-03c1b lands in attempt 15).
-    for (const task of ['hadalv2.execute_leaf.__attempt_0014', 'hadalv2.execute_leaf.__attempt_0015']) {
+    // (WI-03c1a landed in attempt 14; WI-03c1b in 15; WI-03c2 in 16).
+    for (const task of [
+      'hadalv2.execute_leaf.__attempt_0014',
+      'hadalv2.execute_leaf.__attempt_0015',
+      'hadalv2.execute_leaf.__attempt_0016',
+    ]) {
       const implDir = join(here, '..', '..', 'agents', 'tasks', task, 'implementation');
       if (existsSync(implDir)) {
         for (const f of readdirSync(implDir)) {

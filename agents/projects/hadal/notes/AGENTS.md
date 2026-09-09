@@ -28,3 +28,5 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260912-implementer-wi03b2-spawn-clearance-reland.md -->
 <!-- include: ./20260909-implementer-wi03c1b-pin-controller-dedup.md -->
 <!-- include: ./20260909-reviewer-wi03c1b2-pin-controller-probe.md -->
+<!-- include: ./20260913-implementer-wi03c1b-tier3-controllers.md -->
+<!-- include: ./20260913-implementer-wi03c2-tier3-spawns-render.md -->

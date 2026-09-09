@@ -1,0 +1,41 @@
+{
+  "port": 54322,
+  "results": [
+    {
+      "name": "the tier-3 burst interceptor exists in the running production simulation",
+      "ok": true,
+      "detail": "at (9500, -6100)"
+    },
+    {
+      "name": "the predator is active and visible (AI range, §34)",
+      "ok": true,
+      "detail": "state active=true hp=100 o2=179"
+    },
+    {
+      "name": "the body is built on the spine pipeline with the tier-3 silhouette",
+      "ok": true,
+      "detail": "kind=spine nodes=4"
+    },
+    {
+      "name": "the commit widens the body silhouette (visible posture change)",
+      "ok": true,
+      "detail": "rest=58.5 commit=58.6"
+    },
+    {
+      "name": "the commit spreads the fins (the pre-contact telegraph)",
+      "ok": true,
+      "detail": "rest=0.63 commit=0.89"
+    },
+    {
+      "name": "no page exceptions",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "name": "no console errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "failed": 0
+}
