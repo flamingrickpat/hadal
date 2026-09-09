@@ -20,3 +20,14 @@ Run from the repo root:
 `npx vitest run --config agents/tasks/hadalv2.execute_leaf.__attempt_0015/scratch/reviewer/adversarial/vitest.config.ts`
 
 All three pass against commit `0ed789a`.
+
+## Addition (review attempt 2, 2026-09-09)
+
+- `pin-probe.test.ts` — fix-verification probes for the attempt-3
+  de-duplication commit `331ae76`: the pin controllers (via the real T-14 /
+  T-16 / T-17 defs and real `Creature` instances) pin every non-armed state
+  to `idle`/null and leave the armed state (`alert` / `custom`) untouched —
+  byte-for-byte the pre-fix behavior; T-18 still carries no controller; and
+  the pin body now occurs exactly once in `hiddenCreatures.ts` (the inline
+  `!== 'custom'` comparisons are gone). 5/5 pass against `331ae76`; the three
+  original probes above re-run green against `331ae76` as well (8/8 total).

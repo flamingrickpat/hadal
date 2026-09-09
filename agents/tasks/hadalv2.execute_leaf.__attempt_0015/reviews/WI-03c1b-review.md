@@ -137,3 +137,89 @@ not an implementation bug.
   files directly with plain `node` (they import extensionless TS through
   `Simulation.ts`), so I treated their reported numbers as implementer evidence
   and verified the underlying behavior through my own vitest probes instead.
+
+---
+
+# Review attempt 2 (2026-09-09) — re-review after the attempt-3 fix
+
+Status: pass
+
+Fresh reviewer session (never saw the implementation being built). Scope: the
+attempt-3 fix commit `331ae76` ("de-duplicated the tier-3 rest-state pin
+controllers"), which exists solely to resolve the single finding above, plus
+regression re-runs. The base (`0ed789a`, the attempt-2 implementation) was
+fully verified by the review above and is unchanged in the fix commit — the
+product delta is `src/content/secret/hiddenCreatures.ts` only (27 changed
+lines: the `pinRestExcept` factory, the three controller definitions, one
+added type import, comments). `Simulation.ts` and `tier3Scenario.test.ts` are
+byte-identical to `0ed789a`.
+
+## Acceptance Criteria (re-verified)
+
+| Criterion | Verdict | Evidence checked |
+|---|---|---|
+| AC-roster-behavior (4+ non-pursuit behaviors, 2+ beneficial, anti-cliche/§47 coverage) | **passed** | No product behavior changed in the fix commit; the FINAL PROOF test is unchanged and I re-ran it as part of `npx vitest run src/sim/tier3Scenario.test.ts` → **21 passed (21)** at `331ae76`. |
+| AC-roster-tests (headless signature-rule test per species; spoiler containment) | **passed** | Same re-run (21/21, including the spoiler sweep). I additionally re-scanned all **added lines** of `331ae76` case-insensitively against all 62 name/story tokens in `design_private/_spoiler_tokens.txt`: zero name hits (only T-IDs, which the token file explicitly excludes from the scan). Commit message uses "buried/territorial mid-depth predator controllers" — no names. |
+| Work-item contract: anti-duplication assumption ("falsified if two predators need the same bespoke controller") | **satisfied by `331ae76`** | The byte-identical `t16Controller`/`t17Controller` bodies are gone. One parameterized factory `pinRestExcept(armed: CreatureState): CreatureController` now owns the pin body; `t14Controller = pinRestExcept('alert')`, `t16Controller = pinRestExcept('custom')`, `t17Controller = pinRestExcept('custom')`. Source-level check: the exact pin body occurs exactly once in `hiddenCreatures.ts` (line 389) and no inline `creature.state !== 'custom'` comparison remains. The implementer also corrected its Shrink/Flatten self-report in the dated revision section of `implementation/WI-03c1b-implementation.md`, as the finding required. |
+
+## Verification I ran myself (commands + observed results)
+
+- `git show 331ae76` (full diff) → product change is `hiddenCreatures.ts` only; artifact changes are the dedup project note + its index entry + the implementation-note revision section. No `state.md`, no other task folders, no other product files.
+- `npx vitest run src/sim/tier3Scenario.test.ts` → **21 passed (21)** (740 ms).
+- `npx vitest run` (full suite) → **29 files, 231 passed (231)** (11.46 s).
+- `npx tsc --noEmit` → **exit 0** (also proves the new `CreatureState` type import from `creatures/CreatureDef` resolves).
+- Attempt-1 regression probes re-run: `npx vitest run --config agents/tasks/hadalv2.execute_leaf.__attempt_0015/scratch/reviewer/adversarial/vitest.config.ts` → **3 passed (3)** at `331ae76` — the fix is behavior-neutral end-to-end (T-14 re-arm/snap, T-15 cornered-charge, T-18 drive/harvest all hold).
+- New attempt-2 probes (below) → **5 passed (5)**.
+
+## Impact Check
+
+- `pinRestExcept` has three real users (T-14, T-16, T-17) — a genuine
+  generalization under the rule of two, not an abstraction for one user.
+- `t14Controller`/`t16Controller`/`t17Controller` are module-private and read
+  only through their respective `CreatureDef.behavior.controller` fields
+  (wiring verified: T-14 line 431, T-16 line 485, T-17 line 511); the
+  `Creature` step path is the only consumer. No signature changes anywhere;
+  the only public-surface effect is the type-only import.
+- No other controller in the file duplicates the pin: all tier-2 controllers
+  pin `forage` (six `creature.state = 'forage'` sites — pre-existing tier-2
+  data-driven pins, out of scope for this item and untouched here), T-13 has
+  its own flee machine, T-15 is a distinct no-op stand-down, T-18 has no
+  controller.
+
+## Independent Adversarial Probes
+
+New file `scratch/reviewer/adversarial/pin-probe.test.ts` (committed, indexed
+in that folder's `AGENTS.md`), run with the same one-liner config:
+`npx vitest run --config agents/tasks/hadalv2.execute_leaf.__attempt_0015/scratch/reviewer/adversarial/vitest.config.ts` → **8 passed (8)** (5 new + 3 regression).
+
+1. **Pin behavior equivalence, per state, through the real defs** (T-14 armed
+   `alert`; T-16 and T-17 armed `custom`): for every state in
+   `CREATURE_STATES`, I set a real `Creature` to that state with a live
+   target and invoked the def's real `behavior.controller`. Non-armed states
+   must pin to `idle` with `target === null`; the armed state must be left
+   untouched (state and target both preserved). This could falsify the fix if
+   the factory were wired to the wrong armed state, inverted the comparison,
+   or dropped the `target = null` — all would fail specific assertions.
+   → **passed** for all three organisms.
+2. **T-18 controller absence**: `T18.behavior.controller === undefined` —
+   confirms the note's claim that generic wander is its whole motion (no
+   controller smuggled in by the refactor). → **passed**.
+3. **Deduplication is real, not cosmetic**: the exact pin body
+   (`creature.state = 'idle';` + `creature.target = null;`) occurs exactly
+   once in `hiddenCreatures.ts`, no inline `!== 'custom'` comparison
+   remains, and the `pinRestExcept` factory is present. → **passed**.
+
+## Findings
+
+None. The single attempt-1 finding is resolved exactly as prescribed
+(parameterized factory + corrected Shrink/Flatten self-report), the fix is
+behavior-neutral (full suite + regression probes green), and the commit
+contains nothing outside the finding's scope.
+
+## What I Could Not Verify
+
+Same exclusions as the attempt-1 review: no live/browser criterion exists for
+this item (deferred to WI-03c2 per the work item); design-level §47/§11.2
+judgments remain design-level; the roster-wide spoiler audit and
+large/colossal staging are WI-03d's. Nothing new could not be verified: the
+fix commit's complete product surface is 27 lines in one file, read in full.
