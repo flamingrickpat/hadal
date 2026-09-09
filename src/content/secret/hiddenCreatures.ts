@@ -373,6 +373,45 @@ export const T31: CreatureDef = {
 // Size class follows overall body size (root plus chain extent): root under
 // ~30 is small, ~30-49 medium, ~50 and up large; long-chain bodies are
 // classed by their extent (the burst interceptor and the living cable).
+//
+// WI-03c1b: the bespoke controllers (request §19) pin the rest state; the
+// load-bearing signature rule — trigger, net, charge, harvest — resolves
+// simulation-side in `Simulation.applyTier3Interactions`, the same pattern as
+// the tier-2 interactions (the hook cannot see the player or the ambient
+// pool). The arm thresholds the controllers read are the def's own sense
+// values (WI-03c1a data), so the rule and the data cannot drift apart.
+
+// T-14 holds the post: anything but the armed (alert) state is the held post.
+const t14Controller: CreatureController = (creature) => {
+  if (creature.state !== 'alert') {
+    creature.state = 'idle';
+    creature.target = null;
+  }
+};
+
+// T-15's whole machine — the burst cycle and the cornered charge — runs
+// simulation-side (it needs the player and the ambient pool), so the hook
+// stands the generic engine down: without it the noise sense would escalate
+// into exactly the chase this organism must not do.
+const t15Controller: CreatureController = () => {
+  // The simulation owns every state of this organism.
+};
+
+// T-16 is buried: anything but the strike (custom) state is inert geology.
+const t16Controller: CreatureController = (creature) => {
+  if (creature.state !== 'custom') {
+    creature.state = 'idle';
+    creature.target = null;
+  }
+};
+
+// T-17 holds its frame: anything but the silk (custom) state is a still colony.
+const t17Controller: CreatureController = (creature) => {
+  if (creature.state !== 'custom') {
+    creature.state = 'idle';
+    creature.target = null;
+  }
+};
 
 // T-14 — the territorial guardian (band: deep 4). Signature (private
 // roster): it never chases — it holds a fixed post around a landmark, and
@@ -394,7 +433,7 @@ export const T14: CreatureDef = {
   },
   movement: { maxSpeed: 60, accel: 160, dragRate: 3 },
   senses: { sonar: 0.1, noise: 0.15, range: 2000 },
-  behavior: { startState: 'idle', wanderRadius: 0 },
+  behavior: { startState: 'idle', wanderRadius: 0, controller: t14Controller },
   combat: { damage: 10 },
   audio: { alert: 't14-knock' },
   sizeClass: 'large',
@@ -422,7 +461,7 @@ export const T15: CreatureDef = {
   },
   movement: { maxSpeed: 200, accel: 500, dragRate: 3 },
   senses: { noise: 0.2 },
-  behavior: { startState: 'wander', wanderRadius: 400 },
+  behavior: { startState: 'wander', wanderRadius: 400, controller: t15Controller },
   combat: { damage: 15 },
   audio: { attack: 't15-thwip' },
   sizeClass: 'medium',
@@ -448,7 +487,7 @@ export const T16: CreatureDef = {
   },
   movement: { maxSpeed: 40, accel: 100, dragRate: 4 },
   senses: {},
-  behavior: { startState: 'idle', wanderRadius: 0 },
+  behavior: { startState: 'idle', wanderRadius: 0, controller: t16Controller },
   combat: { damage: 12 },
   audio: {},
   sizeClass: 'large',
@@ -474,7 +513,7 @@ export const T17: CreatureDef = {
   },
   movement: { maxSpeed: 30, accel: 80, dragRate: 4 },
   senses: { noise: 0.25 },
-  behavior: { startState: 'idle', wanderRadius: 0 },
+  behavior: { startState: 'idle', wanderRadius: 0, controller: t17Controller },
   combat: { damage: 8 },
   audio: {},
   sizeClass: 'small',

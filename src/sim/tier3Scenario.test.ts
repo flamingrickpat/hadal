@@ -1,12 +1,13 @@
 /**
- * Tests — the tier-3 predator/territorial roster foundation (WI-03c1a): the
- *   five organisms the private roster selects for the predator tier (T-14,
- *   T-15, T-16, T-17, T-18 — internal ids only, request §0/§33/§68) as
- *   CreatureDef data, plus the section 10 damage model per size class,
- *   exercised headlessly through the production simulation. No per-predator
- *   controllers or per-predator signature scenarios in this file (WI-03c1b);
- *   no production spawns (WI-03c2). No rule is mocked: every scenario drives
- *   the real `Simulation` (request §70).
+ * Tests — the tier-3 predator/territorial roster (WI-03c1a data + damage
+ *   model; WI-03c1b per-predator controllers): the five organisms the private
+ *   roster selects for the predator tier (T-14, T-15, T-16, T-17, T-18 —
+ *   internal ids only, request §0/§33/§68) exercised headlessly through the
+ *   production simulation. WI-03c1b lands the per-predator signature
+ *   scenarios (trigger approach plus a must-not-trigger control each), the
+ *   non-chase signature state paths, and the FINAL PROOF for AC-roster-
+ *   behavior across tiers 1-3; no production spawns (WI-03c2). No rule is
+ *   mocked: every scenario drives the real `Simulation` (request §70).
  */
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -15,9 +16,12 @@ import { fileURLToPath } from 'node:url';
 import { vec2, type Vec2 } from '../util/math';
 import { emptyInput, makeSimWorld, Simulation, type SimWorld } from './Simulation';
 import { Scenario } from './scenario';
+import type { PlayerInput } from '../player/PlayerController';
+import type { Creature } from '../creatures/Creature';
+import { FIXED_DT } from '../game/constants';
 import { CREATURE_BY_ID } from '../creatures/fixtures';
 import { DETER_HOLD_SECONDS, HARPOON_RANGE } from '../creatures/combat';
-import { SIZE_CLASSES } from '../creatures/CreatureDef';
+import { SIZE_CLASSES, type CreatureState, type SignatureRule } from '../creatures/CreatureDef';
 import {
   HIDDEN_CREATURES,
   TIER3_BANDS,
@@ -33,6 +37,22 @@ const dist = (a: Vec2, b: Vec2): number => Math.hypot(a.x - b.x, a.y - b.y);
 function greyboxWorld(spawns: readonly CreatureSpawnDef[], currentFields: SimWorld['currentFields'] = []): SimWorld {
   const chunks = GREYBOX_WORLD.map((c, i) => (i === 0 ? { ...c, creatureSpawns: spawns } : c));
   return { chunks, base: BASE, currentFields };
+}
+
+/** The single creature of `id` in the scenario. */
+const one = (sc: Scenario, id: string): Creature => sc.sim.creatures.find((c) => c.def.id === id)!;
+
+/**
+ * Advance `seconds` with a fixed input, recording `c`'s state after every
+ * step — the state-path evidence for the signature rules (a non-chase
+ * predator's path must avoid the pursuit states).
+ */
+function runT(sc: Scenario, c: Creature, seen: Set<CreatureState>, seconds: number, input: PlayerInput = emptyInput()): void {
+  const steps = Math.round(seconds / FIXED_DT);
+  for (let i = 0; i < steps; i += 1) {
+    sc.step(input);
+    seen.add(c.state);
+  }
 }
 
 describe('tier-3 roster data (WI-03c1a)', () => {
@@ -213,23 +233,25 @@ describe('large-predator deterable-not-killable, exercised headlessly (T-14)', (
     expect(c.state, 'a loud tool signal alerts the territorial organism').toBe('alert');
     sc.step({ ...emptyInput(), useTool: false });
 
-    // 2. The generic machine escalates to a hunt (stalk) after the alert dwell.
-    sc.stepFor(1.6, emptyInput());
-    expect(c.state, 'the large predator must be hunting before the deter').toBe('stalk');
+    // 2. WI-03c1b: the bespoke post controller holds the armed net through
+    //    the arm window — no stalk, no attack (the non-chase signature).
+    const seen = new Set<CreatureState>();
+    runT(sc, c, seen, 3);
+    expect(c.state, 'the armed net holds (no stalk, no attack)').toBe('alert');
 
     // 3. The harpoon lands: the simulation resolves a deter, not a kill.
     sc.step({ ...emptyInput(), toolSelect: 2 });
     sc.step({ ...emptyInput(), useTool: true });
     expect(c.dead, 'a deter is not a kill').toBe(false);
     expect(sc.sim.creatures.some((cr) => cr === c), 'a detered predator stays in the pool').toBe(true);
-    expect(c.state, 'a deterred hunting creature withdraws to its post').toBe('return');
+    expect(c.state, 'a deterred armed creature drops the net and stands down').toBe('idle');
     expect(c.deterredUntil, 'the deter holds for a bounded window').toBeGreaterThan(sc.sim.state.timeSec);
     expect(c.deterredUntil - sc.sim.state.timeSec).toBeLessThanOrEqual(DETER_HOLD_SECONDS + 1);
     sc.step({ ...emptyInput(), useTool: false });
 
-    // 4. It works its way back to the post while the deter is still in force.
-    for (let i = 0; i < 300 && c.state !== 'idle'; i += 1) sc.step(emptyInput());
-    expect(c.state, 'a deterred large predator is back at its post').toBe('idle');
+    // 4. It holds the post while the deter is still in force.
+    runT(sc, c, seen, 3);
+    expect(c.state, 'a deterred large predator is at its post').toBe('idle');
     expect(dist(c.position, home)).toBeLessThan(60);
 
     // 5. The same loud play inside the deter window does not re-engage it.
@@ -238,13 +260,344 @@ describe('large-predator deterable-not-killable, exercised headlessly (T-14)', (
     expect(c.state, 'the deter suppresses re-hunt inside the window').toBe('idle');
     sc.step({ ...emptyInput(), useTool: false });
 
-    // 6. Once the window expires, the same signal re-engages it: the readable
+    // 6. Once the window expires, the same signal re-arms it: the readable
     //    rule holds again, and only then.
     sc.stepFor(20, emptyInput());
     expect(sc.sim.state.timeSec, 'the deter window must have lapsed').toBeGreaterThan(c.deterredUntil);
     sc.step({ ...emptyInput(), useTool: true });
-    expect(c.state, 'after the window the same signal re-engages').toBe('alert');
-    sc.trace('T-14 deter: withdraws on the hit, holds the post, re-engages after the window');
+    expect(c.state, 'after the window the same signal re-arms').toBe('alert');
+    for (const s of seen) expect(s, `the detered path stays out of pursuit (${s})`).not.toMatch(/attack|stalk/);
+    sc.trace('T-14 deter: drops the net on the hit, holds the post, re-arms after the window');
+  });
+});
+
+describe('T-14: the post-holder — loud play sets the net, a quiet approach does not (§10, §19)', () => {
+  it('a quiet approach inside the net reach is safe; a sonar ping sets the net', () => {
+    const home = vec2(1700, -300);
+    const sc = new Scenario(201, greyboxWorld([{ id: 't14-a', creature: 'T-14', position: home }]));
+    const c = sc.sim.creatures[0]!;
+    const seen = new Set<CreatureState>();
+    // Control: a quiet swim up to the post, inside the net reach — the
+    // intruder makes no signal, so the net must not set.
+    sc.swimTo(vec2(1650, -280), 40, 6000);
+    seen.add(c.state);
+    expect(dist(sc.sim.player.position, c.position), 'inside the net reach').toBeLessThan(260);
+    expect(sc.sim.player.health, 'a quiet approach must not snap the net').toBe(100);
+    expect(c.state, 'without a loud cue the post-holder holds').toBe('idle');
+    // A fixed in-reach position with zero velocity, so the snap read is the
+    // drag and nothing else (a drifting player would sail past it).
+    sc.sim.teleportTo(1600, 300); // 100u west of the post
+    const dBefore = dist(sc.sim.player.position, c.position);
+    // Trigger: a sonar ping at the post arms it (its readable rule). The
+    // audio data event drains on the following step (the tier-3 pass runs
+    // after this step's audio collection).
+    sc.sim.player.capabilities.add('sonar');
+    sc.step({ ...emptyInput(), sonar: true });
+    seen.add(c.state);
+    expect(c.state, 'a sonar ping arms the post').toBe('alert');
+    sc.step({ ...emptyInput(), sonar: false });
+    seen.add(c.state);
+    expect(
+      sc.sim.creatureAudioEvents.some((e) => e.creatureId === 'T-14' && e.state === 'alert'),
+      'arming is observable (the audio data event)',
+    ).toBe(true);
+    // The set net snaps on the intruder in reach: damage plus a drag out.
+    runT(sc, c, seen, 2);
+    expect(sc.sim.player.health, 'the set net must snap').toBe(90);
+    expect(
+      dist(sc.sim.player.position, c.position) - dBefore,
+      'the drag pushes the intruder out',
+    ).toBeGreaterThanOrEqual(180);
+    expect(c.state, 'the net drops after it snaps').toBe('idle');
+    // The snap puts the net on reset: fresh loud play inside the reset does
+    // not re-set it (the same stand-down as the other traps).
+    sc.step({ ...emptyInput(), sonar: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), sonar: false });
+    expect(c.state, 'the net reset holds after a snap').toBe('idle');
+    runT(sc, c, seen, 10);
+    expect(sc.sim.player.health, 'no second snap inside the reset').toBe(90);
+    // After the reset, fresh loud play re-arms the post (the rule holds again).
+    sc.step({ ...emptyInput(), sonar: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), sonar: false });
+    expect(c.state, 'after the reset, loud play re-arms the post').toBe('alert');
+    // The non-chase signature: the whole path stays out of the pursuit states.
+    for (const s of seen) expect(s, `T-14 never pursues (${s})`).not.toMatch(/attack|stalk/);
+  });
+});
+
+describe('T-15: the burst interceptor — a cornered charge, not a chase (§10)', () => {
+  it('moves in visible bursts with rests (the readable motion)', () => {
+    const sc = new Scenario(203, greyboxWorld([{ id: 't15-b', creature: 'T-15', position: vec2(1700, -300) }]));
+    const c = sc.sim.creatures[0]!;
+    const seen = new Set<CreatureState>();
+    const home = vec2(c.position.x, c.position.y);
+    let maxFromHome = 0;
+    // The bursts point in rotating directions, so the metric is the furthest
+    // dash from home, not the net displacement.
+    const steps = Math.round(12 / FIXED_DT);
+    for (let i = 0; i < steps; i += 1) {
+      sc.step(emptyInput());
+      seen.add(c.state);
+      maxFromHome = Math.max(maxFromHome, dist(c.position, home));
+    }
+    expect(seen.has('wander'), 'burst phases swim').toBe(true);
+    expect(seen.has('idle'), 'rest phases hold').toBe(true);
+    expect(maxFromHome, 'a burst leaves a visible dash').toBeGreaterThanOrEqual(150);
+  });
+
+  it('loud play at range and a silent corner do not trigger it; a loud corner does, once, then a stand-down', () => {
+    const sc = new Scenario(205, greyboxWorld([{ id: 't15-c', creature: 'T-15', position: vec2(1700, -300) }]));
+    const c = sc.sim.creatures[0]!;
+    const seen = new Set<CreatureState>();
+    // Control A: loud play at range — the organism is not cornered.
+    sc.sim.teleportTo(2400, 250);
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    runT(sc, c, seen, 3);
+    expect(seen.has('attack'), 'loud play at range must not trigger the charge').toBe(false);
+    expect(sc.sim.player.health).toBe(100);
+    // Control B: a silent corner — being close without noise does not trigger.
+    sc.sim.teleportTo(c.position.x + 120, -c.position.y);
+    runT(sc, c, seen, 2);
+    expect(seen.has('attack'), 'silence in the corner must not trigger the charge').toBe(false);
+    expect(sc.sim.player.health).toBe(100);
+    // Trigger: a loud tool in the corner — one bounded charge, one hit.
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    expect(c.state, 'the loud corner triggers the charge').toBe('attack');
+    runT(sc, c, seen, 3);
+    expect(sc.sim.player.health, 'the charge hits once').toBe(85);
+    expect(c.state, 'the charge is bounded, not a chase').not.toBe('attack');
+    // Stand-down: a fresh loud corner inside the window does not re-trigger.
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    runT(sc, c, seen, 3);
+    expect(c.state, 'no re-charge inside the stand-down window').not.toBe('attack');
+  });
+});
+
+describe('T-16: the buried boulder — a silent proximity strike from cover (§10)', () => {
+  it('a silent pass inside the strike reach is safe; a loud pass strikes once, then a long reset', () => {
+    const home = vec2(1700, -300);
+    const sc = new Scenario(207, greyboxWorld([{ id: 't16-a', creature: 'T-16', position: home }]));
+    const c = sc.sim.creatures[0]!;
+    const seen = new Set<CreatureState>();
+    // Control: a silent pass right past the boulder — the silence is the tell.
+    sc.sim.teleportTo(1700, 200); // 100u north, inside the strike reach
+    runT(sc, c, seen, 3);
+    expect(seen.has('custom'), 'silence must not wake it').toBe(false);
+    expect(sc.sim.player.health).toBe(100);
+    // Trigger: a loud pass inside the strike radius wakes it.
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    expect(c.state, 'a loud pass inside the strike radius wakes it').toBe('custom');
+    runT(sc, c, seen, 3);
+    expect(sc.sim.player.health, 'the expanding net hits').toBe(88);
+    expect(c.state, 'the strike ends and it is buried again').toBe('idle');
+    // Reset: another loud pass inside the reset window does not strike.
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    runT(sc, c, seen, 3);
+    expect(sc.sim.player.health, 'no second strike inside the reset').toBe(88);
+    for (const s of seen) expect(s, `the boulder never pursues (${s})`).not.toMatch(/attack|stalk/);
+  });
+});
+
+describe('T-17: the silk colony — a noise trip in its frame, then it re-sets (§10)', () => {
+  it('a silent approach through the frame is safe; a loud one trips the silk', () => {
+    const home = vec2(1700, -300);
+    const sc = new Scenario(209, greyboxWorld([{ id: 't17-a', creature: 'T-17', position: home }]));
+    const c = sc.sim.creatures[0]!;
+    const seen = new Set<CreatureState>();
+    // Control: a silent approach well inside the silk reach.
+    sc.sim.teleportTo(1750, 260); // ~70u from the frame
+    runT(sc, c, seen, 2);
+    expect(seen.has('custom'), 'silence must not trip the silk').toBe(false);
+    expect(sc.sim.player.health).toBe(100);
+    // Trigger: a loud pass inside the frame trips it.
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    expect(c.state, 'loud play inside the frame trips the silk').toBe('custom');
+    runT(sc, c, seen, 1);
+    expect(sc.sim.player.health, 'the silk snags once').toBe(92);
+    runT(sc, c, seen, 3);
+    expect(c.state, 'the silk drops once the pass is over').toBe('idle');
+    // Re-set: after the cooldown the same rule holds again.
+    sc.stepFor(10, emptyInput());
+    sc.step({ ...emptyInput(), useTool: true });
+    seen.add(c.state);
+    sc.step({ ...emptyInput(), useTool: false });
+    expect(c.state, 'the re-set silk trips on the same rule').toBe('custom');
+    runT(sc, c, seen, 1);
+    expect(sc.sim.player.health, 'the re-set silk snags again').toBe(84);
+    for (const s of seen) expect(s, `the colony never pursues (${s})`).not.toMatch(/attack|stalk/);
+  });
+});
+
+describe('T-18: the field herder — drives small prey into a harvestable field (§11.1)', () => {
+  it('drives nearby schooling prey into its field, and a player collects them', () => {
+    const sc = new Scenario(211, greyboxWorld([
+      { id: 't18-a', creature: 'T-18', position: vec2(1700, -300) },
+      { id: 't03-a', creature: 'T-03', position: vec2(2000, -250) },
+      { id: 't03-b', creature: 'T-03', position: vec2(2050, -350) },
+      { id: 't03-c', creature: 'T-03', position: vec2(2100, -300) },
+    ]));
+    const c = one(sc, 'T-18');
+    const seen = new Set<CreatureState>();
+    runT(sc, c, seen, 40);
+    const field = sc.sim.creatures.filter((o) => o.def.id === 'T-03' && dist(o.position, c.position) <= 150);
+    expect(field.length, 'prey are driven into the field').toBeGreaterThanOrEqual(2);
+    // The exploitable relationship: a player at the field collects one.
+    const prey = field[0]!;
+    sc.sim.teleportTo(prey.position.x, -prey.position.y);
+    const bank0 = sc.sim.player.banked.salvage ?? 0;
+    sc.step({ ...emptyInput(), interact: true });
+    expect((sc.sim.player.banked.salvage ?? 0) - bank0, 'a collected field member yields salvage').toBe(1);
+    expect(sc.sim.creatures.some((o) => o === prey), 'the collected prey leaves the pool').toBe(false);
+    expect(sc.sim.player.health, 'the herder never attacks the player').toBe(100);
+    for (const s of seen) expect(s, 'the herder has no pursuit states').toBe('wander');
+  });
+
+  it('only drives prey inside its reach (the control: a distant school is untouched)', () => {
+    const sc = new Scenario(213, greyboxWorld([
+      { id: 't18-b', creature: 'T-18', position: vec2(1700, -300) },
+      { id: 't03-f', creature: 'T-03', position: vec2(2600, -300) },
+    ]));
+    const c = one(sc, 'T-18');
+    const far = one(sc, 'T-03');
+    runT(sc, c, new Set<CreatureState>(), 20);
+    expect(dist(far.position, c.position), 'a school outside the reach is not driven').toBeGreaterThan(550);
+  });
+});
+
+describe('FINAL PROOF: AC-roster-behavior across tiers 1-3 (§10, §11.1, §47)', () => {
+  it('4+ species have non-pursuit signature behaviors and 2+ are beneficial', () => {
+    // The roster under test: what the production world data spawns (tiers 1-2,
+    // WI-03a/WI-03b) plus the tier-3 registry (its spawns land in WI-03c2).
+    const rosterIds = new Set<string>();
+    for (const chunk of makeSimWorld().chunks) for (const s of chunk.creatureSpawns ?? []) rosterIds.add(s.creature);
+    for (const id of TIER3_IDS) rosterIds.add(id);
+    expect(rosterIds.size, 'the roster spans the implemented tiers').toBeGreaterThanOrEqual(10);
+    // Data half: every tier-3 signature rule is a non-pursuit category.
+    const NON_PURSUIT: SignatureRule[] = [
+      'reacts-sonar', 'reacts-light', 'attacks-from-cover', 'territory',
+      'attacks-noise', 'mistakes-tool-signals', 'dangerous-only-in-company',
+      'cornered-charge', 'herds-prey',
+    ];
+    for (const id of TIER3_IDS) {
+      for (const r of TIER3_CREATURES[id]!.rules ?? []) {
+        expect(NON_PURSUIT, `tier-3 rule ${r} at ${id} must be non-pursuit`).toContain(r);
+      }
+    }
+    // Behavior half: compact headless probes, counted. Each probe passes when
+    // the signature behavior happens and no pursuit state does.
+    let nonPursuit = 0;
+    {
+      // T-14: the post arms on sonar; the path never pursues.
+      const sc = new Scenario(301, greyboxWorld([{ id: 't14-f', creature: 'T-14', position: vec2(1700, -300) }]));
+      const c = sc.sim.creatures[0]!;
+      const seen = new Set<CreatureState>();
+      sc.sim.player.capabilities.add('sonar');
+      sc.sim.teleportTo(1650, 280);
+      sc.step({ ...emptyInput(), sonar: true });
+      seen.add(c.state);
+      sc.step({ ...emptyInput(), sonar: false });
+      runT(sc, c, seen, 4);
+      if (seen.has('alert') && !seen.has('attack') && !seen.has('stalk')) nonPursuit += 1;
+    }
+    {
+      // T-16: the proximity strike from cover; the path never pursues.
+      const sc = new Scenario(303, greyboxWorld([{ id: 't16-f', creature: 'T-16', position: vec2(1700, -300) }]));
+      const c = sc.sim.creatures[0]!;
+      const seen = new Set<CreatureState>();
+      sc.sim.teleportTo(1700, 200);
+      sc.step({ ...emptyInput(), useTool: true });
+      seen.add(c.state);
+      sc.step({ ...emptyInput(), useTool: false });
+      runT(sc, c, seen, 4);
+      if (seen.has('custom') && !seen.has('attack') && !seen.has('stalk')) nonPursuit += 1;
+    }
+    {
+      // T-17: the noise trip; the path never pursues.
+      const sc = new Scenario(305, greyboxWorld([{ id: 't17-f', creature: 'T-17', position: vec2(1700, -300) }]));
+      const c = sc.sim.creatures[0]!;
+      const seen = new Set<CreatureState>();
+      sc.sim.teleportTo(1750, 260);
+      sc.step({ ...emptyInput(), useTool: true });
+      seen.add(c.state);
+      sc.step({ ...emptyInput(), useTool: false });
+      runT(sc, c, seen, 4);
+      if (seen.has('custom') && !seen.has('attack') && !seen.has('stalk')) nonPursuit += 1;
+    }
+    {
+      // T-18: the field herder carries no combat capability at all.
+      if (TIER3_CREATURES['T-18']!.combat === undefined) nonPursuit += 1;
+    }
+    {
+      // T-13 (production world data): it runs from noise — the opposite of
+      // pursuit, observable in the shipped world.
+      const prod = new Scenario(307);
+      const t13 = prod.sim.creatures.find((cr) => cr.def.id === 'T-13');
+      if (t13 !== undefined) {
+        prod.sim.teleportTo(t13.position.x + 80, -t13.position.y);
+        const seen = new Set<CreatureState>();
+        prod.step({ ...emptyInput(), useTool: true });
+        seen.add(t13.state);
+        prod.step({ ...emptyInput(), useTool: false });
+        runT(prod, t13, seen, 2);
+        if (seen.has('flee')) nonPursuit += 1;
+      }
+    }
+    expect(nonPursuit, 'at least four species are materially non-pursuit').toBeGreaterThanOrEqual(4);
+
+    // The beneficial half: the friendly species WI-03b1 lands, plus the
+    // tier-3 field harvest. Each probe is the same minimal production scenario
+    // as the per-species tests; count the passes.
+    let beneficial = 0;
+    {
+      // T-08: the feeding trade nets a salvage gain.
+      const sc = new Scenario(309, greyboxWorld([{ id: 't08-f', creature: 'T-08', position: vec2(1900, -800) }]));
+      sc.sim.player.inventory.salvage = 1;
+      sc.swimTo(one(sc, 'T-08').position, 60, 900);
+      const bank0 = sc.sim.player.banked.salvage ?? 0;
+      sc.step({ ...emptyInput(), interact: true });
+      if ((sc.sim.player.banked.salvage ?? 0) - bank0 >= 2) beneficial += 1;
+    }
+    {
+      // T-11: the settled pocket gives a passive lift.
+      const sc = new Scenario(311, greyboxWorld([{ id: 't11-f', creature: 'T-11', position: vec2(2000, -1050) }]));
+      sc.stepFor(8, emptyInput());
+      sc.sim.teleportTo(2000, 900);
+      const y0 = sc.sim.player.position.y;
+      sc.stepFor(12, emptyInput());
+      if (sc.sim.player.position.y - y0 > 60) beneficial += 1;
+    }
+    {
+      // T-18: the driven field pays out a collected salvage unit.
+      const sc = new Scenario(313, greyboxWorld([
+        { id: 't18-f', creature: 'T-18', position: vec2(1700, -300) },
+        { id: 't03-f1', creature: 'T-03', position: vec2(2000, -250) },
+        { id: 't03-f2', creature: 'T-03', position: vec2(2050, -350) },
+      ]));
+      const c = one(sc, 'T-18');
+      runT(sc, c, new Set<CreatureState>(), 30);
+      const field = sc.sim.creatures.find((o) => o.def.id === 'T-03' && dist(o.position, c.position) <= 150);
+      if (field !== undefined) {
+        sc.sim.teleportTo(field.position.x, -field.position.y);
+        const bank0 = sc.sim.player.banked.salvage ?? 0;
+        sc.step({ ...emptyInput(), interact: true });
+        if ((sc.sim.player.banked.salvage ?? 0) - bank0 >= 1) beneficial += 1;
+      }
+    }
+    expect(beneficial, 'at least two species are beneficial or mutually useful').toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -283,10 +636,14 @@ describe('spoiler containment for this work item (§0/§12/§68)', () => {
       }
     }
     scanFile(join(here, '..', '..', 'src', 'content', 'secret', 'hiddenCreatures.ts'));
-    const implDir = join(here, '..', '..', 'agents', 'tasks', 'hadalv2.execute_leaf.__attempt_0014', 'implementation');
-    if (existsSync(implDir)) {
-      for (const f of readdirSync(implDir)) {
-        if (f.endsWith('.md')) scanFile(join(implDir, f));
+    // The implementation artifacts of the tier-3 execution attempts
+    // (WI-03c1a landed in attempt 14; WI-03c1b lands in attempt 15).
+    for (const task of ['hadalv2.execute_leaf.__attempt_0014', 'hadalv2.execute_leaf.__attempt_0015']) {
+      const implDir = join(here, '..', '..', 'agents', 'tasks', task, 'implementation');
+      if (existsSync(implDir)) {
+        for (const f of readdirSync(implDir)) {
+          if (f.endsWith('.md')) scanFile(join(implDir, f));
+        }
       }
     }
     expect(offenders, `spoiler tokens found: ${offenders.join(', ')}`).toEqual([]);

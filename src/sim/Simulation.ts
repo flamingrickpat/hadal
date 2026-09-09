@@ -138,6 +138,33 @@ const T31_SHALLOW_DRIFT = 55; // y > -500
 const T31_MID_DRIFT = 30; // -500..-1500
 const T31_DEEP_DRIFT = 8; // y < -1500
 
+// ---- Tier-3 per-predator rules (WI-03c1b, request §10, §19) ----------------
+// The controllers (hiddenCreatures.ts) pin the rest state; the signature
+// rules resolve here against the player and the ambient pool — the same
+// simulation-side pattern as the tier-2 interactions, because the controller
+// hook cannot see either.
+const T14_NET_RADIUS = 260; // the set net's reach from the post
+const T14_ARM_TIME = 8; // a loud cue keeps the net set for this long (s)
+const T14_SNAP_COOLDOWN = 10; // after a snap, the net reset before the next (s)
+const T14_DRAG_DIST = 220; // the snap drags the intruder out this far
+const T15_CORNERED_NOISE = 0.35; // perceived noise this loud = a loud corner
+const T15_BURST_TIME = 1.2; // one visible burst (s)
+const T15_REST_TIME = 1.6; // the rest between bursts (s)
+const T15_CHARGE_TIME = 1.2; // the cornered charge is one bounded dash (s)
+const T15_CHARGE_COOLDOWN = 6; // the stand-down after a charge (s)
+const T15_CONTACT_RADIUS = 80; // the charge hits within this
+const T16_WAKE_NOISE = 0.4; // perceived noise this loud = a loud pass close
+const T16_STRIKE_TIME = 1.5; // the expanding net stays open (s)
+const T16_NET_RADIUS = 110; // the expanding net's reach
+const T16_STRIKE_COOLDOWN = 12; // the buried reset after a strike (s)
+const T17_SILK_RADIUS = 150; // the silk's reach around the frame
+const T17_SILK_TIME = 2.5; // the set silk stays live (s)
+const T17_SILK_COOLDOWN = 8; // the re-set after the silk drops (s)
+const T17_SILK_SLOW_RATE = 3; // per-second player velocity damping in silk
+const T18_DRIVE_RADIUS = 600; // how far the herder drives schooling prey
+const T18_DRIVE_SPEED = 45; // the drive toward the field (units/s, §64 drift)
+const T18_FIELD_RADIUS = 150; // the harvestable field around the herder
+
 export class Simulation {
   readonly player: Player;
   readonly controller: PlayerController;
@@ -211,6 +238,14 @@ export class Simulation {
   // accumulated sweep time per node and the nodes it has already finished.
   // Creatures are stable objects, so keying by instance is safe.
   private readonly tier2Sweep = new Map<Creature, { work: number; finished: Set<string> }>();
+  // Per-creature working state for the tier-3 signature rules (request §30):
+  // the arm/strike window end, the next-trigger time (cooldown), the one-hit
+  // flag per window, and the T-15 burst phase. Creature instances are stable,
+  // so keying by instance is safe (same as `tier2Sweep`).
+  private readonly tier3 = new Map<Creature, { until: number; ready: number; hit: boolean; burstUntil: number; resting: boolean; n: number }>();
+  // The T-18 driven prey: small schooling members currently herded into its
+  // field, so they can be collected there and released back to wander later.
+  private readonly tier3Driven = new Set<Creature>();
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -311,6 +346,7 @@ export class Simulation {
     this.stepCreatures(dt);
     if (toolFired) this.fireHarpoon();
     this.applyTier2Interactions(input, dt);
+    this.applyTier3Interactions(input, dt);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
     this.handleCraft(input);
@@ -587,6 +623,245 @@ export class Simulation {
     const y = c.position.y;
     const speed = y > -500 ? T31_SHALLOW_DRIFT : y > -1500 ? T31_MID_DRIFT : T31_DEEP_DRIFT;
     c.position.x -= speed * dt;
+  }
+
+  /** The tier-3 per-predator signature rules (WI-03c1b, request §10, §19). */
+  private applyTier3Interactions(input: PlayerInput, dt: number): void {
+    for (const c of this.creatures) {
+      if (!c.active) continue;
+      const id = c.def.id;
+      if (id === 'T-14') this.t14Post(c);
+      else if (id === 'T-15') this.t15Burst(c);
+      else if (id === 'T-16') this.t16Boulder(c);
+      else if (id === 'T-17') this.t17Silk(c, dt);
+      else if (id === 'T-18') this.t18Herd(c, input, dt);
+    }
+  }
+
+  /** The tier-3 per-creature working state (created on first use). */
+  private tier3State(c: Creature): { until: number; ready: number; hit: boolean; burstUntil: number; resting: boolean; n: number } {
+    let st = this.tier3.get(c);
+    if (st === undefined) {
+      st = { until: 0, ready: 0, hit: false, burstUntil: 0, resting: false, n: 0 };
+      this.tier3.set(c, st);
+    }
+    return st;
+  }
+
+  /**
+   * The territorial post (T-14, request §10: territory without long chase —
+   * the non-chase signature): a loud cue at or above the def's sense
+   * thresholds (sonar or tool noise) sets a silent capture net that holds
+   * the post; an intruder in the net's reach is hit once and dragged out.
+   * The drag is recoverable, not lethal — a large predator that is deterable
+   * (the section 10 deter holds the whole rule, including the arming).
+   */
+  private t14Post(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier3State(c);
+    if (t < c.deterredUntil) {
+      if (c.state !== 'idle') {
+        c.setState('idle');
+        c.target = null;
+      }
+      return;
+    }
+    if (c.state === 'alert') {
+      if (t >= st.until) {
+        c.setState('idle');
+        c.target = null;
+        return;
+      }
+      const p = this.player.position;
+      const d = Math.hypot(p.x - c.position.x, p.y - c.position.y);
+      if (t >= st.ready && d <= T14_NET_RADIUS) {
+        const nx = d > 1e-6 ? (p.x - c.position.x) / d : 1;
+        const ny = d > 1e-6 ? (p.y - c.position.y) / d : 0;
+        p.x += nx * T14_DRAG_DIST;
+        p.y += ny * T14_DRAG_DIST;
+        this.player.health = Math.max(0, this.player.health - c.def.combat!.damage);
+        c.setState('idle');
+        c.target = null;
+        st.until = 0;
+        st.ready = t + T14_SNAP_COOLDOWN;
+      }
+      return;
+    }
+    const s = c.percept;
+    const thr = c.def.senses;
+    if (t >= st.ready && ((thr.sonar !== undefined && s.sonar >= thr.sonar) || (thr.noise !== undefined && s.noise >= thr.noise))) {
+      c.setState('alert');
+      st.until = t + T14_ARM_TIME;
+    }
+  }
+
+  /**
+   * The burst interceptor (T-15, request §10: cornered-charge): it cruises
+   * in visible bursts (a dash, then a rest) hunting the ambient swarms, and
+   * is dangerous to the player only in a loud corner — one bounded charge,
+   * one hit, then a stand-down. It never chases: a corner that stays silent,
+   * or stays at range, never triggers it.
+   */
+  private t15Burst(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier3State(c);
+    if (c.state === 'attack') {
+      if (!st.hit && Math.hypot(c.position.x - this.player.position.x, c.position.y - this.player.position.y) <= T15_CONTACT_RADIUS) {
+        this.player.health = Math.max(0, this.player.health - c.def.combat!.damage);
+        st.hit = true;
+      }
+      if (t >= st.until) {
+        c.setState('idle');
+        c.target = null;
+        st.resting = true;
+        st.burstUntil = t + T15_CHARGE_COOLDOWN;
+      }
+      return;
+    }
+    if (t >= st.ready && c.percept.noise >= T15_CORNERED_NOISE) {
+      c.setState('attack');
+      c.target = c.strongestPos('noise') ?? vec2(c.position.x, c.position.y);
+      st.until = t + T15_CHARGE_TIME;
+      st.hit = false;
+      st.resting = true;
+      st.burstUntil = t + T15_CHARGE_TIME + T15_CHARGE_COOLDOWN;
+      st.ready = t + T15_CHARGE_TIME + T15_CHARGE_COOLDOWN;
+      return;
+    }
+    if (st.resting) {
+      if (t >= st.burstUntil) {
+        st.resting = false;
+        st.n += 1;
+        const ang = st.n * 2.4;
+        c.setState('wander');
+        // setState clears the target for the ambient states — the burst point
+        // must be set after the transition, not before.
+        c.target = vec2(c.home.x + Math.cos(ang) * 320, c.home.y + Math.sin(ang) * 220);
+        st.burstUntil = t + T15_BURST_TIME;
+      } else {
+        c.setState('idle');
+        c.target = null;
+      }
+    } else if (t >= st.burstUntil) {
+      st.resting = true;
+      st.burstUntil = t + T15_REST_TIME;
+      c.setState('idle');
+      c.target = null;
+    }
+  }
+
+  /**
+   * The buried boulder (T-16, request §10: attacks-from-cover — its
+   * dangerous phase is not the phase it presents): it sits inert in the
+   * floor and wakes on a loud pass close in; the strike is one expanding
+   * net, one hit, then a long buried reset. Silence passes unharmed.
+   */
+  private t16Boulder(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier3State(c);
+    if (t < c.deterredUntil) {
+      if (c.state !== 'idle') {
+        c.setState('idle');
+        c.target = null;
+      }
+      return;
+    }
+    if (c.state === 'custom') {
+      if (!st.hit && Math.hypot(c.position.x - this.player.position.x, c.position.y - this.player.position.y) <= T16_NET_RADIUS) {
+        this.player.health = Math.max(0, this.player.health - c.def.combat!.damage);
+        st.hit = true;
+      }
+      if (t >= st.until) {
+        c.setState('idle');
+        st.ready = t + T16_STRIKE_COOLDOWN;
+      }
+      return;
+    }
+    if (t >= st.ready && c.percept.noise >= T16_WAKE_NOISE) {
+      c.setState('custom');
+      st.until = t + T16_STRIKE_TIME;
+      st.hit = false;
+    }
+  }
+
+  /**
+   * The silk colony (T-17, request §10: territory + attacks-noise): a loud
+   * pass at or above its def's noise sense trips the silk around its frame —
+   * a slow plus one snag while it is set — and the silk re-sets after the
+   * cooldown, so the same rule holds again.
+   */
+  private t17Silk(c: Creature, dt: number): void {
+    const t = this.state.timeSec;
+    const st = this.tier3State(c);
+    if (c.state === 'custom') {
+      const d = Math.hypot(c.position.x - this.player.position.x, c.position.y - this.player.position.y);
+      if (d <= T17_SILK_RADIUS) {
+        const damp = Math.exp(-T17_SILK_SLOW_RATE * dt);
+        this.player.velocity.x *= damp;
+        this.player.velocity.y *= damp;
+        if (!st.hit) {
+          this.player.health = Math.max(0, this.player.health - c.def.combat!.damage);
+          st.hit = true;
+        }
+      }
+      if (t >= st.until) {
+        c.setState('idle');
+        st.ready = t + T17_SILK_COOLDOWN;
+      }
+      return;
+    }
+    const thr = c.def.senses.noise;
+    if (thr !== undefined && t >= st.ready && c.percept.noise >= thr) {
+      c.setState('custom');
+      st.until = t + T17_SILK_TIME;
+      st.hit = false;
+    }
+  }
+
+  /**
+   * The field herder (T-18, request §11.1: herds-prey, exploitable
+   * relationship): it drives nearby small schooling prey into a field around
+   * itself and never attacks the player; a player at the field collects a
+   * driven member for a salvage unit. Prey that drift out of the reach go
+   * back to their own wandering.
+   */
+  private t18Herd(c: Creature, input: PlayerInput, dt: number): void {
+    for (const o of this.creatures) {
+      if (o === c || !o.active || o.dead || o.def.combat !== undefined) continue;
+      if (o.def.ecology?.school !== true) continue;
+      const d = Math.hypot(o.position.x - c.position.x, o.position.y - c.position.y);
+      if (d <= T18_DRIVE_RADIUS) {
+        this.tier3Driven.add(o);
+        // A position drift toward the field, the sanctioned mechanism for
+        // herd/ride motion (request §64): steering through the member's own
+        // state machine would fight its schooling cohesion and stall.
+        const inv = d > 1e-6 ? 1 / d : 0;
+        o.position.x += (c.position.x - o.position.x) * inv * T18_DRIVE_SPEED * dt;
+        o.position.y += (c.position.y - o.position.y) * inv * T18_DRIVE_SPEED * dt;
+      } else if (this.tier3Driven.has(o)) {
+        this.tier3Driven.delete(o);
+      }
+    }
+    if (!input.interact) return;
+    let best: Creature | null = null;
+    let bestD = INTERACT_RADIUS;
+    for (const o of this.creatures) {
+      if (!this.tier3Driven.has(o) || !o.active || o.dead) continue;
+      if (Math.hypot(o.position.x - c.position.x, o.position.y - c.position.y) > T18_FIELD_RADIUS) continue;
+      const pd = Math.hypot(o.position.x - this.player.position.x, o.position.y - this.player.position.y);
+      if (pd <= bestD) {
+        bestD = pd;
+        best = o;
+      }
+    }
+    if (best === null) return;
+    this.giveResources('salvage', 1);
+    best.dead = true;
+    const ci = this.creatures.indexOf(best);
+    if (ci >= 0) this.creatures.splice(ci, 1);
+    const si = this.schoolMembers.indexOf(best);
+    if (si >= 0) this.schoolMembers.splice(si, 1);
+    this.tier3Driven.delete(best);
   }
 
   /** The nearest active creature of `id` within `radius` of `pos`, or null. */
