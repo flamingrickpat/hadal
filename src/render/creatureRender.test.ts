@@ -191,6 +191,7 @@ describe('creature renderer — sim state in, nothing back (request §30, §13)'
       senses: {},
       behavior: { startState: 'idle' },
       audio: {},
+      sizeClass: 'large',
     };
     const creature = makeCreature(leviathan, vec2(0, 0));
     const renderer = new CreatureRenderer(new THREE.Scene());

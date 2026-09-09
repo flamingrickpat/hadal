@@ -1,0 +1,43 @@
+﻿
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/Temp/hadal-v2[39m
+
+ [31m❯[39m src/sim/scenarios.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 16062[2mms[22m[39m
+   [32m✓[39m §30 simulation boundary [2m(1)[22m
+     [32m✓[39m the simulation + world data import and run in Node without browser globals[32m 9[2mms[22m[39m
+   [31m❯[39m separate headless scenarios (request §70) [2m(8)[22m
+     [33m[2m✓[22m[39m death: respawns at the base, keeps upgrades, loses a modest fraction of unbanked[33m 2107[2mms[22m[39m
+     [32m✓[39m insufficient materials: crafting is rejected with no state change[32m 1[2mms[22m[39m
+[31m     [31m×[31m blocked route: the sealed node is unreachable from the start[39m[33m 6802[2mms[22m[39m
+     [33m[2m✓[22m[39m depleted resources: harvesting all reachable nodes leaves none to collect[33m 2620[2mms[22m[39m
+     [32m✓[39m a failing assertion produces a trace with seed, time, position, input, assertion[32m 74[2mms[22m[39m
+     [32m✓[39m a save loaded into a fresh simulation drives the same progression (step 8–9)[32m 1[2mms[22m[39m
+     [32m✓[39m sonar: the Q pulse is inert without the upgrade and emits a world signal after it (request §18, §63)[32m 6[2mms[22m[39m
+     [33m[2m✓[22m[39m traverses the macro world end to end: the terrain is swimmable through every depth band (request §4.2/§49)[33m 4439[2mms[22m[39m
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/sim/scenarios.test.ts[2m > [22mseparate headless scenarios (request §70)[2m > [22mblocked route: the sealed node is unreachable from the start
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/sim/scenarios.test.ts:[2m83:3[22m[39m
+    [90m 81|[39m   });
+    [90m 82|[39m
+    [90m 83|[39m   it('blocked route: the sealed node is unreachable from the start', (…
+    [90m   |[39m   [31m^[39m
+    [90m 84|[39m     const s = new Scenario(4);
+    [90m 85|[39m     const sim = s.sim;
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (9)[39m
+[2m   Start at [22m 18:41:25
+[2m   Duration [22m 16.48s[2m (tests 98%, transform 1%)[22m
+

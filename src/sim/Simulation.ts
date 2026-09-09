@@ -38,7 +38,7 @@ import type { SaveGameV1 } from '../game/save';
 import { findItem } from '../content/items';
 import { RECIPE_BY_ID } from '../content/recipes';
 import { BASE_RETURN_LINES, TRIGGER_RADIO_LINES } from '../content/dialogue';
-import { applyStarterGear } from '../player/equipment';
+import { applyStarterGear, HARPOON } from '../player/equipment';
 import { Player } from '../player/Player';
 import { PlayerController, type PlayerInput } from '../player/PlayerController';
 import { createCargo } from '../player/inventory';
@@ -46,6 +46,7 @@ import { canCraft, applyEquipment, type CraftResult } from '../systems/CraftingS
 import { WorldSignalBus, type WorldSignal } from '../creatures/senses';
 import { Creature, type CreatureAudioEvent } from '../creatures/Creature';
 import { CREATURE_BY_ID } from '../creatures/fixtures';
+import { DETER_HOLD_SECONDS, HARPOON_RANGE, resolveHarpoonHit } from '../creatures/combat';
 import {
   FLEE_RADIUS,
   FLEE_THRESHOLD,
@@ -295,15 +296,21 @@ export class Simulation {
     this.state.tick(dt);
     c.update(dt);
     this.applyCurrent(dt);
+    // The harpoon's rising edge must be captured before `emitPlayerSignals`
+    // updates `wasTool` (the tool noise and the lance share the edge).
+    const toolFired = input.useTool && !this.wasTool;
     this.emitPlayerSignals(input);
     if (input.sonar && !this.wasSonar && this.player.capabilities.has('sonar')) {
       this.sonar.fire(this.player.position, this.state.timeSec);
     }
     this.wasSonar = input.sonar;
     this.sonar.update(dt, this.state.timeSec);
-    this.stepCreatures(dt);
-    this.applyTier2Interactions(input, dt);
+    // One-shot actions resolve before the world steps, so a slot select in the
+    // same step as a tool use aims the new tool.
     if (input.toolSelect !== null) this.controller.setToolIndex(input.toolSelect);
+    this.stepCreatures(dt);
+    if (toolFired) this.fireHarpoon();
+    this.applyTier2Interactions(input, dt);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
     this.handleCraft(input);
@@ -802,6 +809,53 @@ export class Simulation {
     ) {
       this.signals.emit({ type: 'noise', pos, strength: BOOST_NOISE_STRENGTH, tag: 'boost' }, t);
       this.lastBoostSignal = t;
+    }
+  }
+
+  /**
+   * The player's harpoon (request §10 "combat philosophy"): on a tool rising
+   * edge with the harpoon selected, the shot lances the nearest active
+   * creature within `HARPOON_RANGE` — the same radius-based interaction model
+   * harvesting uses — and resolves the hit against the section 10 damage
+   * model by the creature's size class: small fauna die on one hit, medium
+   * predators on the last of the table's cost, and large predators never die
+   * — the hit resolves as a deter (a bounded stand-down window plus a
+   * withdraw for a creature mid-hunt). Nothing here is an HP model: the
+   * table carries costs, and creatures expose no hp data (request §10 "never
+   * put an HP bar over a leviathan").
+   */
+  private fireHarpoon(): void {
+    if (this.player.selectedTool !== HARPOON.name) return;
+    const t = this.state.timeSec;
+    const pos = this.player.position;
+    let target: Creature | null = null;
+    let bestD = HARPOON_RANGE;
+    for (const c of this.creatures) {
+      if (!c.active || c.dead) continue;
+      const d = Math.hypot(c.position.x - pos.x, c.position.y - pos.y);
+      if (d <= bestD) {
+        bestD = d;
+        target = c;
+      }
+    }
+    if (target === null) return; // a whiff: the noise blip is the whole effect
+    const res = resolveHarpoonHit(target.def.sizeClass, target.harpoonHits);
+    target.harpoonHits = res.hits;
+    if (res.outcome === 'kill') {
+      // The same removal a predator kill performs (§20 ambient pool).
+      target.dead = true;
+      const ci = this.creatures.indexOf(target);
+      if (ci >= 0) this.creatures.splice(ci, 1);
+      const si = this.schoolMembers.indexOf(target);
+      if (si >= 0) this.schoolMembers.splice(si, 1);
+    } else if (res.outcome === 'deter') {
+      target.deterredUntil = t + DETER_HOLD_SECONDS;
+      if (this.isHuntingState(target.state)) {
+        // A mid-hunt deter withdraws: clear the stale stalk target so the
+        // `return` state heads for the creature's home, not the last signal.
+        target.setState('return');
+        target.target = null;
+      }
     }
   }
 

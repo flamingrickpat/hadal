@@ -80,7 +80,7 @@ describe('tier-1 roster data (WI-03a)', () => {
   });
 
   it('bodies are distinct: no two share a body and movement fingerprint (§46)', () => {
-    expect(HIDDEN_CREATURES).toHaveLength(12); // tier-1 (6) + tier-2 (6)
+    expect(HIDDEN_CREATURES).toHaveLength(17); // tier-1 (6) + tier-2 (6) + tier-3 (5)
     const seen = new Set<string>();
     for (const def of HIDDEN_CREATURES) {
       const chains = (def.body!.chainCircles ?? [])

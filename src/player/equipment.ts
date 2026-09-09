@@ -46,6 +46,12 @@ export const STARTER_GEAR: EquipmentDef[] = [
 
 const STARTER_TOOL_SLOTS = ['knife-0', 'light-0', 'harpoon-0'];
 
+const HARPOON_GEAR = STARTER_GEAR.find((gear) => gear.id === 'harpoon-0');
+if (HARPOON_GEAR === undefined) throw new Error('STARTER_GEAR must define the harpoon');
+
+/** The starter harpoon (request §9 tier 0): the lance tool (request §10). */
+export const HARPOON: EquipmentDef = HARPOON_GEAR;
+
 export function applyStarterGear(player: Player): void {
   const tank = STARTER_GEAR[0];
   if (tank === undefined) throw new Error('STARTER_GEAR must define the tank');

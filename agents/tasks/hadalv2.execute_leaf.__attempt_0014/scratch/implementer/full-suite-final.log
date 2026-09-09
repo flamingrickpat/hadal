@@ -1,0 +1,81 @@
+﻿
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/Temp/hadal-v2[39m
+
+ [32m✓[39m src/render/band.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/game/save.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/util/audio.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/world/triggers.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/world/terrain.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/game/frame.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/creatures/combat.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/creatures/senses.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/creatures/steering.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/render/particles.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/render/lighting.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/util/rng.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 127[2mms[22m[39m
+ [32m✓[39m src/player/PlayerController.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/player/PlayerMeters.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/render/sonar.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/systems/SonarSystem.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/creatures/ecology.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/creatures/Creature.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+node.exe : [90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mderives output only from sim state: the creature 
+is never mutated
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([90mstderr[2m...s never mutated:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mmoves the visual with the simulated position
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mhides deactivated creatures instead of stepping them
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mdispatches: chain bodies render rigid per-circle parts, 
+small bodies do not
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mhandles an empty creature list without error
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2manimates deterministically: same state and time give the 
+same frame, time moves the fins
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+THREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mcarries a found object that rides its attachment point with 
+the creature
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+[90mstderr[2m | src/render/creatureRender.test.ts[2m > [22m[2mcreature renderer — sim state in, nothing back (request §30, §13)[2m > [22m[2mlets rigid bodies exceed the screen bounds without clamping 
+(request §13.3)
+[22m[39mTHREE.Material: parameter 'alphaMap' has value of undefined.
+
+ [32m✓[39m src/render/creatureRender.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/systems/CraftingSystem.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/world/chunks.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/sim/creatureScenario.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m src/systems/CurrentSystem.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/sim/tier3Scenario.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 77[2mms[22m[39m
+ [32m✓[39m src/sim/ecologyScenario.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+ [32m✓[39m src/sim/tier1Scenario.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 184[2mms[22m[39m
+ [32m✓[39m src/sim/tier2Scenario.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 211[2mms[22m[39m
+ [32m✓[39m src/sim/coreLoop.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 696[2mms[22m[39m
+   [32m✓[39m §70 continuous core-loop scenario (spawn -> resource -> craft -> save -> load -> verify) [2m(1)[22m
+     [33m[2m✓[22m[39m runs steps 1–9 end to end[33m 694[2mms[22m[39m
+ [32m✓[39m src/sim/scenarios.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 16262[2mms[22m[39m
+   [32m✓[39m separate headless scenarios (request §70) [2m(8)[22m
+     [33m[2m✓[22m[39m death: respawns at the base, keeps upgrades, loses a modest fraction of unbanked[33m 1975[2mms[22m[39m
+     [33m[2m✓[22m[39m blocked route: the sealed node is unreachable from the start[33m 6989[2mms[22m[39m
+     [33m[2m✓[22m[39m depleted resources: harvesting all reachable nodes leaves none to collect[33m 2693[2mms[22m[39m
+     [33m[2m✓[22m[39m traverses the macro world end to end: the terrain is swimmable through every depth band (request §4.2/§49)[33m 4508[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m29 passed[39m[22m[90m (29)[39m
+[2m      Tests [22m [1m[32m223 passed[39m[22m[90m (223)[39m
+[2m   Start at [22m 18:43:04
+[2m   Duration [22m 16.97s[2m (tests 67%, transform 24%, import 8%, worker 1%)[22m
+

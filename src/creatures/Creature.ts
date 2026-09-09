@@ -12,7 +12,9 @@
  *   throttling distance — the creature never reads player state.
  * owns: one creature instance's state machine (`state`, `stateTime`), its
  *   perception of the bus (`percept`), its steering `target`, the flee
- *   reference point, and its active/deactivated flag (request §34).
+ *   reference point, its active/deactivated flag (request §34), and the
+ *   section 10 combat counters (`harpoonHits`, `deterredUntil` — the deter
+ *   window suppresses the generic engine's re-engage).
  * coordinates: `WorldSignalBus` (senses, request §63), `steering.ts`
  *   (motion, request §6), the simulation (collision via
  *   `Terrain.resolveCircle`, request §31, and audio event collection,
@@ -82,6 +84,18 @@ export class Creature {
   active = true;
   /** True after a predator kill removes the creature from the ambient pool (§20). */
   dead = false;
+  /**
+   * Harpoon hits taken (request §10): the section 10 kill cost accumulates
+   * here — a hidden counter, never an HP bar (the model carries no hp data).
+   */
+  harpoonHits = 0;
+  /**
+   * Sim time until the current deter lifts (request §10: a detered large
+   * predator stands down); 0 = not deterred. While in force the generic
+   * engine does not re-engage from signals; bespoke controllers read this
+   * field if they hunt.
+   */
+  deterredUntil = 0;
   /**
    * The transition made this tick, so the simulation can emit the audio event
    * data (request §19); the simulation nulls it after consuming it.
@@ -156,6 +170,9 @@ export class Creature {
 
   /** The generic sense-driven transitions: the right state for the right signal. */
   private genericReact(): void {
+    // Deter hold (request §10): while a deter is in force this creature does
+    // not re-engage from signals — the stand-down is the deter's effect.
+    if (this.time < this.deterredUntil) return;
     const s = this.percept;
     const thr = this.def.senses;
     const predator = this.def.combat !== undefined;

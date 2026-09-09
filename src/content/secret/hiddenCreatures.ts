@@ -1,24 +1,31 @@
 /**
- * problem — the private roster's tier-1 ambient/schooling organisms (request
- *   §11.1) must become real `CreatureDef` data on the ST-02 framework,
- *   spoiler-contained; solution — six data-driven defs in a `secret` content
- *   directory (request §0, §12, §68), each parameterized on the generic
- *   state machine plus the framework's school / filter-feeder ecology, with
- *   one small bespoke controller (T-13) for the roster's flee-signature
- *   marker (request §19 allows bespoke controllers).
+ * problem — the private roster's organisms (request §11.1) must become real
+ *   `CreatureDef` data on the ST-02 framework, spoiler-contained; solution —
+ *   data-driven defs in a `secret` content directory (request §0, §12, §68):
+ *   the six tier-1 ambient/schooling organisms (generic state machine plus
+ *   the framework's school / filter-feeder ecology, one small bespoke
+ *   controller for T-13's flee-signature marker), the six tier-2
+ *   useful/neutral organisms (simulation-side interactions own their rules),
+ *   and the five tier-3 predator/territorial organisms (request §19 allows
+ *   bespoke controllers; they land in WI-03c1b — this file carries the size
+ *   classes, signature-rule categories, and section 11.1 minimums their
+ *   controllers read).
  *
  * archetype: information-holder
- * owns: the six tier-1 `CreatureDef`s, the `HIDDEN_CREATURES` list, the
- *   `TIER1_IDS` roster check, and `TIER1_BANDS` (the depth bands the private
- *   roster designed each organism for — the data the world-data band check
- *   in the scenario tests asserts against).
+ * owns: the 17 hidden `CreatureDef`s across the three tiers, the
+ *   `HIDDEN_CREATURES` list, the per-tier `TIERn_IDS` / `TIERn_CREATURES`
+ *   roster checks, and `TIERn_BANDS` (the depth bands the private roster
+ *   designed each organism for — the data the world-data band checks in the
+ *   scenario tests assert against).
  * not own: the registry (fixtures.ts merges these into `CREATURE_BY_ID`),
  *   the spawn positions (worldData.ts authors them), rendering (the WI-02b
- *   renderer reads `def.body`), or any later roster tier.
- * invariant: every def is neutral (no `combat`); ids are internal codes
- *   only — no creature names or secret descriptions live in this file's
- *   exported data, and this file is the only non-design place they may be
- *   referenced.
+ *   renderer reads `def.body`), the section 10 damage table (combat.ts), or
+ *   the per-predator controllers (WI-03c1b).
+ * invariant: ids are internal codes only — no creature names or secret
+ *   descriptions live in this file's exported data, and this file is the
+ *   only non-design place they may be referenced; every def carries a
+ *   `sizeClass` the damage model resolves; the tier-1 and tier-2 defs are
+ *   neutral (no `combat`), the tier-3 ones are the roster's predators.
  * fails when: a world chunk spawns an id this file does not define — the
  *   `Simulation` constructor throws on registry resolution (request §32).
  */
@@ -37,6 +44,7 @@ export const T01: CreatureDef = {
   behavior: { startState: 'wander', wanderRadius: 300 },
   ecology: { school: true, density: 0.7 },
   audio: { investigate: 't01-attention', flee: 't01-scatter' },
+  sizeClass: 'small',
 };
 
 // T-02 — the descending filter feeder (bands: shelf, twilight). Its
@@ -58,6 +66,7 @@ export const T02: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 200 },
   ecology: { school: false, filterFeeder: true },
   audio: { investigate: 't02-drift' },
+  sizeClass: 'small',
 };
 
 // T-03 — the loose congregation (bands: shelf, twilight, abyss). Its
@@ -72,6 +81,7 @@ export const T03: CreatureDef = {
   behavior: { startState: 'wander', wanderRadius: 400 },
   ecology: { school: true },
   audio: { investigate: 't03-attention' },
+  sizeClass: 'small',
 };
 
 // T-05 — the overhang feeder (band: twilight). Its signature: it hangs in
@@ -94,6 +104,7 @@ export const T05: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 80 },
   ecology: { school: false, filterFeeder: true },
   audio: {},
+  sizeClass: 'small',
 };
 
 // T-06 — the everywhere drifter (bands: twilight, abyss, hadal — below band
@@ -108,6 +119,7 @@ export const T06: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 150 },
   ecology: { school: false, filterFeeder: true },
   audio: {},
+  sizeClass: 'small',
 };
 
 // T-13 — the silent marker (bands: shelf, twilight, abyss). Its signature
@@ -138,6 +150,7 @@ export const T13: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 200, controller: t13Controller },
   ecology: { school: false },
   audio: { flee: 't13-flee' },
+  sizeClass: 'small',
 };
 
 // ---- Tier 2 — the mid-depth useful/neutral fauna (request §11.1, §21) ----
@@ -173,6 +186,7 @@ export const T08: CreatureDef = {
   behavior: { startState: 'forage', controller: t08Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'medium',
 };
 
 // T-09 — the current herder (bands: mid 3,4). Signature (request §21 guide
@@ -203,6 +217,7 @@ export const T09: CreatureDef = {
   behavior: { startState: 'forage', controller: t09Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'medium',
 };
 
 // T-10 — the film sweeper (bands: mid 2,3). Signature (request §21
@@ -233,6 +248,7 @@ export const T10: CreatureDef = {
   behavior: { startState: 'forage', controller: t10Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'small',
 };
 
 // T-11 — the gas-pocket lifter (band: mid 3). Signature (request §21): it
@@ -274,6 +290,7 @@ export const T11: CreatureDef = {
   behavior: { startState: 'forage', controller: t11Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'medium',
 };
 
 // T-27 — the living cable (bands: mid 3). Signature (request §21): a
@@ -313,6 +330,7 @@ export const T27: CreatureDef = {
   behavior: { startState: 'forage', controller: t27Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'medium',
 };
 
 // T-31 — the depth-tiered drifter (bands: 1-5). Its signature (request
@@ -337,6 +355,156 @@ export const T31: CreatureDef = {
   behavior: { startState: 'custom', controller: t31Controller },
   ecology: { school: false },
   audio: {},
+  sizeClass: 'small',
+};
+
+// ---- Tier 3 — the predator / territorial fauna (request §11.1) ----------
+//
+// The five predator/territorial organisms the private roster selects (the
+// roster's own bands: bands 3-4). Each def carries the simulation-side data
+// the per-predator controllers (WI-03c1b) will read: the section 10 size
+// class (the damage table resolves a harpoon hit from it), the section 10
+// signature-rule categories (request §10 "predator fairness" — the private
+// roster decides which categories apply, not a checklist), and the
+// section 11.1 data-level minimums this tier covers. No bespoke controllers
+// in this item: the generic state machine plus the section 10 damage model
+// is the foundation the controllers build on (request §19 allows both).
+//
+// Size class follows overall body size (root plus chain extent): root under
+// ~30 is small, ~30-49 medium, ~50 and up large; long-chain bodies are
+// classed by their extent (the burst interceptor and the living cable).
+
+// T-14 — the territorial guardian (band: deep 4). Signature (private
+// roster): it never chases — it holds a fixed post around a landmark, and
+// loud play (a sonar ping, a thruster burst) flushes a silent capture net
+// into the intruder's path. The drag is recoverable, not lethal: a large
+// predator that is deterable, not worth killing (request §10).
+export const T14: CreatureDef = {
+  id: 'T-14',
+  // A broad flat disc held mid-body with four slow trailing fronds — it
+  // reads as a shield or a discus, never as a fish (private roster).
+  body: {
+    radius: 54,
+    chainCircles: [
+      { offset: vec2(-40, -16), radius: 14 },
+      { offset: vec2(-40, 16), radius: 14 },
+      { offset: vec2(-68, -9), radius: 11 },
+      { offset: vec2(-68, 9), radius: 11 },
+    ],
+  },
+  movement: { maxSpeed: 60, accel: 160, dragRate: 3 },
+  senses: { sonar: 0.1, noise: 0.15, range: 2000 },
+  behavior: { startState: 'idle', wanderRadius: 0 },
+  combat: { damage: 10 },
+  audio: { alert: 't14-knock' },
+  sizeClass: 'large',
+  rules: ['territory', 'reacts-sonar'],
+  minimums: ['non-chase-predator'],
+};
+
+// T-15 — the burst interceptor (bands: deep 3,4). Signature (private
+// roster): a slim tapering body that moves in visible bursts with no tail —
+// it hunts the ambient swarms, and it is dangerous to the player only when
+// cornered (an incompatibility, not a chase). Medium: killable, at the cost
+// of several lances (request §10).
+export const T15: CreatureDef = {
+  id: 'T-15',
+  // A slim tapering body with a wide collar gill-ring at the head — it
+  // reads as a whip, and it moves in bursts, not continuous swim
+  // (private roster).
+  body: {
+    radius: 20,
+    chainCircles: [
+      { offset: vec2(-26, 0), radius: 15 },
+      { offset: vec2(-44, 0), radius: 10 },
+      { offset: vec2(-58, 0), radius: 6 },
+    ],
+  },
+  movement: { maxSpeed: 200, accel: 500, dragRate: 3 },
+  senses: { noise: 0.2 },
+  behavior: { startState: 'wander', wanderRadius: 400 },
+  combat: { damage: 15 },
+  audio: { attack: 't15-thwip' },
+  sizeClass: 'medium',
+  rules: ['cornered-charge'],
+};
+
+// T-16 — the buried boulder (band: deep 4). Signature (private roster): it
+// sits in the soft floor and reads as a boulder, but the true body is
+// larger than the rock, and the danger is a sudden expanding capture net —
+// the silence is the tell. The section 11.1 minimum: its dangerous phase is
+// not the phase it presents (the inert "boulder" is the safe one).
+export const T16: CreatureDef = {
+  id: 'T-16',
+  // A boulder-sized mass with no obvious head — the capture net hides
+  // beneath it (private roster).
+  body: {
+    radius: 58,
+    chainCircles: [
+      { offset: vec2(-30, -10), radius: 34 },
+      { offset: vec2(34, 8), radius: 30 },
+      { offset: vec2(0, -30), radius: 26 },
+    ],
+  },
+  movement: { maxSpeed: 40, accel: 100, dragRate: 4 },
+  senses: {},
+  behavior: { startState: 'idle', wanderRadius: 0 },
+  combat: { damage: 12 },
+  audio: {},
+  sizeClass: 'large',
+  rules: ['attacks-from-cover'],
+  minimums: ['dangerous-phase-not-scary-phase', 'harmless-with-second-behavior'],
+};
+
+// T-17 — the silk colony (band: deep 3). Signature (private roster): it
+// spins silk between wreck struts, using the architecture as its frame, and
+// marks its territory acoustically — it trips only if the intruder is loud,
+// and the silk releases. Small: killable quickly (request §10).
+export const T17: CreatureDef = {
+  id: 'T-17',
+  // A small dark colony of nodes — the silk frame is rendered architecture,
+  // not body (private roster).
+  body: {
+    radius: 16,
+    chainCircles: [
+      { offset: vec2(-22, -12), radius: 9 },
+      { offset: vec2(24, -6), radius: 8 },
+      { offset: vec2(14, 20), radius: 8 },
+    ],
+  },
+  movement: { maxSpeed: 30, accel: 80, dragRate: 4 },
+  senses: { noise: 0.25 },
+  behavior: { startState: 'idle', wanderRadius: 0 },
+  combat: { damage: 8 },
+  audio: {},
+  sizeClass: 'small',
+  rules: ['territory', 'attacks-noise'],
+};
+
+// T-18 — the field herder (band: deep 4). Signature (private roster): a
+// broad flat body holds a translucent filter plane ahead of it and drives
+// small prey into the field; it never attacks the player directly, and
+// standing behind it lets the player harvest the flushed prey — an
+// ecosystem relationship the player can exploit (request §11.1).
+export const T18: CreatureDef = {
+  id: 'T-18',
+  // A broad flat body with a wide filter plane held ahead — it reads as a
+  // scoop or a net, not a fish (private roster).
+  body: {
+    radius: 38,
+    chainCircles: [
+      { offset: vec2(30, -16), radius: 20 },
+      { offset: vec2(40, 0), radius: 22 },
+      { offset: vec2(30, 16), radius: 20 },
+    ],
+  },
+  movement: { maxSpeed: 70, accel: 160, dragRate: 3 },
+  senses: {},
+  behavior: { startState: 'wander', wanderRadius: 300 },
+  audio: {},
+  sizeClass: 'medium',
+  rules: ['herds-prey'],
+  minimums: ['non-chase-predator', 'exploitable-relationship'],
 };
 
 /** The tier-1 roster: the ambient/schooling organisms (request §11.1). */
@@ -349,14 +517,24 @@ export const TIER2_CREATURES: Record<string, CreatureDef> = Object.fromEntries(
   TIER2_LIST.map((d) => [d.id, d]),
 );
 
-/** Every hidden organism, both tiers — this is what `fixtures` merges into the registry. */
-export const HIDDEN_CREATURES: readonly CreatureDef[] = [...TIER1_CREATURES, ...TIER2_LIST];
+const TIER3_LIST: readonly CreatureDef[] = [T14, T15, T16, T17, T18];
+
+/** The tier-3 roster keyed by id (request §11.1) — for registry lookups. */
+export const TIER3_CREATURES: Record<string, CreatureDef> = Object.fromEntries(
+  TIER3_LIST.map((d) => [d.id, d]),
+);
+
+/** Every hidden organism, all three tiers — this is what `fixtures` merges into the registry. */
+export const HIDDEN_CREATURES: readonly CreatureDef[] = [...TIER1_CREATURES, ...TIER2_LIST, ...TIER3_LIST];
 
 /** The tier-1 ids, for registry / world-data checks. */
 export const TIER1_IDS: readonly string[] = TIER1_CREATURES.map((d) => d.id);
 
 /** The tier-2 ids, for registry / band checks (WI-03b1). */
 export const TIER2_IDS: readonly string[] = TIER2_LIST.map((d) => d.id);
+
+/** The tier-3 ids, for registry / band checks (WI-03c1a; spawns land in WI-03c2). */
+export const TIER3_IDS: readonly string[] = TIER3_LIST.map((d) => d.id);
 
 /**
  * The depth bands (1 = surface … 5 = hadal) each tier-2 organism was designed
@@ -385,4 +563,18 @@ export const TIER1_BANDS: Record<string, ReadonlySet<number>> = {
   'T-05': new Set([3]),
   'T-06': new Set([3, 4, 5]),
   'T-13': new Set([2, 3, 4]),
+};
+
+/**
+ * The depth bands (1 = surface … 5 = hadal) each tier-3 organism was
+ * designed for by the private roster — the predator/territorial tier lives
+ * in the deep water (bands 3-4). WI-03c2's world-data band check asserts
+ * each spawn against these.
+ */
+export const TIER3_BANDS: Record<string, ReadonlySet<number>> = {
+  'T-14': new Set([4]),
+  'T-15': new Set([3, 4]),
+  'T-16': new Set([4]),
+  'T-17': new Set([3]),
+  'T-18': new Set([4]),
 };

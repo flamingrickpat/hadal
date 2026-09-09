@@ -115,17 +115,21 @@ describe('tier-2 production world data (WI-03b2)', () => {
   });
 
   it('every hidden roster type is active in the production data (§11.1 roster floor)', () => {
-    // The tier-2 portion of the roster-wide AC-roster-count check that WI-03d
-    // finalizes: only the 12 implemented hidden types are asserted active in
-    // the production data here. The 5 framework fixtures are not spawned in
+    // The tier-1+tier-2 portion of the roster-wide AC-roster-count check that
+    // WI-03d finalizes: the 12 tier-1+tier-2 hidden types are asserted active
+    // in the production data here. The 5 framework fixtures are not spawned in
     // MACRO_WORLD, so they do not count toward the 15+ roster floor — that
     // floor is WI-03d's to prove, not this item's.
+    // WI-03c1a revision: the 5 tier-3 predator types land in this item but
+    // are deliberately NOT spawned yet (spawns are WI-03c2's, per its
+    // non-goals). tier3Scenario.test.ts asserts their defs resolve and that
+    // no tier-3 id is spawned yet, so the floor here stays tier-1+tier-2.
     const active = new Set<string>();
     for (const chunk of makeSimWorld().chunks) {
       for (const spawn of chunk.creatureSpawns ?? []) active.add(spawn.creature);
     }
-    for (const def of HIDDEN_CREATURES) {
-      expect(active.has(def.id), `${def.id} has no spawn in the production world data`).toBe(true);
+    for (const id of [...TIER1_IDS, ...TIER2_IDS]) {
+      expect(active.has(id), `${id} has no spawn in the production world data`).toBe(true);
     }
     expect(active.size).toBeGreaterThanOrEqual(12);
   });

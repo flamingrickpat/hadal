@@ -43,8 +43,10 @@ describe('fixture organisms (framework test fixtures, not roster content)', () =
   // only) is merged into the same registry — eleven entries then.
   // WI-03b1 revision: the tier-2 roster (T-08…T-31, internal ids only) is
   // merged too — seventeen entries now.
-  it('the registry holds the five framework fixtures plus the tier-1 and tier-2 rosters', () => {
-    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(17);
+  // WI-03c1a revision: the tier-3 predator roster (T-14…T-18, internal ids
+  // only) merges in — twenty-two entries now.
+  it('the registry holds the five framework fixtures plus the tier-1, tier-2, and tier-3 rosters', () => {
+    expect(Object.keys(CREATURE_BY_ID)).toHaveLength(22);
     expect(Object.keys(CREATURE_BY_ID).filter((id) => id.startsWith('fixture-'))).toHaveLength(5);
   });
 });

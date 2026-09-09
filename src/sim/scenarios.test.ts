@@ -80,14 +80,22 @@ describe('separate headless scenarios (request §70)', () => {
     s.assert(sim.player.o2Max === O2_MAX, 'capability unchanged');
   });
 
-  it('blocked route: the sealed node is unreachable from the start', () => {
-    const s = new Scenario(4);
-    const sim = s.sim;
-    const target: Vec2 = s.findNodePosition('salvage-sealed')!;
-    s.swimTo(target, 50, 6000); // try to reach it; the seal blocks the route
-    s.assert(s.distanceTo(target) > INTERACT_RADIUS, `blocked from the sealed node (d=${s.distanceTo(target).toFixed(1)})`);
-    s.assert((sim.player.inventory.salvage ?? 0) === 0, 'did not harvest the sealed node');
-  });
+  it(
+    'blocked route: the sealed node is unreachable from the start',
+    () => {
+      const s = new Scenario(4);
+      const sim = s.sim;
+      const target: Vec2 = s.findNodePosition('salvage-sealed')!;
+      s.swimTo(target, 50, 6000); // try to reach it; the seal blocks the route
+      s.assert(s.distanceTo(target) > INTERACT_RADIUS, `blocked from the sealed node (d=${s.distanceTo(target).toFixed(1)})`);
+      s.assert((sim.player.inventory.salvage ?? 0) === 0, 'did not harvest the sealed node');
+    },
+    // WI-03c1a revision: the 6000-step swim loop runs ~5.6 s under current
+    // machine load and tripped the default 5 s test timeout (reproduced
+    // identically on the base commit before this item's changes). Explicit
+    // timeout per the documented vitest remedy; no logic change.
+    15000,
+  );
 
   it('depleted resources: harvesting all reachable nodes leaves none to collect', () => {
     const s = new Scenario(5);

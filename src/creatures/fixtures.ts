@@ -31,6 +31,7 @@ export const SCHOOLER: CreatureDef = {
   behavior: { startState: 'wander', wanderRadius: 500 },
   ecology: { school: true },
   audio: { investigate: 'schooler-attention', flee: 'schooler-scatter' },
+  sizeClass: 'small',
 };
 
 // A simple forager: slow, long-bodied (chain circles, request §31), and it
@@ -48,6 +49,7 @@ export const FORAGER: CreatureDef = {
   senses: { noise: 0.3, injury: 0.1 },
   behavior: { startState: 'forage', wanderRadius: 300, fleeRange: 900 },
   audio: { investigate: 'forager-attention', flee: 'forager-flee' },
+  sizeClass: 'medium',
 };
 
 // A scavenger: it drifts home-patch style and does NOT generically react to
@@ -64,6 +66,7 @@ export const SCAVENGER: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 300 },
   ecology: { school: false, scavenge: true },
   audio: { investigate: 'scavenger-attention' },
+  sizeClass: 'small',
 };
 
 // A predator: the generic engine's combat path makes it alert → stalk →
@@ -77,6 +80,7 @@ export const PREDATOR: CreatureDef = {
   combat: { damage: 20 },
   ecology: { school: false, quiet: 0.1 },
   audio: { alert: 'predator-alert', attack: 'predator-lunge' },
+  sizeClass: 'large',
 };
 
 // A filter feeder: it orients along the local current field while foraging
@@ -94,6 +98,7 @@ export const FEEDER: CreatureDef = {
   behavior: { startState: 'forage', wanderRadius: 200 },
   ecology: { school: false, filterFeeder: true },
   audio: { investigate: 'feeder-attention' },
+  sizeClass: 'medium',
 };
 
 /** The id → def registry the simulation resolves `creatureSpawns` against. */

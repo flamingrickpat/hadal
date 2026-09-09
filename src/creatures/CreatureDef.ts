@@ -10,8 +10,9 @@
  * owns: the creature definition schema (request §19 interface, verbatim
  *   shape) and the runtime-state vocabulary (`idle`, `forage`, `wander`,
  *   `investigate`, `alert`, `stalk`, `attack`, `flee`, `return`, `interact`,
- *   `custom`), plus the bespoke-controller hook type (request §19 "major
- *   organisms can have bespoke controllers").
+ *   `custom`), the section 10 size-class and signature-rule vocabularies
+ *   (request §10, carried by the def), plus the bespoke-controller hook type
+ *   (request §19 "major organisms can have bespoke controllers").
  * not own: no runtime behavior — `Creature` advances instances,
  *   `steering.ts` moves them, `senses.ts` provides the channels.
  * invariant: defs are plain data (no methods, no hidden state); audio is a
@@ -51,6 +52,49 @@ export const CREATURE_STATES: readonly CreatureState[] = [
   'interact',
   'custom',
 ];
+
+/**
+ * The section 10 damage-model size classes (request §10 "Damage model"):
+ * small fauna kill quickly, medium predators kill at a cost, large predators
+ * are detered rather than killed. Every def carries exactly one class — the
+ * `DAMAGE_MODEL` table in `combat.ts` resolves a harpoon hit from it.
+ */
+export type CreatureSizeClass = 'small' | 'medium' | 'large';
+
+export const SIZE_CLASSES: readonly CreatureSizeClass[] = ['small', 'medium', 'large'];
+
+/**
+ * The section 10 "predator fairness" signature-rule categories: the readable
+ * rule a player learns by observation (request §10 — the list is examples,
+ * "not exact secret species designs", so the private roster also contributes
+ * the two categories it needs beyond the request's nine:
+ * `cornered-charge` (dangerous only when cornered) and `herds-prey` (a
+ * non-chase hunt that drives another species into a harvestable field).
+ */
+export type SignatureRule =
+  | 'reacts-motion'
+  | 'reacts-light'
+  | 'reacts-sonar'
+  | 'attacks-from-cover'
+  | 'territory'
+  | 'follows-blood'
+  | 'attacks-noise'
+  | 'mistakes-tool-signals'
+  | 'dangerous-only-in-company'
+  | 'cornered-charge'
+  | 'herds-prey';
+
+/**
+ * The section 11.1 roster minimums an organism covers, as data (private
+ * roster; request §11.1). The behavior these minimums describe is realized
+ * by the per-predator controllers (WI-03c1b); this field is the data-level
+ * encoding the roster checks read.
+ */
+export type RosterMinimum =
+  | 'dangerous-phase-not-scary-phase'
+  | 'harmless-with-second-behavior'
+  | 'exploitable-relationship'
+  | 'non-chase-predator';
 
 /** A segment of a long body's collision chain (request §31 chain circles). */
 export interface ChainCircle {
@@ -152,4 +196,14 @@ export interface CreatureDef {
   combat?: CombatDef;
   ecology?: EcologyDef;
   audio: CreatureAudioDef;
+  /** The section 10 size class: the `DAMAGE_MODEL` resolves a harpoon hit from it. */
+  sizeClass: CreatureSizeClass;
+  /**
+   * The section 10 signature-rule categories this species carries (request
+   * §10 "predator fairness": every predator needs at least one readable rule).
+   * The per-predator controllers read these; neutral fauna carry none.
+   */
+  rules?: readonly SignatureRule[];
+  /** The section 11.1 minimums the private roster assigns this organism (data only). */
+  minimums?: readonly RosterMinimum[];
 }
