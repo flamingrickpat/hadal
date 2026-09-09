@@ -16,7 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { vec2, type Vec2 } from '../util/math';
 import { emptyInput, makeSimWorld, type SimWorld } from './Simulation';
 import { Scenario } from './scenario';
-import { TIER2_BANDS, TIER2_CREATURES, TIER2_IDS } from '../content/secret/hiddenCreatures';
+import { CREATURE_BY_ID } from '../creatures/fixtures';
+import { TIER1_IDS, TIER2_BANDS, TIER2_CREATURES, TIER2_IDS, HIDDEN_CREATURES } from '../content/secret/hiddenCreatures';
 import { driftField } from '../systems/CurrentSystem';
 import { BASE, GREYBOX_WORLD } from '../world/worldData';
 import type { CreatureSpawnDef } from '../world/chunks';
@@ -63,6 +64,70 @@ describe('mid-depth fauna registry (WI-03b1)', () => {
       expect(seen.has(key), `duplicate body/movement signature ${key} at ${id}`).toBe(false);
       seen.add(key);
     }
+  });
+});
+
+describe('tier-2 production world data (WI-03b2)', () => {
+  it('every production spawn resolves, sits in a designed band, and every tier-2 id appears in every band it was designed for (§49 dense traversal)', () => {
+    const bandsById = new Map<string, Set<number>>();
+    let spawns = 0;
+    for (const chunk of makeSimWorld().chunks) {
+      for (const spawn of chunk.creatureSpawns ?? []) {
+        const def = CREATURE_BY_ID[spawn.creature];
+        expect(def, `spawn ${spawn.id} references unknown creature ${spawn.creature}`).toBeDefined();
+        const inBounds =
+          spawn.position.x >= chunk.bounds.x &&
+          spawn.position.x <= chunk.bounds.x + chunk.bounds.w &&
+          spawn.position.y >= chunk.bounds.y &&
+          spawn.position.y <= chunk.bounds.y + chunk.bounds.h;
+        expect(inBounds, `spawn ${spawn.id} outside chunk ${chunk.id} bounds`).toBe(true);
+        const allowed = TIER2_BANDS[spawn.creature];
+        if (allowed === undefined) continue; // other tiers' content
+        expect(allowed.has(chunk.band), `${spawn.creature} in chunk ${chunk.id} band ${chunk.band} (designed ${[...allowed].join(',')})`).toBe(true);
+        if (!bandsById.has(spawn.creature)) bandsById.set(spawn.creature, new Set());
+        bandsById.get(spawn.creature)!.add(chunk.band);
+        spawns += spawn.count ?? 1;
+      }
+    }
+    // Every tier-2 organism appears in every band the roster designed it for,
+    // so no band is an empty corridor for this tier (§49).
+    for (const id of TIER2_IDS) {
+      const placed = bandsById.get(id) ?? new Set<number>();
+      const bands = TIER2_BANDS[id]!;
+      for (const band of bands) {
+        expect(placed.has(band), `${id} is missing from band ${band} in the production world data`).toBe(true);
+      }
+    }
+    expect(spawns).toBeGreaterThanOrEqual(12);
+  });
+
+  it('keeps per-chunk per-type ambient counts under the §34 cap for every roster tier', () => {
+    const CAP = 16; // §34 ambient creature count cap per chunk (per type, matching the tier-1 check)
+    for (const chunk of makeSimWorld().chunks) {
+      for (const id of [...TIER1_IDS, ...TIER2_IDS]) {
+        let n = 0;
+        for (const spawn of chunk.creatureSpawns ?? []) {
+          if (spawn.creature === id) n += spawn.count ?? 1;
+        }
+        expect(n, `chunk ${chunk.id} exceeds the ambient cap for ${id} (${n} > ${CAP})`).toBeLessThanOrEqual(CAP);
+      }
+    }
+  });
+
+  it('every hidden roster type is active in the production data (§11.1 roster floor)', () => {
+    // The tier-2 portion of the roster-wide AC-roster-count check WI-03d
+    // finalizes: the world data now spawns every implemented type, so the
+    // 12 implemented creatures are the types "active in the production world
+    // data" — plus the 5 framework fixtures that carry the tier-0 greybox,
+    // which clears the 15+ floor on its own.
+    const active = new Set<string>();
+    for (const chunk of makeSimWorld().chunks) {
+      for (const spawn of chunk.creatureSpawns ?? []) active.add(spawn.creature);
+    }
+    for (const def of HIDDEN_CREATURES) {
+      expect(active.has(def.id), `${def.id} has no spawn in the production world data`).toBe(true);
+    }
+    expect(active.size).toBeGreaterThanOrEqual(12);
   });
 });
 
@@ -295,19 +360,22 @@ describe('spoiler containment for this work item (§0/§12/§68)', () => {
         if (re.test(text)) offenders.push(`${p} :: ${t}`);
       }
     };
-    for (const dir of ['src/sim', 'src/creatures', 'src/content']) {
+    // WI-03b2 extends the sweep to src/world (the production spawn data this
+    // tier now lands in) and to this work item's own implementation artifact.
+    for (const dir of ['src/sim', 'src/creatures', 'src/content', 'src/world']) {
       const abs = join(here, '..', '..', dir);
       for (const f of readdirSync(abs)) {
         if (f.endsWith('.ts')) scanFile(join(abs, f));
       }
     }
-    // This task's implementation artifact (if present) must be id-clean too.
-    const implDir = join(
-      here, '..', '..', 'agents', 'tasks', 'hadalv2.execute_leaf.__attempt_0011', 'implementation',
-    );
-    if (existsSync(implDir)) {
-      for (const f of readdirSync(implDir)) {
-        if (f.endsWith('.md')) scanFile(join(implDir, f));
+    for (const implDir of [
+      join(here, '..', '..', 'agents', 'tasks', 'hadalv2.execute_leaf.__attempt_0011', 'implementation'),
+      join(here, '..', '..', 'agents', 'tasks', 'hadalv2.execute_leaf.__attempt_0012', 'implementation'),
+    ]) {
+      if (existsSync(implDir)) {
+        for (const f of readdirSync(implDir)) {
+          if (f.endsWith('.md')) scanFile(join(implDir, f));
+        }
       }
     }
     expect(offenders, `spoiler tokens found: ${offenders.join(', ')}`).toEqual([]);

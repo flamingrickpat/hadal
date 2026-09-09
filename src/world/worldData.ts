@@ -118,6 +118,10 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
         actions: [{ type: 'setStoryFlag', flag: 'descended' }, { type: 'showRadio', textId: 'radio-descent-1' }],
       },
     ],
+    // Tier-2 useful fauna (ids debug-only, request §33): the drifter's
+    // schooling stage patrols the shallow band — the east drift keeps it in
+    // open water for a long time before it reaches the west wall.
+    creatureSpawns: [{ id: 't31-coast', creature: 'T-31', position: vec2(5500, -600), count: 1 }],
     ambient: { particleDensity: 0.8, light: 0.8 },
   },
   {
@@ -265,6 +269,11 @@ const shelf: WorldChunkDef = {
     { id: 't02-shelf', creature: 'T-02', position: vec2(8000, -3000), count: 3 },
     { id: 't03-shelf', creature: 'T-03', position: vec2(9500, -3500), count: 3 },
     { id: 't13-shelf', creature: 'T-13', position: vec2(11000, -2500), count: 2 },
+    // Tier-2 useful fauna (ids debug-only, request §33): the shelf is the
+    // sweeper's salvage-rich band and the drifter's shallow stage — both in
+    // open water, clear of the landmark and the wreck interior.
+    { id: 't10-shelf', creature: 'T-10', position: vec2(7500, -3800), count: 2 },
+    { id: 't31-shelf', creature: 'T-31', position: vec2(8500, -3000), count: 1 },
   ],
   ambient: { particleDensity: 0.6, light: 0.5 },
 };
@@ -325,6 +334,16 @@ const twilight: WorldChunkDef = {
     { id: 't05-twilight', creature: 'T-05', position: vec2(12500, -5800), count: 3 },
     { id: 't06-twilight', creature: 'T-06', position: vec2(14000, -5500), count: 3 },
     { id: 't13-twilight', creature: 'T-13', position: vec2(16000, -5000), count: 2 },
+    // Tier-2 useful fauna (ids debug-only, request §33): the mid-depth band
+    // the roster centers this tier on — the feeder and the lifter hold open
+    // water, the herder works the congregation lane, the sweeper the facility
+    // wreck, and the living cable spans wreck to landmark.
+    { id: 't08-twilight', creature: 'T-08', position: vec2(15600, -7700), count: 1 },
+    { id: 't09-twilight', creature: 'T-09', position: vec2(11000, -5300), count: 2 },
+    { id: 't10-twilight', creature: 'T-10', position: vec2(13900, -6850), count: 2 },
+    { id: 't11-twilight', creature: 'T-11', position: vec2(14500, -5900), count: 1 },
+    { id: 't27-twilight', creature: 'T-27', position: vec2(13400, -5600), count: 1 },
+    { id: 't31-twilight', creature: 'T-31', position: vec2(17000, -5700), count: 1 },
   ],
   ambient: { particleDensity: 0.5, light: 0.35 },
 };
@@ -375,6 +394,11 @@ const abyss: WorldChunkDef = {
     { id: 't03-abyss', creature: 'T-03', position: vec2(15500, -8000), count: 3 },
     { id: 't06-abyss', creature: 'T-06', position: vec2(17000, -7800), count: 4 },
     { id: 't13-abyss', creature: 'T-13', position: vec2(22500, -8000), count: 2 },
+    // Tier-2 useful fauna (ids debug-only, request §33): the deep band of the
+    // feeder (it works the facility wreck) and the drifter's mid-water stage.
+    { id: 't08-abyss', creature: 'T-08', position: vec2(18700, -8900), count: 1 },
+    { id: 't09-abyss', creature: 'T-09', position: vec2(17200, -8200), count: 1 },
+    { id: 't31-abyss', creature: 'T-31', position: vec2(15500, -8300), count: 1 },
   ],
   ambient: { particleDensity: 0.45, light: 0.25 },
 };
@@ -422,7 +446,12 @@ const hadal: WorldChunkDef = {
   ],
   // Tier-1 ambient fauna (internal ids only, request §33): a sparse drifter
   // ribbon in the deepest band, west of the installation.
-  creatureSpawns: [{ id: 't06-hadal', creature: 'T-06', position: vec2(19500, -9650), count: 2 }],
+  // + the drifter's hadal stage (ids debug-only, request §33): the deepest
+  // band still carries the tier's drifting-seed form, west of the installation.
+  creatureSpawns: [
+    { id: 't06-hadal', creature: 'T-06', position: vec2(19500, -9650), count: 2 },
+    { id: 't31-hadal', creature: 'T-31', position: vec2(19800, -9650), count: 1 },
+  ],
   ambient: { particleDensity: 0.4, light: 0.15 },
 };
 

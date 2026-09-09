@@ -1,0 +1,222 @@
+{
+  "port": 54321,
+  "results": [
+    {
+      "name": "T-11 exists in the running production simulation",
+      "ok": true,
+      "detail": "at (14500, -5900)"
+    },
+    {
+      "name": "T-11 reactivates near the player (AI range, §34)",
+      "ok": true,
+      "detail": "state=forage"
+    },
+    {
+      "name": "T-11 rises to its hold and hangs (signature rule)",
+      "ok": true,
+      "detail": "y=-5600 band"
+    },
+    {
+      "name": "visual is built on the spine pipeline with a real body",
+      "ok": true,
+      "detail": "kind=spine nodes=4"
+    },
+    {
+      "name": "the sim clock advances (animation is driven)",
+      "ok": true,
+      "detail": "dt=2.50s"
+    },
+    {
+      "name": "the organism is alive at its hold (moving, not frozen)",
+      "ok": true,
+      "detail": "moved=26.2u in 2.5s"
+    },
+    {
+      "name": "player drifting inside the pocket is lifted with no input (interaction)",
+      "ok": true,
+      "detail": "rose 99u in 6s"
+    },
+    {
+      "name": "no page exceptions",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "name": "no console errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "failed": 0,
+  "timeline": [
+    {
+      "t": 2.249999999999997,
+      "player": {
+        "x": 14511.897712198379,
+        "y": -5583.7132506181115
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5885.624692190828
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 2.7666666666666617,
+      "player": {
+        "x": 14522.4356858598,
+        "y": -5569.289702744965
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5865.635559447535
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 3.2833333333333266,
+      "player": {
+        "x": 14532.973659521222,
+        "y": -5554.8696031454665
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5845.646426704243
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 3.7999999999999914,
+      "player": {
+        "x": 14543.511633182643,
+        "y": -5540.454583826987
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5825.6572939609505
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 4.29999999999999,
+      "player": {
+        "x": 14553.709672209825,
+        "y": -5526.510939415797
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5806.312971951313
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 4.816666666666655,
+      "player": {
+        "x": 14564.247645871246,
+        "y": -5512.11068203707
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5786.32383920802
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 5.33333333333332,
+      "player": {
+        "x": 14574.785619532668,
+        "y": -5497.720348316083
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5766.334706464728
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 5.8499999999999845,
+      "player": {
+        "x": 14585.323593194089,
+        "y": -5483.34157026022
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5746.345573721435
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 6.366666666666649,
+      "player": {
+        "x": 14595.86156685551,
+        "y": -5468.975979876853
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5726.356440978143
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 6.866666666666648,
+      "player": {
+        "x": 14606.059605882692,
+        "y": -5455.08788923554
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5707.012118968505
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 7.383333333333312,
+      "player": {
+        "x": 14616.597579544114,
+        "y": -5440.753014046111
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5687.022986225213
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 7.899999999999977,
+      "player": {
+        "x": 14627.135553205535,
+        "y": -5426.436169905903
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5667.03385348192
+      },
+      "active": true,
+      "state": "forage"
+    },
+    {
+      "t": 8.416666666666664,
+      "player": {
+        "x": 14637.673526866956,
+        "y": -5412.138988822284
+      },
+      "pos": {
+        "x": 14500,
+        "y": -5647.044720738628
+      },
+      "active": true,
+      "state": "forage"
+    }
+  ]
+}

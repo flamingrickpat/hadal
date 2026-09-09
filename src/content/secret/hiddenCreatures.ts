@@ -165,7 +165,9 @@ const t08Controller: CreatureController = (creature, percept, dt) => {
 
 export const T08: CreatureDef = {
   id: 'T-08',
-  body: { radius: 26, chainCircles: [{ offset: vec2(0, 18), radius: 12 }] },
+  // A broad flat body that tapers into two long manipulator arms — it reads
+  // as a tool, not an animal (the private roster's silhouette for the id).
+  body: { radius: 26, chainCircles: [{ offset: vec2(-18, 4), radius: 24 }, { offset: vec2(-46, -2), radius: 10 }, { offset: vec2(-66, 4), radius: 7 }] },
   movement: { maxSpeed: 80, accel: 240, dragRate: 2.5 },
   senses: {},
   behavior: { startState: 'forage', controller: t08Controller },
@@ -187,11 +189,13 @@ const t09Controller: CreatureController = (creature, percept, dt) => {
 
 export const T09: CreatureDef = {
   id: 'T-09',
+  // A broad flat leading plate with a broad trailing frill — a slow, wide
+  // profile that reads as a set-dresser, never a chaser (private roster).
   body: {
     radius: 30,
     chainCircles: [
-      { offset: vec2(-28, -6), radius: 16 },
-      { offset: vec2(28, 8), radius: 14 },
+      { offset: vec2(-44, -4), radius: 26 },
+      { offset: vec2(-14, 6), radius: 19 },
     ],
   },
   movement: { maxSpeed: 80, accel: 240, dragRate: 2.2 },
@@ -215,11 +219,13 @@ const t10Controller: CreatureController = (creature, percept, dt) => {
 
 export const T10: CreatureDef = {
   id: 'T-10',
+  // A small round body with three wide brush arms — it reads as a mop, an
+  // unmistakable cleaner, not a fish (private roster).
   body: {
     radius: 22,
     chainCircles: [
-      { offset: vec2(-20, 6), radius: 13 },
-      { offset: vec2(20, -6), radius: 13 },
+      { offset: vec2(-18, 10), radius: 15 },
+      { offset: vec2(18, 14), radius: 13 },
     ],
   },
   movement: { maxSpeed: 40, accel: 120, dragRate: 2 },
@@ -253,12 +259,14 @@ const t11Controller: CreatureController = (creature, percept, dt) => {
 
 export const T11: CreatureDef = {
   id: 'T-11',
+  // A pale round membrane over a ring of dark settlement points — it reads
+  // as a balloon or a bubble, not an animal (private roster).
   body: {
     radius: 34,
     chainCircles: [
-      { offset: vec2(0, -26), radius: 18 },
-      { offset: vec2(-16, 14), radius: 16 },
-      { offset: vec2(16, 14), radius: 16 },
+      { offset: vec2(0, -30), radius: 22 },
+      { offset: vec2(-18, 16), radius: 13 },
+      { offset: vec2(18, 16), radius: 13 },
     ],
   },
   movement: { maxSpeed: 40, accel: 120, dragRate: 2 },
@@ -288,13 +296,16 @@ const t27Controller: CreatureController = (creature, percept, dt) => {
 
 export const T27: CreatureDef = {
   id: 'T-27',
+  // A segmented colonial cable: even segments at a steady radius, so it
+  // reads as a laid cable or vine, not an animal (private roster).
   body: {
     radius: 18,
     chainCircles: [
-      { offset: vec2(-40, 0), radius: 14 },
-      { offset: vec2(-20, 2), radius: 14 },
-      { offset: vec2(20, -2), radius: 14 },
-      { offset: vec2(40, 0), radius: 14 },
+      { offset: vec2(-42, 2), radius: 14 },
+      { offset: vec2(-21, -2), radius: 14 },
+      { offset: vec2(0, 2), radius: 14 },
+      { offset: vec2(21, -2), radius: 14 },
+      { offset: vec2(42, 2), radius: 14 },
     ],
   },
   movement: { maxSpeed: 60, accel: 180, dragRate: 2 },
