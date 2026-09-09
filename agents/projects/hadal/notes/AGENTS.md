@@ -25,3 +25,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260907-understander-wi07-baseline-remaining-scope.md -->
 <!-- include: ./20260908-implementer-wi02a-creature-runtime-seams.md -->
 <!-- include: ./20260908-implementer-wi02b-creature-render-seams.md -->
+<!-- include: ./20260912-implementer-wi03b2-spawn-clearance-reland.md -->

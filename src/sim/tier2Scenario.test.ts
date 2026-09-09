@@ -115,11 +115,11 @@ describe('tier-2 production world data (WI-03b2)', () => {
   });
 
   it('every hidden roster type is active in the production data (§11.1 roster floor)', () => {
-    // The tier-2 portion of the roster-wide AC-roster-count check WI-03d
-    // finalizes: the world data now spawns every implemented type, so the
-    // 12 implemented creatures are the types "active in the production world
-    // data" — plus the 5 framework fixtures that carry the tier-0 greybox,
-    // which clears the 15+ floor on its own.
+    // The tier-2 portion of the roster-wide AC-roster-count check that WI-03d
+    // finalizes: only the 12 implemented hidden types are asserted active in
+    // the production data here. The 5 framework fixtures are not spawned in
+    // MACRO_WORLD, so they do not count toward the 15+ roster floor — that
+    // floor is WI-03d's to prove, not this item's.
     const active = new Set<string>();
     for (const chunk of makeSimWorld().chunks) {
       for (const spawn of chunk.creatureSpawns ?? []) active.add(spawn.creature);
@@ -128,6 +128,38 @@ describe('tier-2 production world data (WI-03b2)', () => {
       expect(active.has(def.id), `${def.id} has no spawn in the production world data`).toBe(true);
     }
     expect(active.size).toBeGreaterThanOrEqual(12);
+  });
+
+  it('no tier-2 spawn sits inside a closed terrain slab (§49 open-water placement)', () => {
+    // A spawn whose center is strictly inside a solid slab is trapped there:
+    // the terrain resolve only pushes a circle out near an edge, so a body
+    // deep inside a closed slab is never pushed out, drifts to the nearest
+    // interior wall, and box-walks it — never contributing to the band's
+    // dense traversal. Every closed authored slab is an axis-aligned
+    // rectangle, so strict bounding-box containment is exact (a point on an
+    // edge resolves back to open water and is not "trapped").
+    const slabs = makeSimWorld().chunks.flatMap((c) => c.terrain).filter((s) => s.closed);
+    const trappedBy = (p: Vec2): string[] =>
+      slabs
+        .filter((s) => {
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          for (const pt of s.points) {
+            minX = Math.min(minX, pt.x); maxX = Math.max(maxX, pt.x);
+            minY = Math.min(minY, pt.y); maxY = Math.max(maxY, pt.y);
+          }
+          return p.x > minX && p.x < maxX && p.y > minY && p.y < maxY;
+        })
+        .map((s) => s.id);
+    let checked = 0;
+    for (const chunk of makeSimWorld().chunks) {
+      for (const spawn of chunk.creatureSpawns ?? []) {
+        if (TIER2_CREATURES[spawn.creature] === undefined) continue; // tier-2 only
+        checked += 1;
+        const hits = trappedBy(spawn.position);
+        expect(hits, `tier-2 spawn ${spawn.id} is trapped inside a solid slab: ${hits.join(', ')}`).toEqual([]);
+      }
+    }
+    expect(checked, 'expected the loop to cover the tier-2 spawns').toBeGreaterThanOrEqual(12);
   });
 });
 

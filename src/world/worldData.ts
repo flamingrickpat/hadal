@@ -343,7 +343,9 @@ const twilight: WorldChunkDef = {
     { id: 't10-twilight', creature: 'T-10', position: vec2(13900, -6850), count: 2 },
     { id: 't11-twilight', creature: 'T-11', position: vec2(14500, -5900), count: 1 },
     { id: 't27-twilight', creature: 'T-27', position: vec2(13400, -5600), count: 1 },
-    { id: 't31-twilight', creature: 'T-31', position: vec2(17000, -5700), count: 1 },
+    // The drifter's mid stage: placed above the landmark (which caps the band's
+    // upper water) so its westward drift traverses open twilight, not a solid.
+    { id: 't31-twilight', creature: 'T-31', position: vec2(18200, -5300), count: 1 },
   ],
   ambient: { particleDensity: 0.5, light: 0.35 },
 };

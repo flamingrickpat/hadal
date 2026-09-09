@@ -163,3 +163,86 @@ interaction seams). Wrote: a note on the spawn-clearance gotcha (a rising
 hold-point creature must be placed with the hold offset of vertical headroom
 above its spawn — slabs cap the twilight band and a spawn directly under one
 freezes the rise).
+
+## Revision — re-land after `reviews/WI-03b2-review.md` findings
+
+The work-item review (commit `78c3926`) returned **findings**: the
+`t31-twilight` spawn sat inside the `twilight-landmark` solid and
+box-walked its interior wall (Finding 1, a defect), and a roster-floor test
+comment overstated what the test proved (Finding 2, minor). This revision
+fixes both. No renderer or simulation rule changed.
+
+### Finding 1 — relocate the `t31-twilight` spawn to open water
+
+- **Where it was wrong:** `{ id: 't31-twilight', position: vec2(17000, -5700) }`
+  was strictly inside `slab('twilight-landmark', 15500, -6800, 2200, 1200)`
+  (x ∈ [15500,17700], y ∈ [-6800,-5600]). The T-31 body (radius 12, no chain
+  circles) sits ~100 below the nearest top edge, so `Terrain.resolveCircle`
+  never pushes it out; the depth-tier drift (`driftT31`, westward at
+  `T31_DEEP_DRIFT = 8`) drove it to the interior left wall at x≈15512 where it
+  box-walked — the same failure mode this item already fixed for the T-11
+  lifter, missed for the T-31 drifter.
+- **Fix:** relocated to `vec2(18200, -5300)` — above the landmark (the
+  landmark tops out at y=-5600, so this is open water), in the twilight
+  chunk (band 3), clear of every closed slab in the world. The westward
+  drift now traverses the upper twilight lane over the landmark instead of a
+  solid. Band coverage is unchanged (still band 3), so the band-coverage test
+  is unaffected.
+- **Regression guard (test-first):** added
+  `no tier-2 spawn sits inside a closed terrain slab (§49 open-water
+  placement)` to the `tier-2 production world data (WI-03b2)` block. It
+  checks every tier-2 spawn center against every closed authored slab using
+  exact axis-aligned bounding-box containment. Confirmed **failing** on the
+  old position (`expected ['twilight-landmark'] to deeply equal []`) before
+  the fix, passing after.
+
+### Finding 2 — correct the roster-floor comment
+
+The third test's comment claimed the 5 framework fixtures "carry the tier-0
+greybox, which clears the 15+ floor on its own." That overstates the test:
+`active` is built only from production `creatureSpawns` (the 12 implemented
+hidden types), and the fixtures are not spawned in `MACRO_WORLD`. Rewrote the
+comment to state that only the 12 implemented types are asserted here and the
+15+ floor is WI-03d's to prove.
+
+### Shrink / Flatten (this revision)
+
+No new abstraction, class, or module: the fix is one spawn position + one
+inline hidden-constraint comment (the terrain resolve will not push a body
+out of a deep-inside slab — a constraint not visible from the code), one
+comment correction, and one local test helper (`trappedBy`, not a new file).
+Nothing removable remained.
+
+### Evidence (re-run this revision)
+
+| Check | Command | Result |
+|---|---|---|
+| New clearance test red→green | `npx vitest run src/sim/tier2Scenario.test.ts` | red on old position; 16/16 pass after |
+| Full suite | `npx vitest run` | 27 files / **206/206** pass (was 205; +1 test) |
+| Type-check + bundle | `npm run build` | exit 0 (only the informational >500 kB three.js chunk notice) |
+| Clearance enumeration | `scratch/implementer/clearance/probe.ts` (`npx tsx`) | `t31-twilight` now clear; only out-of-scope `t03-twilight` flagged |
+| Browser spot-check (re-run, T-11) | `scratch/implementer/tier2-spot-check/probe.mjs` | 9/9 pass; no page exceptions, no console errors with the new world data |
+
+### Out-of-scope discovery (recorded, not fixed)
+
+The clearance probe surfaced a **tier-1** cross-chunk overlap: `t03-twilight`
+(T-03, the loose congregation, radius 10) at (11000, -5000) is strictly
+inside the shelf chunk's `shelf-floor-east` slab (x ∈ [10000,14000],
+y ∈ [-5200,-4900]). It is the same trapped-in-a-solid class of defect, but it
+is a tier-1 creature placed by the tier-1/tier-2 greybox work, not this
+tier-2 item, and it was not flagged by the review. Fixing it is outside this
+work item's seams (a world-data placement for another tier's creature) —
+routed to the existing fix-planning path. Recorded so it is not silently
+missed; the tier-2 clearance test is scoped to tier-2 ids and does not
+mask it.
+
+### Files touched (this revision)
+
+- `src/world/worldData.ts` — `t31-twilight` position `(17000,-5700)` →
+  `(18200,-5300)` + one inline clearance comment.
+- `src/sim/tier2Scenario.test.ts` — new tier-2 spawn-clearance regression
+  test + corrected roster-floor comment (Finding 2).
+- `agents/tasks/hadalv2.execute_leaf.__attempt_0012/scratch/implementer/clearance/`
+  (new probe + its AGENTS.md) and the re-run tier2-spot-check `out/`
+  (fresh `result.json` + screenshots).
+- This artifact (append-only revision).
