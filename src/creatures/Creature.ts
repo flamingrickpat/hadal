@@ -291,9 +291,13 @@ export class Creature {
     // is loud enough for the ecology flee reaction, state-driven steering is
     // suppressed this step so it cannot steer the prey back toward the
     // predator while the sim's ecology pass steers it away (same pattern as
-    // the quiet hold). Predators (combat) never hold for their own tag.
+    // the quiet hold). Predators (combat) never hold for their own tag, and
+    // non-targetable presences (request §10, WI-03d1) never hold either —
+    // the crossing presence announces itself with exactly this tag and must
+    // not stand down inside its own announcement.
     if (
       this.def.combat === undefined &&
+      this.def.nonTargetable !== true &&
       fleeSignalStrength(this.bus, pos.x, pos.y, this.time, this.queryOut) >= FLEE_THRESHOLD
     ) {
       return;

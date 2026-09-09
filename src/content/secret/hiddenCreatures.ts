@@ -6,13 +6,16 @@
  *   the framework's school / filter-feeder ecology, one small bespoke
  *   controller for T-13's flee-signature marker), the six tier-2
  *   useful/neutral organisms (simulation-side interactions own their rules),
- *   and the five tier-3 predator/territorial organisms (request §19 allows
+ *   the five tier-3 predator/territorial organisms (request §19 allows
  *   bespoke controllers; they land in WI-03c1b — this file carries the size
  *   classes, signature-rule categories, and section 11.1 minimums their
- *   controllers read).
+ *   controllers read), and the five tier-4 huge set-piece / colossal-presence
+ *   organisms (WI-03d1 — non-targetable bodies, rest-state pins, and the
+ *   data-level minimums; their signature rules resolve simulation-side in
+ *   `Simulation.applyTier4Interactions`).
  *
  * archetype: information-holder
- * owns: the 17 hidden `CreatureDef`s across the three tiers, the
+ * owns: the 22 hidden `CreatureDef`s across the four tiers, the
  *   `HIDDEN_CREATURES` list, the per-tier `TIERn_IDS` / `TIERn_CREATURES`
  *   roster checks, and `TIERn_BANDS` (the depth bands the private roster
  *   designed each organism for — the data the world-data band checks in the
@@ -20,12 +23,14 @@
  * not own: the registry (fixtures.ts merges these into `CREATURE_BY_ID`),
  *   the spawn positions (worldData.ts authors them), rendering (the WI-02b
  *   renderer reads `def.body`), the section 10 damage table (combat.ts), or
- *   the per-predator controllers (WI-03c1b).
+ *   the per-predator / colossal-presence controllers (WI-03c1b / WI-03d1).
  * invariant: ids are internal codes only — no creature names or secret
  *   descriptions live in this file's exported data, and this file is the
  *   only non-design place they may be referenced; every def carries a
  *   `sizeClass` the damage model resolves; the tier-1 and tier-2 defs are
- *   neutral (no `combat`), the tier-3 ones are the roster's predators.
+ *   neutral (no `combat`), the tier-3 ones are the roster's predators, and
+ *   the tier-4 ones are non-targetable (request §10: no HP bar, no kill
+ *   path).
  * fails when: a world chunk spawns an id this file does not define — the
  *   `Simulation` constructor throws on registry resolution (request §32).
  */
@@ -558,8 +563,241 @@ export const TIER3_CREATURES: Record<string, CreatureDef> = Object.fromEntries(
   TIER3_LIST.map((d) => [d.id, d]),
 );
 
-/** Every hidden organism, all three tiers — this is what `fixtures` merges into the registry. */
-export const HIDDEN_CREATURES: readonly CreatureDef[] = [...TIER1_CREATURES, ...TIER2_LIST, ...TIER3_LIST];
+// ---- Tier 4 — the huge set pieces and colossal presences (WI-03d1) -------
+//
+// The five organisms the private roster selects for the final tier (2-4 huge
+// ecological set pieces plus 2-3 truly colossal presences, request §11.1),
+// at least one colossal presence not simply hostile (all five are). Their
+// scale comes from the simulation-side half of the section 52 techniques:
+// speed mismatch (F), the fauna-first environment reaction (D), and the
+// sonar-scale signal (E) — the rules resolve simulation-side in
+// `Simulation.applyTier4Interactions` (the controller hook cannot see the
+// player or the ambient pool, the same pattern as tiers 2-3), so these defs
+// carry the bodies, movement, the rest-state pins, and the data-level
+// minimums. Every def is a non-combat-target (request §10: `nonTargetable`):
+// no HP bar, no kill path, no deter.
+//
+// Size class follows overall body size: every tier-4 body is `large`, and the
+// colossal pair's collision spans are several multiples of every other tier.
+
+// T-19 — the plume organism (band: deep 4). Signature (private roster): a
+// large spiny body with a single oversized display plume on a long stalk —
+// it reads as a weapon-bearer, unmistakably dangerous at first glance, but
+// the plume is a feeding/mating filter, not a weapon. The player's suit
+// close enough to disturb it closes the plume and the organism drifts off —
+// a non-lethal, non-combative response. The standoff and return run
+// simulation-side (`t19Plume`); the controller only holds the rest.
+const t19Controller: CreatureController = (creature) => {
+  if (creature.state === 'flee' || creature.state === 'return') return;
+  creature.state = 'forage';
+  creature.target = vec2(creature.home.x, creature.home.y);
+};
+
+export const T19: CreatureDef = {
+  id: 'T-19',
+  // A large spiny body with one oversized plume on a long stalk — the
+  // silhouette of a weapon-bearer (private roster).
+  body: {
+    radius: 140,
+    chainCircles: [
+      { offset: vec2(150, 30), radius: 90 },
+      { offset: vec2(280, -20), radius: 120 },
+      { offset: vec2(420, -70), radius: 150 },
+    ],
+  },
+  movement: { maxSpeed: 40, accel: 120, dragRate: 2.5 },
+  senses: {},
+  behavior: { startState: 'forage', controller: t19Controller },
+  audio: { flee: 't19-close', forage: 't19-unfurl' },
+  sizeClass: 'large',
+  nonTargetable: true,
+  minimums: ['dangerous-looking-but-safe'],
+};
+
+// T-20 — the fixed-point pulse organ (band: hadal). Signature (private
+// roster): a colossal rhythmic organ set into the abyss wall — it reads as
+// a heart, not an animal, and it is the source of the fixed-point pulse.
+// The player hears the sub-bass long before it can see the organ, and can
+// ride the pulsing current it drives. The pulse cycle, the bus signal, and
+// the rideable current run simulation-side (`t20Pulse`); the controller only
+// holds the rest.
+const t20Controller: CreatureController = (creature) => {
+  creature.state = 'idle';
+  creature.target = null;
+};
+
+export const T20: CreatureDef = {
+  id: 'T-20',
+  // A colossal organ: a broad root with four membrane lobes — it reads as a
+  // heart set into the wall (private roster).
+  body: {
+    radius: 500,
+    chainCircles: [
+      { offset: vec2(-380, 0), radius: 320 },
+      { offset: vec2(380, 0), radius: 320 },
+      { offset: vec2(0, -400), radius: 300 },
+      { offset: vec2(0, 400), radius: 300 },
+    ],
+  },
+  movement: { maxSpeed: 6, accel: 20, dragRate: 4 },
+  senses: {},
+  behavior: { startState: 'idle', controller: t20Controller },
+  // The private roster assigns no section 11.1 minimum to T-20 (it is the
+  // tier's fixed-point set piece; `minimums` stays absent by design).
+  audio: { custom: 't20-pulse' },
+  sizeClass: 'large',
+  nonTargetable: true,
+};
+
+// T-22 — the living landmark (band: deep 4). Signature (private roster): a
+// large organism grown around an industrial structure, using it as a
+// skeleton — the player first reads it as a wreck-tower (a scale misread)
+// and sees it move only in slow creaking steps. The creak cycle (a bounded
+// position shift + one audio step) runs simulation-side (`t22Creak`); the
+// controller holds the still state.
+const t22Controller: CreatureController = (creature) => {
+  creature.state = 'forage';
+  creature.target = null;
+};
+
+export const T22: CreatureDef = {
+  id: 'T-22',
+  // A large structure-bound body: a tall root column with a broad base —
+  // it reads as a tower or wreck, not an animal (private roster).
+  body: {
+    radius: 400,
+    chainCircles: [
+      { offset: vec2(0, -750), radius: 380 },
+      { offset: vec2(0, 750), radius: 380 },
+      { offset: vec2(320, 0), radius: 360 },
+      { offset: vec2(-320, 0), radius: 360 },
+    ],
+  },
+  movement: { maxSpeed: 2, accel: 20, dragRate: 4 },
+  senses: {},
+  behavior: { startState: 'forage', controller: t22Controller },
+  audio: { custom: 't22-creak' },
+  sizeClass: 'large',
+  nonTargetable: true,
+  // The roster's living landmark and scale-misread are the same organism.
+  minimums: ['scale-misread', 'living-landmark'],
+};
+
+// T-23 — the crossing presence (band: hadal). Signature (private roster):
+// a colossal flank that crosses the background layer — the body turning,
+// never a clean full-body view. Its presence is communicated FIRST through
+// changes to every local species (the fauna-announcement window) and its own
+// heartbeat only inside the view. The crossing holds at the east end of its
+// lane until a diver is near, then runs it; the announcement signals, the
+// heartbeat, and the lane motion resolve simulation-side (`t23Crossing` +
+// this controller). Technique F (speed mismatch): the body moves slowly in
+// body space but covers large world distance — `maxSpeed` against the
+// collision span says so in the data.
+const T23_LANE_HALF = 2400; // the crossing lane extends this far either side of home
+
+const t23Controller: CreatureController = (creature, percept, dt) => {
+  void percept;
+  void dt;
+  if (creature.state === 'idle') return; // held at the lane end until the sim releases the crossing
+  const t = creature.target;
+  if (t === null) {
+    creature.target = vec2(creature.home.x - T23_LANE_HALF, creature.home.y);
+  } else if (Math.hypot(creature.position.x - t.x, creature.position.y - t.y) < 200) {
+    // Reached an end of the lane: flip to the other one (allocation only on flip).
+    const x = t.x < creature.home.x ? creature.home.x + T23_LANE_HALF : creature.home.x - T23_LANE_HALF;
+    creature.target = vec2(x, creature.home.y);
+  }
+  creature.state = 'forage';
+};
+
+export const T23: CreatureDef = {
+  id: 'T-23',
+  // A colossal flank: a long, slowly tapering chain of lobes — only a
+  // fraction of the body is ever here at once (private roster).
+  body: {
+    radius: 600,
+    chainCircles: [
+      { offset: vec2(-600, 0), radius: 550 },
+      { offset: vec2(600, 0), radius: 550 },
+      { offset: vec2(-1300, 40), radius: 560 },
+      { offset: vec2(1300, -40), radius: 560 },
+      { offset: vec2(-2100, 0), radius: 500 },
+      { offset: vec2(2100, 0), radius: 500 },
+      { offset: vec2(-2800, 60), radius: 420 },
+      { offset: vec2(2800, -60), radius: 420 },
+    ],
+  },
+  movement: { maxSpeed: 120, accel: 120, dragRate: 0.5 },
+  senses: {},
+  behavior: { startState: 'idle', controller: t23Controller },
+  audio: { custom: 't23-pulse' },
+  sizeClass: 'large',
+  nonTargetable: true,
+  minimums: ['felt-through-fauna', 'never-full-body-view'],
+};
+
+// T-25 — the headless plate cluster (band: hadal). Signature (private
+// roster): a distributed swarm of interlocking plates that drifts in the
+// slow eddy around the fixed point and reconfigures as the eddy shifts —
+// no head, no fixed shape, it cannot be mapped to any Earth body plan. The
+// drift reuses the §20/§64 filter-feeder current orientation (the cluster
+// rides whatever local current is around); the reconfigure cycle (one audio
+// step on a period) runs simulation-side (`t25Reconfig`).
+const t25Controller: CreatureController = (creature) => {
+  creature.state = 'forage';
+  creature.target = null;
+};
+
+export const T25: CreatureDef = {
+  id: 'T-25',
+  // A loose cluster of interlocking plates around a small core — no head,
+  // no axis, it reconfigures (private roster).
+  body: {
+    radius: 120,
+    chainCircles: [
+      { offset: vec2(-300, 160), radius: 100 },
+      { offset: vec2(300, -160), radius: 100 },
+      { offset: vec2(-180, -260), radius: 110 },
+      { offset: vec2(180, 260), radius: 110 },
+      { offset: vec2(0, -320), radius: 90 },
+      { offset: vec2(0, 320), radius: 90 },
+    ],
+  },
+  movement: { maxSpeed: 30, accel: 60, dragRate: 2 },
+  senses: {},
+  behavior: { startState: 'forage', controller: t25Controller },
+  ecology: { school: false, filterFeeder: true },
+  audio: { custom: 't25-clink' },
+  sizeClass: 'large',
+  nonTargetable: true,
+  minimums: ['uncategorizable'],
+};
+
+const TIER4_LIST: readonly CreatureDef[] = [T19, T20, T22, T23, T25];
+
+/** The tier-4 roster keyed by id (request §11.1) — for registry lookups. */
+export const TIER4_CREATURES: Record<string, CreatureDef> = Object.fromEntries(
+  TIER4_LIST.map((d) => [d.id, d]),
+);
+
+/** The tier-4 ids, for registry / band checks (WI-03d1). */
+export const TIER4_IDS: readonly string[] = TIER4_LIST.map((d) => d.id);
+
+/**
+ * The depth bands (1 = surface … 5 = hadal) each tier-4 organism was designed
+ * for by the private roster — WI-03d3's world-data band check asserts each
+ * spawn against these.
+ */
+export const TIER4_BANDS: Record<string, ReadonlySet<number>> = {
+  'T-19': new Set([4]),
+  'T-20': new Set([5]),
+  'T-22': new Set([4]),
+  'T-23': new Set([5]),
+  'T-25': new Set([5]),
+};
+
+/** Every hidden organism, all four tiers — this is what `fixtures` merges into the registry. */
+export const HIDDEN_CREATURES: readonly CreatureDef[] = [...TIER1_CREATURES, ...TIER2_LIST, ...TIER3_LIST, ...TIER4_LIST];
 
 /** The tier-1 ids, for registry / world-data checks. */
 export const TIER1_IDS: readonly string[] = TIER1_CREATURES.map((d) => d.id);

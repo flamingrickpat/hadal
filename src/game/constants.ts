@@ -88,3 +88,13 @@ export const CURRENT_CONTROL_WITH_PROPULSION = 0.8; // `boost`: resist 80%
 // from the player. It is a WORLD distance in world units — not a screen-edge
 // test (request §16) — so deactivation is stable and camera-independent.
 export const CREATURE_AI_RANGE = 3000; // world units; beyond it, the AI does not tick
+
+// Tier-4 visibility state (WI-03d1, request §52): a clean full-body view of a
+// presence exists only when its ENTIRE body fits within this range of the
+// player. The sim owns this rule headlessly; the renderer and the no-clean-
+// view scenario read it.
+export const FULL_BODY_VIEW_RANGE = 1200;
+// The body span that maps to sonar size 4 for a non-targetable presence
+// (request §18 "larger objects return larger/slower pulses", §52 technique E):
+// sonar size = body span / this.
+export const SONAR_MASSIVE_REF = 300;

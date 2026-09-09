@@ -203,7 +203,9 @@ describe('separate headless scenarios (request §70)', () => {
     s.assert(percept.sonar > 0.2, `a nearby creature perceives the sonar signal (sonar=${percept.sonar.toFixed(2)})`);
   });
 
-  it('traverses the macro world end to end: the terrain is swimmable through every depth band (request §4.2/§49)', () => {
+  it(
+    'traverses the macro world end to end: the terrain is swimmable through every depth band (request §4.2/§49)',
+    () => {
     const s = new Scenario(10);
     const sim = s.sim;
     // Open-water waypoints, one per deeper band, placed at the band's descent
@@ -241,5 +243,12 @@ describe('separate headless scenarios (request §70)', () => {
     }
     // The deepest band is ~-9,000 to -12,000 (request §4.1).
     s.assert(sim.player.depth >= 9000, `reached the deepest band (depth=${sim.player.depth.toFixed(0)})`);
-  });
+    },
+    // WI-03d1 note: this full-descent swim loop runs ~5.4 s under current
+    // machine load and trips the default 5 s test timeout (reproduced
+    // identically on the base commit with this item's changes stashed).
+    // Explicit timeout matching the sibling "blocked route" test above; no
+    // logic change.
+    15000,
+  );
 });

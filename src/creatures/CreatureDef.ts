@@ -17,7 +17,8 @@
  *   `steering.ts` moves them, `senses.ts` provides the channels.
  * invariant: defs are plain data (no methods, no hidden state); audio is a
  *   state → call-name mapping the sim emits and the browser adapter
- *   consumes, never synthesized here.
+ *   consumes, never synthesized here; `bodyExtent` is a pure read of a def's
+ *   collision circles (WI-03d1).
  * fails when: a def omits `audio` (required by request §19) — TypeScript,
  *   not this file, enforces it.
  */
@@ -94,7 +95,15 @@ export type RosterMinimum =
   | 'dangerous-phase-not-scary-phase'
   | 'harmless-with-second-behavior'
   | 'exploitable-relationship'
-  | 'non-chase-predator';
+  | 'non-chase-predator'
+  // The tier-4 minimums (WI-03d1): the large-scale set pieces and colossal
+  // presences the private roster assigns (request §11.1).
+  | 'dangerous-looking-but-safe'
+  | 'scale-misread'
+  | 'living-landmark'
+  | 'felt-through-fauna'
+  | 'never-full-body-view'
+  | 'uncategorizable';
 
 /** A segment of a long body's collision chain (request §31 chain circles). */
 export interface ChainCircle {
@@ -206,4 +215,26 @@ export interface CreatureDef {
   rules?: readonly SignatureRule[];
   /** The section 11.1 minimums the private roster assigns this organism (data only). */
   minimums?: readonly RosterMinimum[];
+  /**
+   * A colossal presence (request §10: "Colossal organisms: not conventional
+   * combat targets"): the harpoon never selects it, predators never kill it,
+   * and it takes no combat damage — there is no HP bar and no kill path.
+   */
+  nonTargetable?: boolean;
+}
+
+/**
+ * A body's overall span in world units: twice the farthest reach of its
+ * collision circles (root plus chain) from the root center. The sim's
+ * sonar-scale registration (request §18/§52 technique E) and the no-clean-
+ * view visibility rule (WI-03d1) read this — a huge span is what makes an
+ * echo "impossibly large" and a full-body view impossible.
+ */
+export function bodyExtent(def: CreatureDef): number {
+  let far = def.body.radius;
+  for (const c of def.body.chainCircles ?? []) {
+    const reach = Math.hypot(c.offset.x, c.offset.y) + c.radius;
+    if (reach > far) far = reach;
+  }
+  return 2 * far;
 }

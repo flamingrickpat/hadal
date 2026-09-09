@@ -17,7 +17,9 @@
  *   are consumed, not owned here.
  * invariant: `step` advances by exactly the given `dt` and is
  *   deterministic in (state, input, seed); a fresh simulation from the
- *   production world starts at `PLAYER_START` with starter gear.
+ *   production world starts at `PLAYER_START` with starter gear; non-
+ *   targetable presences (request §10) are never selected as harpoon or
+ *   predator-kill targets.
  * fails when: the world has no base or no resource nodes — the
  *   constructor throws for invalid authored data.
  */
@@ -28,9 +30,11 @@ import {
   CURRENT_CONTROL_BASE,
   CURRENT_CONTROL_WITH_PROPULSION,
   DEATH_RESOURCE_LOSS_FRACTION,
+  FULL_BODY_VIEW_RANGE,
   HP_MAX,
   INTERACT_RADIUS,
   PLAYER_RADIUS,
+  SONAR_MASSIVE_REF,
   TOOL_NOISE_STRENGTH,
 } from '../game/constants';
 import { GameState } from '../game/GameState';
@@ -45,6 +49,7 @@ import { createCargo } from '../player/inventory';
 import { canCraft, applyEquipment, type CraftResult } from '../systems/CraftingSystem';
 import { WorldSignalBus, type WorldSignal } from '../creatures/senses';
 import { Creature, type CreatureAudioEvent } from '../creatures/Creature';
+import { bodyExtent } from '../creatures/CreatureDef';
 import { CREATURE_BY_ID } from '../creatures/fixtures';
 import { DETER_HOLD_SECONDS, HARPOON_RANGE, resolveHarpoonHit } from '../creatures/combat';
 import {
@@ -56,6 +61,7 @@ import {
   PREDATOR_SIGNAL_STRENGTH,
   PREDATOR_TAG,
   PART_RADIUS,
+  QUIET_TAG,
   SCAVENGE_RADIUS,
   SCAVENGE_THRESHOLD,
   fleeSignalStrength,
@@ -165,6 +171,29 @@ const T18_DRIVE_RADIUS = 600; // how far the herder drives schooling prey
 const T18_DRIVE_SPEED = 45; // the drive toward the field (units/s, §64 drift)
 const T18_FIELD_RADIUS = 150; // the harvestable field around the herder
 
+// ---- Tier-4 colossal-presence rules (WI-03d1, request §52, §20, §10) ------
+// The section 52 simulation-side half: speed mismatch (F) comes from the
+// defs' data (large maxSpeed against a huge body span); the fauna-first
+// environment reaction (D) and the sonar-scale signal (E) resolve here. Each
+// value is the single number that makes one signature rule hold headlessly.
+// The plume's own collision body keeps a diver at ~390 from its center on
+// this approach path, so the disturbance radius must sit outside that.
+const T19_AVOID_RADIUS = 440; // inside this, the plume closes (the player disturbs it)
+const T19_RETURN_RADIUS = 620; // the plume unfurls again once the player is this far
+const T20_PULSE_PERIOD = 6; // the fixed-point pulse period (s)
+const T20_RIDE_RADIUS = 1200; // how far the pulse organ's current reaches
+const T20_PUSH_SPEED = 90; // the pulsing current's peak carry (units/s)
+const T22_CREAK_PERIOD = 8; // a creaking step every this long (s)
+const T22_CREAK_STEP = 12; // each creaking step shifts the structure this far (units)
+const T23_START_RANGE = 2500; // the crossing starts when a diver is this near (units)
+// The fauna-announcement radius is the designed reaction range: twice the
+// sight range, so local fauna are reacting well before the presence can be
+// seen (section 20, technique D).
+const T23_ANNOUNCE_RADIUS = 2400;
+const T23_ANNOUNCE_REFRESH = 2.5; // the announcement signals refresh this often (s)
+const T23_BEAT_PERIOD = 3; // the heartbeat inside the view, once per this long (s)
+const T25_RECONFIG_PERIOD = 7; // the plate cluster reconfigures once per this long (s)
+
 export class Simulation {
   readonly player: Player;
   readonly controller: PlayerController;
@@ -246,6 +275,12 @@ export class Simulation {
   // The T-18 driven prey: small schooling members currently herded into its
   // field, so they can be collected there and released back to wander later.
   private readonly tier3Driven = new Set<Creature>();
+  // Per-creature working state for the tier-4 signature rules (WI-03d1):
+  // the next cycle time (`next` — creak/reconfig/announce refresh), the
+  // next heartbeat (`beat`), and whether the crossing has been released
+  // (`started`). Creature instances are stable, so keying by instance is
+  // safe (same as `tier3`).
+  private readonly tier4 = new Map<Creature, { next: number; beat: number; started: boolean }>();
 
   constructor(world: SimWorld, seed: number = DEFAULT_SEED) {
     this.chunks = world.chunks;
@@ -257,27 +292,14 @@ export class Simulation {
     this.player = new Player(PLAYER_START);
     applyStarterGear(this.player);
     this.controller = new PlayerController(this.player);
-    // The world-signal bus (the §63 perception seam) and the sonar system
-    // (request §18), both owned by the simulation core (request §30).
+    // The world-signal bus (the §63 perception seam), both owned by the
+    // simulation core (request §30).
     this.signals = new WorldSignalBus();
-    const terrainPoints = world.chunks.flatMap((c) => c.terrain).flatMap((s) => s.points);
-    const objects: SonarObject[] = this.nodes.map((n) => ({
-      x: n.position.x,
-      y: n.position.y,
-      size: 1,
-      resource: true,
-    }));
-    this.sonar = new SonarSystem(this.signals, terrainPoints, objects);
-    // The encounter-trigger system (request §36): one state the sim owns (the
-    // `storyFlags` array is shared so fired flags persist in the save), and the
-    // current system (request §64) built from the world's authored fields.
-    this.triggerState = emptyTriggerState();
-    this.triggerState.storyFlags = this.storyFlags;
-    this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
-    this.currents = new CurrentSystem(world.currentFields ?? []);
     // The creatures (request §19, §30): authored per chunk (`creatureSpawns`),
     // resolved against the creature registry — an unknown id is an authored
     // world error and fails loudly (request §32 "all creature IDs resolve").
+    // Built before the sonar system: the colossal presences register as
+    // massive sonar objects (request §18, §52 technique E).
     const creatureRng = createRng((this.seed ^ 0x5eed) >>> 0);
     for (const chunk of this.chunks) {
       for (const spawn of chunk.creatureSpawns ?? []) {
@@ -292,6 +314,33 @@ export class Simulation {
     for (const c of this.creatures) {
       if (c.def.ecology?.school) this.schoolMembers.push(c);
     }
+    // The sonar system (request §18): resource nodes plus every non-targetable
+    // presence, whose sonar `size` scales with the body span — a huge body
+    // returns a far larger, slower echo (WI-03d1, technique E).
+    const terrainPoints = world.chunks.flatMap((c) => c.terrain).flatMap((s) => s.points);
+    const objects: SonarObject[] = this.nodes.map((n) => ({
+      x: n.position.x,
+      y: n.position.y,
+      size: 1,
+      resource: true,
+    }));
+    for (const c of this.creatures) {
+      if (c.def.nonTargetable !== true) continue;
+      objects.push({
+        x: c.position.x,
+        y: c.position.y,
+        size: Math.max(1, bodyExtent(c.def) / SONAR_MASSIVE_REF),
+        resource: false,
+      });
+    }
+    this.sonar = new SonarSystem(this.signals, terrainPoints, objects);
+    // The encounter-trigger system (request §36): one state the sim owns (the
+    // `storyFlags` array is shared so fired flags persist in the save), and the
+    // current system (request §64) built from the world's authored fields.
+    this.triggerState = emptyTriggerState();
+    this.triggerState.storyFlags = this.storyFlags;
+    this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
+    this.currents = new CurrentSystem(world.currentFields ?? []);
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
     this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
@@ -302,6 +351,26 @@ export class Simulation {
   /** Flatten every authored chunk trigger into one trigger set (request §36). */
   private collectTriggers(): import('../world/triggers').EncounterTrigger[] {
     return this.chunks.flatMap((c) => c.triggers ?? []);
+  }
+
+  /**
+   * The sim's visibility state for a colossal presence (WI-03d1, request §52):
+   * true only when the player currently has a clean full-body view — the
+   * ENTIRE body (root plus chain circles) is within `FULL_BODY_VIEW_RANGE`.
+   * Headless stand-in for the no-clean-view floor; the renderer and the
+   * crossing scenario read it. Pure geometry on the current state — no
+   * allocation (request §34).
+   */
+  hasCleanFullBody(c: Creature): boolean {
+    const p = this.player.position;
+    let far = Math.hypot(c.position.x - p.x, c.position.y - p.y) + c.def.body.radius;
+    for (const chain of c.def.body.chainCircles ?? []) {
+      const cx = c.position.x + chain.offset.x;
+      const cy = c.position.y + chain.offset.y;
+      const d = Math.hypot(cx - p.x, cy - p.y) + chain.radius;
+      if (d > far) far = d;
+    }
+    return far <= FULL_BODY_VIEW_RANGE;
   }
 
   /**
@@ -347,6 +416,7 @@ export class Simulation {
     if (toolFired) this.fireHarpoon();
     this.applyTier2Interactions(input, dt);
     this.applyTier3Interactions(input, dt);
+    this.applyTier4Interactions(dt);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
     this.handleCraft(input);
@@ -482,7 +552,9 @@ export class Simulation {
       let nearest: Creature | null = null;
       let nearestDist = PREDATOR_ATTACK_RANGE;
       for (const o of this.creatures) {
-        if (o === p || !o.active || o.dead || o.def.combat !== undefined) continue;
+        // A non-targetable presence is never prey: no kill path (request §10,
+        // WI-03d1).
+        if (o === p || !o.active || o.dead || o.def.combat !== undefined || o.def.nonTargetable === true) continue;
         const d = Math.hypot(o.position.x - p.position.x, o.position.y - p.position.y);
         if (d < nearestDist) {
           nearestDist = d;
@@ -864,6 +936,149 @@ export class Simulation {
     this.tier3Driven.delete(best);
   }
 
+  /** The tier-4 colossal-presence signature rules (WI-03d1, request §52, §20, §10). */
+  private applyTier4Interactions(dt: number): void {
+    for (const c of this.creatures) {
+      if (!c.active) continue;
+      const id = c.def.id;
+      if (id === 'T-19') this.t19Plume(c);
+      else if (id === 'T-20') this.t20Pulse(c, dt);
+      else if (id === 'T-22') this.t22Creak(c);
+      else if (id === 'T-23') this.t23Crossing(c);
+      else if (id === 'T-25') this.t25Reconfig(c);
+    }
+  }
+
+  /** The tier-4 per-creature working state (created on first use). */
+  private tier4State(c: Creature): { next: number; beat: number; started: boolean } {
+    let st = this.tier4.get(c);
+    if (st === undefined) {
+      st = { next: 0, beat: 0, started: false };
+      this.tier4.set(c, st);
+    }
+    return st;
+  }
+
+  /**
+   * The plume organism (T-19, request §10 "dangerous-looking-but-safe"):
+   * the player's suit close enough to disturb the plume closes it and the
+   * organism drifts off — a non-lethal, non-combative response — and once
+   * the player stands away it returns home and unfurls. The generic engine
+   * would `investigate` the approach, so the whole rule lives here.
+   */
+  private t19Plume(c: Creature): void {
+    const p = this.player.position;
+    const d = Math.hypot(c.position.x - p.x, c.position.y - p.y);
+    if (c.state === 'flee') {
+      if (d > T19_RETURN_RADIUS) c.setState('return');
+      return;
+    }
+    if (c.state === 'return') {
+      c.target = vec2(c.home.x, c.home.y);
+      if (Math.hypot(c.home.x - c.position.x, c.home.y - c.position.y) < 80) c.setState('forage');
+      return;
+    }
+    if (d <= T19_AVOID_RADIUS) c.fleeFrom(p); // the plume closes; it drifts off
+  }
+
+  /**
+   * The fixed-point pulse organ (T-20): on each pulse it stamps one `custom`
+   * step (the sub-bass audio, drained next step) and emits a tagged bus
+   * signal, so the pulse is audible from far beyond sight range; a player
+   * inside the ride radius is carried away from the organ by the pulsing
+   * current it drives (request §64 position drift, the sanctioned mechanism
+   * for current/ride motion). The pulse phase is deterministic in the sim
+   * time — no per-creature phase state.
+   */
+  private t20Pulse(c: Creature, dt: number): void {
+    const t = this.state.timeSec;
+    const p = this.player.position;
+    const d = Math.hypot(c.position.x - p.x, c.position.y - p.y);
+    if (d <= T20_RIDE_RADIUS && d > 1) {
+      const nx = (p.x - c.position.x) / d;
+      const ny = (p.y - c.position.y) / d;
+      const pulse = (Math.sin((t / T20_PULSE_PERIOD) * Math.PI * 2) + 1) / 2;
+      const control = this.player.capabilities.has('boost') ? CURRENT_CONTROL_WITH_PROPULSION : CURRENT_CONTROL_BASE;
+      const push = T20_PUSH_SPEED * pulse * (1 - control);
+      p.x += nx * push * dt;
+      p.y += ny * push * dt;
+    }
+    if (t % T20_PULSE_PERIOD < dt) {
+      c.setState('custom'); // the sub-bass pulse (audio, drained next step)
+      this.signals.emit({ type: 'noise', pos: c.position, strength: 1.0, tag: 'pulse' }, t);
+    }
+  }
+
+  /**
+   * The living landmark (T-22, request §11.1 scale misread): the structure
+   * is still except for slow creaking steps — a bounded position shift plus
+   * one `custom` step (the creak audio) on a period. Terrain-read holds
+   * because a creaking shift is a small fraction of the body span.
+   */
+  private t22Creak(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier4State(c);
+    if (t < st.next) return;
+    st.next = t + T22_CREAK_PERIOD;
+    c.position.x += T22_CREAK_STEP;
+    c.setState('custom'); // the creak (audio, drained next step)
+  }
+
+  /**
+   * The crossing presence (T-23, request §20, §52 technique D): the crossing
+   * holds at the lane start until a diver is near, then runs its lane.
+   * While it is inside the announcement window (far from the player but
+   * approaching) it refreshes the environment-reaction signals at its own
+   * position — the flee + quiet tags the local fauna react to — and emits
+   * NOTHING of its own; its heartbeat (`custom` step, audio) starts only
+   * inside the clean-view range. So in a headless trace the fauna reaction
+   * strictly precedes any direct sight or sound evidence. Technique F
+   * (speed mismatch) is the def's data: large world distance per second,
+   * small body-lengths per second.
+   */
+  private t23Crossing(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier4State(c);
+    const p = this.player.position;
+    const d = Math.hypot(c.position.x - p.x, c.position.y - p.y);
+    if (!st.started) {
+      if (d < T23_START_RANGE) {
+        st.started = true;
+        c.setState('forage'); // release the crossing (the controller takes the lane)
+      }
+      return;
+    }
+    if (d > FULL_BODY_VIEW_RANGE && d <= T23_ANNOUNCE_RADIUS) {
+      if (t >= st.next) {
+        st.next = t + T23_ANNOUNCE_REFRESH;
+        // The environment reaction (D): local fauna flee and the zone quiets.
+        this.signals.emit({ type: 'noise', pos: c.position, strength: PREDATOR_SIGNAL_STRENGTH, tag: PREDATOR_TAG }, t);
+        this.signals.emit({ type: 'noise', pos: c.position, strength: 1.0, tag: QUIET_TAG }, t);
+      }
+    } else if (d <= FULL_BODY_VIEW_RANGE) {
+      if (t >= st.beat) {
+        st.beat = t + T23_BEAT_PERIOD;
+        c.setState('custom'); // the heartbeat loudening (audio, drained next step)
+      }
+    }
+  }
+
+  /**
+   * The headless plate cluster (T-25): it rides the local current via the
+   * shared filter-feeder orientation (request §20, §64 — the sim's ecology
+   * pass owns the drift), and reconfigures on a period — one `custom` step
+   * (the clink audio, drained next step). The reconfigure is a brief settle,
+   * so the cluster stalls for a beat before the current re-takes it.
+   */
+  private t25Reconfig(c: Creature): void {
+    const t = this.state.timeSec;
+    const st = this.tier4State(c);
+    if (t >= st.next) {
+      st.next = t + T25_RECONFIG_PERIOD;
+      c.setState('custom'); // the clink (audio, drained next step)
+    }
+  }
+
   /** The nearest active creature of `id` within `radius` of `pos`, or null. */
   private nearestCreatureOf(id: string, pos: Vec2, radius: number): Creature | null {
     let best: Creature | null = null;
@@ -1106,7 +1321,9 @@ export class Simulation {
     let target: Creature | null = null;
     let bestD = HARPOON_RANGE;
     for (const c of this.creatures) {
-      if (!c.active || c.dead) continue;
+      // Non-targetable presences (request §10, WI-03d1) are never selected:
+      // no hit, no deter, no kill path.
+      if (!c.active || c.dead || c.def.nonTargetable === true) continue;
       const d = Math.hypot(c.position.x - pos.x, c.position.y - pos.y);
       if (d <= bestD) {
         bestD = d;
