@@ -417,6 +417,13 @@ const abyss: WorldChunkDef = {
     { id: 't15-abyss', creature: 'T-15', position: vec2(22500, -7900), count: 1 },
     { id: 't16-abyss', creature: 'T-16', position: vec2(15500, -9560), count: 1 },
     { id: 't18-abyss', creature: 'T-18', position: vec2(16200, -8100), count: 1 },
+    // Tier-4 set-piece fauna (ids debug-only, request §33): the large
+    // display-appendage filter feeder works the open water west of the
+    // facility, and the structure-bound organism (first read as a wreck
+    // tower) holds the open floor east of the landmark, below the landmark
+    // block. Both in the deep band the roster designs them for.
+    { id: 't19-abyss', creature: 'T-19', position: vec2(15200, -8700), count: 1 },
+    { id: 't22-abyss', creature: 'T-22', position: vec2(22900, -9300), count: 1 },
   ],
   ambient: { particleDensity: 0.45, light: 0.25 },
 };
@@ -469,6 +476,14 @@ const hadal: WorldChunkDef = {
   creatureSpawns: [
     { id: 't06-hadal', creature: 'T-06', position: vec2(19500, -9650), count: 2 },
     { id: 't31-hadal', creature: 'T-31', position: vec2(19800, -9650), count: 1 },
+    // Tier-4 set-piece and colossal fauna (ids debug-only, request §33): the
+    // fixed-point pulse organ sits in the west open band, the colossal
+    // background-layer presence crosses the middle (only a fraction of its
+    // flank is ever seen), and the headless reconfiguring plate cluster
+    // ranges the east — all in the thin open band above the hadal floor.
+    { id: 't20-hadal', creature: 'T-20', position: vec2(19100, -9650), count: 1 },
+    { id: 't23-hadal', creature: 'T-23', position: vec2(21400, -9650), count: 1 },
+    { id: 't25-hadal', creature: 'T-25', position: vec2(22900, -9650), count: 1 },
   ],
   ambient: { particleDensity: 0.4, light: 0.15 },
 };
