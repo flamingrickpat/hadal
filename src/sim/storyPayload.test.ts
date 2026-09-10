@@ -69,7 +69,7 @@ describe('foreshadowing traces (request §51)', () => {
   // R1 (the deep is a body): traces = the pulse sound, growth into metal,
   //   living-tissue material. These are represented by the props/landmarks.
   // R2 (station was nursery): traces = intact hull, personal items.
-  // R3 (MacGuffin is germination core): traces = sonar echo, alignments,
+  // R3: traces = sonar echo, alignments,
   //   friendly organism deferring.
   // R4 (final choice is spatial): traces = contract wording, radio line,
   //   two exits.

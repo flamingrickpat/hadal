@@ -66,6 +66,10 @@ Nothing removable. The implementation is minimal and each element maps directly 
 - `src/sim/storyPayload.test.ts` — new test file
 - `src/content/textFragments.test.ts` — new test file
 
+## Revision Notes (Attempt 21)
+
+Previous attempt (f6e91f2) implemented the full story payload. Reviewer found a spoiler containment violation: "germination core" appeared in a test comment in `src/sim/storyPayload.test.ts:72`. This attempt fixes that by removing the spoiler token from the comment, keeping only the reveal id reference ("R3"). This restores the section 68 requirement that content be referenced by id only.
+
 ## Notes for Reviewer
 
 The implementation follows the private reveal map (design_private/encounter_beats.md) and places the story payload per the 90-120 minute pacing timeline. The foreshadow traces use the section 51 grammar (scars, alignments, sounds, materials) and do not name the reveals in logs. All content uses internal ids only (section 68 spoiler containment).
