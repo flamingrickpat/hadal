@@ -28,6 +28,7 @@ import { loadFromStorage, resetSave, saveToStorage } from './save';
 import { PLAYER_PLANE_Z } from './constants';
 import { Lighting } from '../render/lighting';
 import { CreatureRenderer } from '../render/creatureRender';
+import { ForegroundPass } from '../render/foreground';
 import { ParticleField } from '../render/particles';
 import { PostFX } from '../render/postfx';
 import { SonarVisuals } from '../render/sonar';
@@ -46,6 +47,7 @@ export class Game implements DebugPanelHost {
   private readonly world: World;
   private readonly lighting: Lighting;
   private readonly creatureRenderer: CreatureRenderer;
+  private readonly foreground: ForegroundPass;
   private readonly particles: ParticleField;
   private readonly postfx: PostFX;
   private readonly sonarVisuals: SonarVisuals;
@@ -65,6 +67,7 @@ export class Game implements DebugPanelHost {
     renderer.setWorldBounds(this.world.bounds);
     this.lighting = new Lighting(renderer.scene);
     this.creatureRenderer = new CreatureRenderer(renderer.scene);
+    this.foreground = new ForegroundPass(renderer.scene);
     this.particles = new ParticleField(renderer.scene);
     this.sonarVisuals = new SonarVisuals(renderer.scene, this.sim.sonar);
     const buffer = new THREE.Vector2();
@@ -142,8 +145,16 @@ export class Game implements DebugPanelHost {
     this.particles.update(frameDt, center, half, profile, (pos, time) => this.sim.currents.velocityAt(pos, time), ambientScale);
     // Creatures are a pure render view of the sim state (request §30): the
     // procedural bodies (request §13) are redrawn from the creature list
-    // every frame, driven by the simulation clock.
-    this.creatureRenderer.update(this.sim.creatures, this.sim.state.timeSec, profile);
+    // every frame, driven by the simulation clock. The camera's current view
+    // (center + half extents) is passed in so the colossal crossing presence
+    // can be parallaxed onto its background layer and realized only where
+    // the screen can show it (request §52 A/B/G — the renderer never moves
+    // the simulated creature).
+    this.creatureRenderer.update(this.sim.creatures, this.sim.state.timeSec, profile, { center, half });
+    // The foreground occluder pass (request §52 C): a few close structures
+    // cross between the camera and the player, so the scene they cross
+    // reads as larger than the view.
+    this.foreground.update(center);
     this.sonarVisuals.update(this.sim.state.timeSec);
     this.postfx.update(profile, frameDt);
     this.audio.update(this.sim.player);

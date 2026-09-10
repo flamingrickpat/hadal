@@ -7,16 +7,24 @@
  *   different animation time scales, small bodies get a tapered polygon
  *   body with translucent fins and an outline, and any creature can
  *   carry a found object from the world's wreckage vocabulary
- *   (request §13.4).
+ *   (request §13.4). The colossal crossing presence (the one body whose
+ *   span dwarfs the view) is drawn through the section 52 scale
+ *   techniques (request §52 A/B/G): a background parallax crossing layer
+ *   and partial anatomy — only the spine nodes inside the view are
+ *   realized as body geometry, so the flank is never presented whole.
  *
  * archetype: service-provider
  * owns: one `CreatureVisual` per live creature (a group at the player
- *   plane, `z = PLAYER_PLANE_Z`) — the pre-allocated body ribbon, the
- *   rigid part meshes, the fin meshes, the outline, and the carried
- *   found objects — updated each frame from sim state only.
- * not own: the simulation (read-only; request §30), the camera, the
- *   depth-band profile mapping (`band`), the player beam (`lighting`),
- *   or audio (request §19 audio is data, consumed elsewhere).
+ *   plane, `z = PLAYER_PLANE_Z`; the crossing presence on its background
+ *   layer, `z = CROSSING_PRESENCE_Z`) — the pre-allocated body ribbon,
+ *   the rigid part meshes, the fin meshes, the outline, and the carried
+ *   found objects — updated each frame from sim state only (plus the
+ *   camera's current view, `RenderView`, which only culls and parallaxes
+ *   the drawing — it never moves the simulated creature).
+ * not own: the simulation (read-only; request §30), the camera (the
+ *   `RenderView` is passed in by `Game`), the depth-band profile mapping
+ *   (`band`), the player beam (`lighting`), or audio (request §19 audio
+ *   is data, consumed elsewhere).
  * fails when: a creature visual is requested for a creature with no
  *   def body radius — the meshes collapse to zero size rather than
  *   throwing; nothing in this module throws at runtime.
@@ -26,10 +34,42 @@
  */
 import * as THREE from 'three';
 import type { Creature } from '../creatures/Creature';
+import { bodyExtent, type CreatureDef } from '../creatures/CreatureDef';
 import type { BandProfile } from './band';
-import { PLAYER_PLANE_Z } from '../game/constants';
+import { CAMERA_VIEW_WIDTH, PLAYER_PLANE_Z } from '../game/constants';
 import { buildSpineDef, makeSpineFrame, solveSpine, type SpineDef, type SpineFrame } from './spineRenderer';
 import { createRng } from '../util/rng';
+import type { Vec2 } from '../util/math';
+
+/**
+ * The camera's current view in world units (request §52): the center the
+ * view is anchored to and the half extents. The renderer reads it to
+ * parallax the crossing presence and to realize only the body nodes the
+ * view can show — it never writes back into the sim (request §30).
+ */
+export interface RenderView {
+  center: Vec2;
+  half: Vec2;
+}
+
+/**
+ * The background crossing layer for the colossal presence (request §52 B):
+ * behind the main terrain (z = 0) and in front of the far parallax, so the
+ * flank crosses behind the playable layer — "always behind the player,
+ * never in front" (the private design's staging for the crossing).
+ */
+export const CROSSING_PRESENCE_Z = -20;
+/** The crossing parallax factor: apparent motion and extent at this fraction of world scale (< 1 = slower than expected). */
+export const CROSSING_PRESENCE_PARALLAX = 0.35;
+// A body wider than the whole view can never be framed whole (request §52
+// A/G): it is the one kind of presence the background crossing gets.
+export function isCrossingPresence(def: CreatureDef): boolean {
+  return def.nonTargetable === true && bodyExtent(def) >= 2 * CAMERA_VIEW_WIDTH;
+}
+// How far past the strict view a body node must be before the render stops
+// realizing it (technique A — the margin keeps the flank from popping as
+// the 0.15 s camera lag pans).
+const PARTIAL_ANATOMY_MARGIN = 150;
 
 /** Which visual style a creature gets: spine ribbon (chain body) or small polygon body. */
 export type CreatureVisualKind = 'spine' | 'small';
@@ -124,6 +164,8 @@ type VisualRec = CreatureVisual & {
   heading: number;
   phase: number;
   bodyLen: number;
+  /** True for the colossal crossing presence (background layer + parallax). */
+  crossing: boolean;
 };
 
 function hashId(id: string): number {
@@ -167,10 +209,11 @@ export class CreatureRenderer {
   }
 
   /**
-   * Draw the whole creature list for one frame. Reads sim state only;
-   * writes nothing back (request §30).
+   * Draw the whole creature list for one frame. Reads sim state (and the
+   * camera's current view, when given) only; writes nothing back
+   * (request §30).
    */
-  update(creatures: readonly Creature[], time: number, profile: BandProfile): void {
+  update(creatures: readonly Creature[], time: number, profile: BandProfile, view: RenderView | null = null): void {
     for (const creature of creatures) {
       let visual = this.visuals.get(creature);
       if (visual === undefined) {
@@ -183,7 +226,7 @@ export class CreatureRenderer {
         continue;
       }
       visual.group.visible = true;
-      this.stepVisual(visual, creature, time, profile);
+      this.stepVisual(visual, creature, time, profile, view);
     }
   }
 
@@ -234,9 +277,12 @@ export class CreatureRenderer {
     const phase = rng() * Math.PI * 2;
     const kind: CreatureVisualKind = def.body.chainCircles && def.body.chainCircles.length > 0 ? 'spine' : 'small';
     const n = spine.rest.length;
+    const crossing = isCrossingPresence(def);
     const group = new THREE.Group();
-    group.position.z = PLAYER_PLANE_Z;
-    group.renderOrder = 5;
+    // The colossal crossing presence renders on its background layer
+    // (request §52 B); every other body is on the playable plane.
+    group.position.z = crossing ? CROSSING_PRESENCE_Z : PLAYER_PLANE_Z;
+    group.renderOrder = crossing ? -2 : 5;
     this.scene.add(group);
 
     // Body ribbon: two vertices per spine node, filled each frame.
@@ -351,11 +397,12 @@ export class CreatureRenderer {
       heading: 0,
       phase,
       bodyLen,
+      crossing,
     };
     return visual;
   }
 
-  private stepVisual(visual: VisualRec, creature: Creature, time: number, profile: BandProfile): void {
+  private stepVisual(visual: VisualRec, creature: Creature, time: number, profile: BandProfile, view: RenderView | null = null): void {
     const { spine, frame, n } = visual;
     const pos = creature.position;
     // Heading comes from sim motion only (velocity, then steering target);
@@ -367,6 +414,19 @@ export class CreatureRenderer {
       visual.heading = Math.atan2(creature.target.y - pos.y, creature.target.x - pos.x);
     }
     solveSpine(spine, frame, pos, visual.heading);
+
+    // Group placement (request §52 B): the colossal crossing presence is
+    // drawn on the background layer at its parallax position — the world
+    // position shrunk toward the camera center, so it crosses slower than
+    // expected — while every other body sits at its simulated position.
+    let gx = pos.x;
+    let gy = pos.y;
+    if (visual.crossing && view !== null) {
+      gx = view.center.x + (pos.x - view.center.x) * CROSSING_PRESENCE_PARALLAX;
+      gy = view.center.y + (pos.y - view.center.y) * CROSSING_PRESENCE_PARALLAX;
+    }
+    visual.group.position.x = gx;
+    visual.group.position.y = gy;
 
     // Animation (request §13.5): a breathing width cycle, a speed-scaled
     // undulation traveling down the body, held flapping pauses, and an
@@ -380,23 +440,28 @@ export class CreatureRenderer {
     const undFreq = n >= 2 ? (Math.PI * 2) / visual.bodyLen : 0;
     const env = flapEnvelope(time, visual.phase * 0.13);
     const flapSpeed = (1.6 + speed * 0.03) * (fleeing ? 1.6 : 1) * env;
-    visual.group.position.x = pos.x;
-    visual.group.position.y = pos.y;
     visual.frontIdx = this.frontNode(visual);
 
-    // Body ribbon: left/right boundary from the per-node normals.
+    // Body ribbon: left/right boundary from the per-node normals. Partial
+    // anatomy (request §52 A): when the view is known, a node beyond
+    // view + margin is not realized — its edge vertices collapse to the
+    // node center (zero area), so a flank that crosses the screen is only
+    // ever partially there.
     const bodyPos = visual.bodyPos;
     for (let i = 0; i < n; i += 1) {
       const p = frame.points[i]!;
-      const w = frame.widths[i]! * breathe * posture;
-      const off = undAmp * n1(time * undFreq * (i - spine.pinned) + time * 0.55, visual.phase) * 0.6;
-      const lx = p.x - pos.x + frame.normalX[i]! * (w + off);
-      const ly = p.y - pos.y + frame.normalY[i]! * (w + off);
+      const rx0 = p.x - pos.x;
+      const ry0 = p.y - pos.y;
+      const realized = view === null || this.nodeInView(gx + rx0, gy + ry0, view);
+      const w = realized ? frame.widths[i]! * breathe * posture : 0;
+      const off = realized ? undAmp * n1(time * undFreq * (i - spine.pinned) + time * 0.55, visual.phase) * 0.6 : 0;
+      const lx = rx0 + frame.normalX[i]! * (w + off);
+      const ly = ry0 + frame.normalY[i]! * (w + off);
       bodyPos[i * 6] = lx;
       bodyPos[i * 6 + 1] = ly;
       bodyPos[i * 6 + 2] = 0;
-      bodyPos[i * 6 + 3] = p.x - pos.x - frame.normalX[i]! * (w + off);
-      bodyPos[i * 6 + 4] = p.y - pos.y - frame.normalY[i]! * (w + off);
+      bodyPos[i * 6 + 3] = rx0 - frame.normalX[i]! * (w + off);
+      bodyPos[i * 6 + 4] = ry0 - frame.normalY[i]! * (w + off);
       bodyPos[i * 6 + 5] = 0;
     }
     (visual.bodyGeom.attributes.position as THREE.BufferAttribute).needsUpdate = true;
@@ -404,6 +469,9 @@ export class CreatureRenderer {
     // Head follows the simulated position via the front node (request §13.2).
     const hp = frame.points[visual.frontIdx]!;
     visual.headMesh.position.set(hp.x - pos.x, hp.y - pos.y, 0);
+    if (view !== null) {
+      visual.headMesh.visible = this.nodeInView(gx + hp.x - pos.x, gy + hp.y - pos.y, view);
+    }
 
     // Rigid parts: each on its own time scale, separately illuminated.
     const ambient = 0.35 + 0.65 * profile.ambient;
@@ -414,6 +482,7 @@ export class CreatureRenderer {
       const wob = n1(time * part.rate * 0.8, part.phase);
       part.mesh.position.set(p.x - pos.x + frame.normalX[part.node]! * wob * part.radius * 0.08, p.y - pos.y + frame.normalY[part.node]! * wob * part.radius * 0.08, 0);
       tint(part.mesh.material as THREE.MeshBasicMaterial, BODY_BASE, ambient * (0.9 + 0.1 * (0.5 + 0.5 * wob)));
+      if (view !== null) part.mesh.visible = this.nodeInView(gx + p.x - pos.x, gy + p.y - pos.y, view);
     }
 
     // Fins flap on the envelope; left and right run on different phases.
@@ -422,6 +491,7 @@ export class CreatureRenderer {
       const a = frame.angles[fin.node]!;
       fin.mesh.position.set(p.x - pos.x + frame.normalX[fin.node]! * fin.side * frame.widths[fin.node]! * 0.5, p.y - pos.y + frame.normalY[fin.node]! * fin.side * frame.widths[fin.node]! * 0.5, 0);
       fin.mesh.rotation.z = a + (fin.side === 1 ? Math.PI / 2 : -Math.PI / 2) + fin.side * (0.35 + 1.05 * n1(time * flapSpeed, fin.phase)) * (alert ? 1.4 : 1);
+      if (view !== null) fin.mesh.visible = this.nodeInView(gx + p.x - pos.x, gy + p.y - pos.y, view);
     }
 
     // Carried found objects ride their attachment point (request §13.4).
@@ -431,7 +501,16 @@ export class CreatureRenderer {
       const sway = 0.5 * n1(time * 0.6, visual.phase + att.node);
       entry.object.position.set(p.x - pos.x + frame.normalX[att.node]! * att.side * (att.distance + frame.widths[att.node]! * 0.5), p.y - pos.y + frame.normalY[att.node]! * att.side * (att.distance + frame.widths[att.node]! * 0.5), 0);
       entry.object.rotation.z = frame.angles[att.node]! + sway * 0.2;
+      if (view !== null) entry.object.visible = this.nodeInView(gx + p.x - pos.x, gy + p.y - pos.y, view);
     }
+  }
+
+  /** Whether a body node's world position is inside the view plus margin (technique A). */
+  private nodeInView(wx: number, wy: number, view: RenderView): boolean {
+    return (
+      Math.abs(wx - view.center.x) <= view.half.x + PARTIAL_ANATOMY_MARGIN &&
+      Math.abs(wy - view.center.y) <= view.half.y + PARTIAL_ANATOMY_MARGIN
+    );
   }
 
   /** The node farthest along the heading — the visual head of the body. */
