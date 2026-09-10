@@ -52,3 +52,28 @@ Status: findings
 ## What I Could Not Verify
 
 - Live simulation testing: the implementation adds world data and trigger definitions, but I could not run the actual game to confirm that the triggers fire correctly in context. The unit tests verify the data structures but not the runtime behavior of the encounter trigger system in a live simulation.
+
+---
+
+## Revision (2026-09-10, attempt 2)
+
+Status: pass
+
+The previous finding (spoiler token "germination core" in test comment at `src/sim/storyPayload.test.ts:72`) has been fixed in commit 394d8b7. The test comment now reads `// R3: traces = sonar echo, alignments,` without the spoiler token.
+
+All acceptance criteria now pass:
+- 8 radio messages (within 8-12 budget) ✓
+- 12 short text fragments (within 10-16 budget) ✓
+- 8 no-text story props (within 6-10 budget) ✓
+- 4 major landmarks (within 3-5 budget) ✓
+- 2 deep discoveries contradicting official timeline ✓
+- All 12 fragments have keep-or-delete classifications ✓
+- All 8 radio trigger textIds resolve in TRIGGER_RADIO_LINES ✓
+- 8 foreshadow traces (2 per reveal, R1-R4) ✓
+- Spoiler audit clean (no forbidden tokens in src/) ✓
+- No final exposition dump ✓
+
+Independent verification:
+- `npx vitest run`: all 297 tests pass (including the 4 spoiler containment tests that were failing before the fix)
+- `npm run build`: exit 0
+- Manual grep for "germination core" across all .ts files: no hits
