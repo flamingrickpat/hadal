@@ -1,0 +1,8 @@
+{
+  "name": "wi04a-implementer-beats-live-fix",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright-core": "^1.63.0"
+  }
+}

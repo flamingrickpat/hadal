@@ -32,3 +32,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260913-implementer-wi03c2-tier3-spawns-render.md -->
 <!-- include: ./20260914-implementer-wi04a-hadal-strip-geometry.md -->
 <!-- include: ./20260910-reviewer-wi04a-storyflags-load-path.md -->
+<!-- include: ./20260910-implementer-wi04a-flag-load-path-fix.md -->

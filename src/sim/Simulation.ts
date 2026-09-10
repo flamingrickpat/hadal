@@ -1567,7 +1567,12 @@ export class Simulation {
     p.maxDepth = save.world.maxDepth;
     this.discoveredChunks = new Set(save.world.discoveredChunks);
     this.collectedUniqueIds = new Set(save.world.collectedUniqueIds);
-    this.storyFlags = [...save.world.storyFlags];
+    // Restore in place: the constructor shared this array with the trigger
+    // state (triggerState.storyFlags = this.storyFlags) so fired flags persist
+    // in the save; re-assigning here would orphan trigger-set flags on the
+    // live load path (Game.ts constructs, then loads).
+    this.storyFlags.length = 0;
+    this.storyFlags.push(...save.world.storyFlags);
     this.updateCargo();
     this.wasAtBase = true;
   }

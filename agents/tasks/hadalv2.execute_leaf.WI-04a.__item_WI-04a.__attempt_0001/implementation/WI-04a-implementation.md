@@ -118,3 +118,61 @@ headless session — no substitute was counted).
 - **No creature behavior change:** the beats reposition roster organisms via the
   existing `moveBackgroundCreature` action; each organism then runs its normal
   state. Nothing in the creature controllers was touched.
+
+## Revision (2026-09-10, implement attempt 2): live load-path flag fix
+
+The work-item review (`reviews/WI-04a-review.md`, status **findings**) found
+one defect: on the live `Game` construction path (constructor + `loadFromSave`
+at boot), `loadFromSave` re-assigned `this.storyFlags` into a new array while
+`triggerState.storyFlags` kept the constructor's reference, so every fired
+`setStoryFlag` (including the five beat completion flags) landed in an
+orphaned array — absent from `toSave()` persistence and from the
+`TriggerContext` the reaction layer (WI-04c) reads. The headless scenarios
+construct the `Simulation` directly, where the shared-reference invariant
+holds, which is why the original pass missed it.
+
+**Fix** (`src/sim/Simulation.ts`, `loadFromSave`): restore the save's flags
+into the existing array in place (`length = 0` + `push(...)`), preserving the
+identity the constructor shared with the trigger state. No other line
+changed; the constructor's documented invariant is now true on both paths.
+
+**Regression tests** (new product file `src/sim/storyFlagLoadPath.test.ts`,
+written red first — both failed on the unfixed build):
+1. Live load path (`createSimulationFromSave`): array identity preserved,
+   `enc-beat-s2` fired through the real trigger system, `beat-s2` present in
+   `sim.storyFlags` and in `toSave().world.storyFlags`.
+2. Round trip: a flag already in the save (`beat-s1`) plus a newly fired
+   flag (`beat-s2`) both end up in `toSave()`'s flags.
+
+**Evidence:**
+- `npx vitest run src/sim/storyFlagLoadPath.test.ts` — red pre-fix (2
+  failed: identity split + orphaned flag), green post-fix (2 passed).
+- Reviewer's repro
+  (`scratch/work-item-reviewer/wi04a-flag-repro/flagRepro.test.ts`) re-run
+  post-fix: the fresh-construction test still passes; the defect-asserting
+  test now fails at its `not.toBe` identity check — the split is gone.
+- `npx vitest run src/sim/beatScenario.test.ts` — 7/7 (no regression in the
+  beat scenarios).
+- `npx vitest run` — 35 files, 284 tests, all green.
+- `npm run build` — exit 0 (the >500 kB chunk notice is informational per
+  BUILD.md).
+
+**Browser check (final proof owner of AC-enc-beats), post-fix:**
+implementer probe `scratch/item-implementer/wi04a-beats-live-fix/probe.mjs`
+(Node + `playwright-core` 1.63.x, real `npm run dev` page at 1920×1080, fresh
+browser context = fresh save, SwiftShader GL, watchdog 300 s): **all 33
+checks green** — the five beats fire in the authored sequence s1..s5
+(first-fire sim times 1.9 < 3.9 < 5.8 < 6.9 < 8.8) through the real
+`TriggerSystem` in the live game; per beat the completion flag is now in
+`sim.storyFlags` (the five checks that failed in the reviewer's pre-fix
+probe), the audio cue + ambient/camera presentation state are present, the
+authored organisms repositioned (T-03, T-22, T-25); all five completion
+flags persist in `sim.toSave().world.storyFlags` and `sim.storyFlags`
+matches the trigger state's array in the live game; player control
+preserved (1 s of thrust moved the player); zero console errors and zero
+page exceptions. Result artifacts in that folder's `output/`
+(`result.json`, `console.json`, `server.log`, screenshots).
+
+**Files touched (this revision):**
+- `src/sim/Simulation.ts` (`loadFromSave` in-place flag restore)
+- `src/sim/storyFlagLoadPath.test.ts` (new, 2 tests)
