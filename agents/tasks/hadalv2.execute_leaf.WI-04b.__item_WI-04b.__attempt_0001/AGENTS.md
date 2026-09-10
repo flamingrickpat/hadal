@@ -5,3 +5,7 @@
   stage, or commit a change to it.
 - other files and folders here are role artifacts. Each role adds
   its own and indexes any directory it creates.
+
+## Reviews
+
+- `reviews/WI-04b-review.md` — work-item review report
