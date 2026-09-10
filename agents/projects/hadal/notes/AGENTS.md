@@ -33,3 +33,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260914-implementer-wi04a-hadal-strip-geometry.md -->
 <!-- include: ./20260910-reviewer-wi04a-storyflags-load-path.md -->
 <!-- include: ./20260910-implementer-wi04a-flag-load-path-fix.md -->
+<!-- include: ./20260910-reviewer-wi04a-fix-verification.md -->

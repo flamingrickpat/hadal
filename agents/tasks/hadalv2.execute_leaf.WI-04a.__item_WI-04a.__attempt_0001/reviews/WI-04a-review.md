@@ -226,3 +226,115 @@ and were designed independently of the implementer's tests.
    but per the WI-01c/ST-03 audit rules this report and the project note
    reference only slot ids (S1..S5) and internal roster ids (T-NN), never the
    private names or descriptions.
+
+## Revision — Review attempt 2 (2026-09-10, fresh `work_item_reviewer` session)
+
+Status: pass
+
+Reviewed the implementer's fix commit `c443d54` ("[sim][save] keep beat story
+flags on the live load path") against Finding 1 of this report. Everything the
+attempt-1 review verified and passed (five authored beats, timing windows,
+entrances, reactions, no-noclip escapes, `once` semantics, determinism, §67
+compliance, the justified `approachCreature` addition, slot assignment,
+spoiler containment) stands — the fix commit changes no world data, no trigger
+vocabulary, and no creature code. This revision re-verified the load-bearing
+claims by running them, and re-ran the browser proof owner of AC-enc-beats
+post-fix.
+
+### Fix verified
+
+- **Code** (`src/sim/Simulation.ts:1574-1575`): `loadFromSave` now restores the
+  save's flags in place (`this.storyFlags.length = 0; push(...)`) instead of
+  re-assigning, preserving the identity the constructor shared with
+  `triggerState.storyFlags` (wired at `:341`). The comment documents the
+  invariant. This is the fix suggested by Finding 1, option one, and it is the
+  minimal change.
+- **New product regression test** `src/sim/storyFlagLoadPath.test.ts` (2
+  tests): run by the reviewer — **2/2 green in 21 ms**. Test 1 mirrors the
+  live `Game` boot exactly (`createSimulationFromSave` = `createSimulation`
+  + `loadFromSave`, verified against `Game.ts:63-65`), asserts array identity
+  and that a live-fired `enc-beat-s2` flag reaches both `sim.storyFlags` and
+  `toSave().world.storyFlags`; test 2 round-trips a saved flag plus a newly
+  fired flag.
+- **Independent falsification of the fix (my own probe from attempt 1):**
+  re-ran the attempt-1 defect-asserting repro
+  (`scratch/work-item-reviewer/wi04a-flag-repro/`, command in Finding 1).
+  Post-fix: test 1 (fresh path) still green; test 2 (which asserts the split
+  existed) now **fails exactly at the identity assertion**
+  (`flagRepro.test.ts:33`, "expected [] not to be []") — the two arrays are
+  once again the same object. This confirms the fix changed live-path
+  behavior, not just the test file.
+- **Regression scope:** `npx vitest run src/sim/beatScenario.test.ts` —
+  **7/7 green** (reviewer re-run, ~199 s); `npx vitest run` — **35 files /
+  284 tests, all green** (reviewer re-run, ~202 s); `npm run build` —
+  **exit 0** (>500 kB chunk notice informational per BUILD.md).
+- **Browser check post-fix (final proof owner of AC-enc-beats):** re-ran my
+  own attempt-1 live-page probe
+  (`scratch/work-item-reviewer/wi04a-beats-live/probe.mjs`, same command as in
+  the attempt-1 section; real `npm run dev` page, 1920×1080, fresh browser
+  profile, SwiftShader GL, watchdog 240 s): **all 36 checks green** (attempt
+  1: 31/36). The five previously-failing "completion flag set in the live
+  sim" checks now pass — they read `sim.storyFlags`, the array `toSave()`
+  persists and the `TriggerContext` is built from. The probe's evidence line
+  now shows `sim.storyFlags` and `triggerState.storyFlags` identical in the
+  live game: both
+  `["descended","beat-s1","base-line-2","abyssal-reached","deep-reached","beat-s2","beat-s3","hadal-reached","beat-s4","beat-s5"]`
+  (the pre-fix split — three base lines vs nine trigger-state flags — is
+  gone). Beats still fire in the authored sequence s1..s5 (first-fire sim
+  times 1.9 < 3.8 < 5.7 < 6.9 < 8.7), player control preserved, zero console
+  errors, zero page exceptions. Fresh `output/` artifacts committed with this
+  revision (the attempt-1 outputs remain in git history at `b538e3d`).
+
+### Updated acceptance verdicts
+
+| Criterion | Verdict | Evidence checked |
+|---|---|---|
+| Each beat sets one completion story flag (`setStoryFlag`) the WI-04c reactions gate on and the scenario assertions record | **passed** (was: failed in the live game) | The flag is now visible on the live path in `sim.storyFlags` (the `TriggerContext` source at `Simulation.ts:1286`) and in `toSave().world.storyFlags` (persistence at `:1544`) — proven headlessly by the new product regression test (reviewer re-run, 2/2) and in the live game by the reviewer's re-run browser probe (36/36). The WI-04c gating seam (the `TriggerContext.storyFlags` set) now contains the beat flags on both construction paths. |
+| AC-enc-beats (all other lines) | passed | Unchanged by the fix; re-verified by the reviewer's own re-runs listed above (scenarios 7/7, suite 284/284, build exit 0, live probe 36/36). |
+
+### Impact check (attempt-2 delta)
+
+- `loadFromSave` callers (codegraph + rg): `Game.ts` (boot, the live path)
+  and `createSimulationFromSave` (the test mirror of that boot). Both are
+  exactly the paths the regression test drives. No other caller.
+- `storyFlags` consumers in product code: `src/game/save.ts` (save-format
+  type), `src/sim/Simulation.ts` (context build `:1286`, base-return radio
+  `:1429-1431`, `toSave` `:1544`, the fix `:1574-1575`),
+  `src/world/triggers.ts` (`setStoryFlag` push at `:167`). No code holds a
+  pre-load reference to the array, so the in-place restore changes no other
+  behavior.
+- `pushNextStoryLine` (`:1428-1433`): the base-return radio index
+  `BASE_RETURN_LINES[this.storyFlags.length]` now counts beat flags in the
+  live game — this **matches the scenario path, where sharing always held**
+  (the attempt-1 finding called out exactly this divergence). The line is
+  guarded (`if (line === undefined) return;`), so table exhaustion cannot
+  throw.
+- Attempt-2 product diff is exactly `src/sim/Simulation.ts` (the 5-line
+  fix + comment) and the new `src/sim/storyFlagLoadPath.test.ts`; no
+  `state.md`, no world data, no creature/controller/AI code, no new trigger
+  vocabulary.
+
+### Spoiler containment (attempt-2 delta)
+
+Scanned the `c443d54` diff against `design_private/_spoiler_tokens.txt`
+(62 non-comment tokens): the only matches are internal roster ids T-03,
+T-22, T-25, which the token file's own header excludes from whole-tree
+scans. Commit message is spoiler-safe. The five beat/flag ids remain
+internal-only.
+
+### What I could not verify (unchanged from attempt 1)
+
+- The aesthetic judgment that the beats "read as authored moments" beyond
+  state-level evidence (manual visual pass in a real desktop browser).
+- Visual/audio realization of the camera/audio/ambient params (the ST-06
+  art/audio pass; no consumer exists yet — recorded as assumption 2, not a
+  finding).
+- The 90–120 minute playthrough pacing that places each beat at its timeline
+  minute slot (emergent, ST-08 phase).
+- The WI-04c reactions themselves (not implemented); the handoff condition
+  they depend on — beat flags visible through the trigger context on both
+  construction paths — is now satisfied and proven.
+
+### Assumptions (attempt 2)
+
+None new. Attempt-1 assumptions 1–4 carry over unchanged.
