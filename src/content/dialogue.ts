@@ -22,7 +22,11 @@ export const BASE_RETURN_LINES: readonly string[] = [
  */
 export const TRIGGER_RADIO_LINES: Readonly<Record<string, string>> = {
   'radio-descent-1': 'Signal: descent confirmed. The lower array stopped replying past 3,000 m.',
+  'radio-shelf-1': 'Your contract: recover and return. Details are classified, but the account is closing. Time matters.',
+  'radio-twilight-1': 'Crew reports describe... unusual biological activity at depth. Treat it as standard fauna.',
   'radio-abyssal-1': 'Static. Then a pattern. Something down there is transmitting on our band.',
   'radio-deep-1': 'Contract addendum: do not surface the compact object intact. — Coastline Salvage',
+  'radio-abyss-1': 'You are approaching the last known position of the installation. Proceed with caution.',
   'radio-hadal-1': 'You are below the last logged depth. No one has come back from here.',
+  'radio-hadal-2': 'Final note: if you find the crew... report as standard. Do not attempt contact.',
 };

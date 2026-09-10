@@ -117,6 +117,12 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
         condition: { type: 'reachDepth', depth: 300 },
         actions: [{ type: 'setStoryFlag', flag: 'descended' }, { type: 'showRadio', textId: 'radio-descent-1' }],
       },
+      {
+        id: 'coast-shelf-line',
+        once: true,
+        condition: { type: 'enterRegion', region: 'shelf' },
+        actions: [{ type: 'setStoryFlag', flag: 'shelf-entered' }, { type: 'showRadio', textId: 'radio-shelf-1' }],
+      },
     ],
     // Tier-2 useful fauna (ids debug-only, request §33): the drifter's
     // schooling stage patrols the shallow band — the east drift keeps it in
@@ -261,6 +267,10 @@ const shelf: WorldChunkDef = {
     { id: 'shelf-landmark', kind: 'landmark', position: vec2(12500, -3500) },
     { id: 'shelf-pocket', kind: 'pocket', position: vec2(5600, -4600) },
     { id: 'shelf-interior', kind: 'interior', position: vec2(11800, -3900), interior: true },
+    // R1 trace: growth into metal, facing one fixed point (section 51).
+    { id: 'trace-growth-R1', kind: 'debris', position: vec2(6000, -4800) },
+    // R4 trace: the contract's "recover and return" wording, mundane at first.
+    { id: 'trace-contract-R4', kind: 'debris', position: vec2(6500, -4200) },
   ],
   // Authored spectacle beat S1 (WI-04a, request §11.4/§36/§67): the light
   // school (T-03) breaks off against the east drift and the driver (T-09)
@@ -334,6 +344,10 @@ const twilight: WorldChunkDef = {
     { id: 'twilight-landmark', kind: 'landmark', position: vec2(16600, -6200) },
     { id: 'twilight-pocket', kind: 'pocket', position: vec2(9800, -7300) },
     { id: 'twilight-interior', kind: 'interior', position: vec2(11800, -6500), interior: true },
+    // R1 trace: recurring low rhythmic sound, a few times in the shallows.
+    { id: 'trace-pulse-R1', kind: 'debris', position: vec2(10500, -6000) },
+    // R3 trace: aligned debris, everything faces the center.
+    { id: 'trace-align-R3', kind: 'debris', position: vec2(14000, -6500) },
   ],
   triggers: [
     {
@@ -341,6 +355,12 @@ const twilight: WorldChunkDef = {
       once: true,
       condition: { type: 'reachDepth', depth: 6000 },
       actions: [{ type: 'setStoryFlag', flag: 'abyssal-reached' }, { type: 'showRadio', textId: 'radio-abyssal-1' }],
+    },
+    {
+      id: 'twilight-transition-line',
+      once: true,
+      condition: { type: 'enterRegion', region: 'twilight' },
+      actions: [{ type: 'setStoryFlag', flag: 'twilight-entered' }, { type: 'showRadio', textId: 'radio-twilight-1' }],
     },
   ],
   // Tier-1 ambient fauna (internal ids only, request §33): the hanging feeder
@@ -406,6 +426,10 @@ const abyss: WorldChunkDef = {
     { id: 'abyss-landmark', kind: 'landmark', position: vec2(20700, -8300) },
     { id: 'abyss-pocket', kind: 'pocket', position: vec2(14800, -9500) },
     { id: 'abyss-interior', kind: 'interior', position: vec2(18300, -8700), interior: true },
+    // R2 trace: intact hull sealed from both sides, contradicting the "hull collapse."
+    { id: 'trace-hull-R2', kind: 'wreck', position: vec2(16500, -9000) },
+    // R3 trace: sonar returns an echo far larger than any visible body.
+    { id: 'trace-sonar-R3', kind: 'debris', position: vec2(17500, -8500) },
   ],
   triggers: [
     {
@@ -413,6 +437,12 @@ const abyss: WorldChunkDef = {
       once: true,
       condition: { type: 'reachDepth', depth: 8500 },
       actions: [{ type: 'setStoryFlag', flag: 'deep-reached' }, { type: 'showRadio', textId: 'radio-deep-1' }],
+    },
+    {
+      id: 'abyss-station-approach-line',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9200 },
+      actions: [{ type: 'setStoryFlag', flag: 'station-approached' }, { type: 'showRadio', textId: 'radio-abyss-1' }],
     },
     // Authored spectacle beat S2 (WI-04a, request §11.4/§36/§67): the
     // structure-bound organism (T-22) — first read as a wreck tower — shifts
@@ -493,6 +523,10 @@ const hadal: WorldChunkDef = {
     // is an alcove, not a critical-path node; its harvest material / lore lands
     // with the progression pass (WI-08).
     { id: 'hadal-pocket', kind: 'pocket', position: vec2(18775, -9640) },
+    // R2 trace: deliberately placed personal items — a mug, a posted photograph.
+    { id: 'trace-items-R2', kind: 'debris', position: vec2(20500, -9550) },
+    // R4 trace: two physical exits at the heart; the second opens only with the core.
+    { id: 'trace-exit-R4', kind: 'debris', position: vec2(22200, -9550) },
   ],
   triggers: [
     {
@@ -500,6 +534,12 @@ const hadal: WorldChunkDef = {
       once: true,
       condition: { type: 'reachDepth', depth: 9600 },
       actions: [{ type: 'setStoryFlag', flag: 'hadal-reached' }, { type: 'showRadio', textId: 'radio-hadal-1' }],
+    },
+    {
+      id: 'hadal-final-approach-line',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9700 },
+      actions: [{ type: 'setStoryFlag', flag: 'hadal-final' }, { type: 'showRadio', textId: 'radio-hadal-2' }],
     },
     // Authored spectacle beat S3 (WI-04a, request §11.4/§36/§67): the sonar-
     // scale arc — the wide framing and the pulse reaction as the player closes
