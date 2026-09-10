@@ -9,11 +9,13 @@
  * trigger: the simulation calls `update(context)` each fixed step (request §30).
  * owns: the set of authored `EncounterTrigger`s and the mutable `TriggerState`
  *   the actions write (story flags, active entities, locked paths, ambient,
- *   radio/camera/timed events), plus the `fired` set that keeps a `once`
- *   trigger from re-firing (request §36, §70 "cannot fire twice").
+ *   radio/camera/timed events, and the authored background-creature moves the
+ *   simulation consumes), plus the `fired` set that keeps a `once` trigger
+ *   from re-firing (request §36, §70 "cannot fire twice").
  * coordinates: the player context (`TriggerContext`) the simulation builds each
- *   step — position, depth, capabilities, collected/scanned ids, and the
- *   region queries (entered / time-in / returned-through).
+ *   step — position, depth, capabilities, collected/scanned ids, the region
+ *   queries (entered / time-in / returned-through), and the roster-creature
+ *   queries (state and distance, for the approach/creatureState conditions).
  * not own: the player or the simulation; it reads a context and writes a state
  *   the simulation owns.
  * invariant: a `once` trigger fires at most once across all steps; a non-`once`
@@ -22,7 +24,7 @@
  * fails when: a `once` trigger's condition is re-satisfied — it does not re-fire.
  */
 import type { Capability } from '../player/equipment';
-import type { Vec2 } from '../util/math';
+import { vec2, type Vec2 } from '../util/math';
 
 /** A trigger condition the player's state can satisfy (request §36). */
 export type TriggerCondition =
@@ -33,7 +35,8 @@ export type TriggerCondition =
   | { type: 'collectItem'; itemId: string }
   | { type: 'creatureState'; creatureId: string; state: string }
   | { type: 'timeInRegion'; region: string; seconds: number }
-  | { type: 'returnThrough'; region: string };
+  | { type: 'returnThrough'; region: string }
+  | { type: 'approachCreature'; creatureId: string; radius: number };
 
 /** A trigger action applied to the world state (request §36). */
 export type TriggerAction =
@@ -69,6 +72,8 @@ export interface TriggerContext {
   regionTimeSeconds: (region: string) => number;
   hasReturnedThrough: (region: string) => boolean;
   creatureState: (creatureId: string) => string | null;
+  /** The player-to-creature distance for a roster id, or null when absent. */
+  creatureDistance: (creatureId: string) => number | null;
 }
 
 /** The mutable world state trigger actions write. */
@@ -81,7 +86,8 @@ export interface TriggerState {
   cameraModifier: string | null;
   audioCues: string[];
   timedEvents: Map<string, number>;
-  movedCreatures: string[];
+  /** Authored background-creature moves awaiting consumption by the simulation. */
+  movedCreatures: { creatureId: string; to: Vec2 }[];
 }
 
 export function emptyTriggerState(): TriggerState {
@@ -116,10 +122,18 @@ function conditionMet(c: TriggerCondition, ctx: TriggerContext): boolean {
       return ctx.hasEnteredRegion(c.region) && ctx.regionTimeSeconds(c.region) >= c.seconds;
     case 'returnThrough':
       return ctx.hasReturnedThrough(c.region);
+    case 'approachCreature': {
+      // The minimal addition for the east-end beat (WI-04a): the deep-strip
+      // region is subsumed by the deeper band's region (first-match chunk
+      // containment), and a roster organism's state is not position-gated, so
+      // "the player reached this organism" is not expressible with the §36 set.
+      const d = ctx.creatureDistance(c.creatureId);
+      return d !== null && d <= c.radius;
+    }
   }
 }
 
-function applyAction(a: TriggerAction, state: TriggerState, to: Vec2): void {
+function applyAction(a: TriggerAction, state: TriggerState): void {
   switch (a.type) {
     case 'spawnEntity':
       state.activeEntities.add(a.entityId);
@@ -134,7 +148,7 @@ function applyAction(a: TriggerAction, state: TriggerState, to: Vec2): void {
       for (const [k, v] of Object.entries(a.params)) state.ambient[k] = v;
       break;
     case 'moveBackgroundCreature':
-      state.movedCreatures.push(`${a.creatureId}->${to.x},${to.y}`);
+      state.movedCreatures.push({ creatureId: a.creatureId, to: vec2(a.to.x, a.to.y) });
       break;
     case 'lockPath':
       if (a.locked) state.lockedPaths.add(a.pathId);
@@ -182,7 +196,7 @@ export class TriggerSystem {
     for (const t of this.triggers) {
       if (t.once && this.fired.has(t.id)) continue;
       if (!conditionMet(t.condition, ctx)) continue;
-      for (const a of t.actions) applyAction(a, this.state, ctx.position);
+      for (const a of t.actions) applyAction(a, this.state);
       this.fired.add(t.id);
       firedNow.push(t.id);
     }

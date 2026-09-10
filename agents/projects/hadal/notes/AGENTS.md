@@ -30,3 +30,4 @@ YYYYMMDD-<role>-<topic>.md
 <!-- include: ./20260909-reviewer-wi03c1b2-pin-controller-probe.md -->
 <!-- include: ./20260913-implementer-wi03c1b-tier3-controllers.md -->
 <!-- include: ./20260913-implementer-wi03c2-tier3-spawns-render.md -->
+<!-- include: ./20260914-implementer-wi04a-hadal-strip-geometry.md -->

@@ -429,6 +429,17 @@ export class Simulation {
       this.lastRadioText = TRIGGER_RADIO_LINES[this.triggerState.radioText] ?? this.triggerState.radioText;
       this.lastStoryLine = this.lastRadioText;
     }
+    // Authored background-creature moves (request §36): a fired beat's
+    // `moveBackgroundCreature` action repositions the organism for its
+    // entrance; the next creature step applies terrain + ecology from there.
+    for (const move of this.triggerState.movedCreatures) {
+      const c = this.creatures.find((x) => x.def.id === move.creatureId);
+      if (c !== undefined) {
+        c.position = vec2(move.to.x, move.to.y);
+        c.velocity = vec2(0, 0);
+      }
+    }
+    this.triggerState.movedCreatures.length = 0;
     // Consume one-shot actions so a reused input object does not re-apply them.
     input.craftRequest = null;
     input.toolSelect = null;
@@ -1277,6 +1288,11 @@ export class Simulation {
       regionTimeSeconds: (r) => (this.regionVisited.has(r) ? this.state.timeSec - (this.regionEntryTimes.get(r) ?? this.state.timeSec) : 0),
       hasReturnedThrough: (r) => this.regionReentered.has(r),
       creatureState: (creatureId) => this.creatures.find((c) => c.def.id === creatureId)?.state ?? null,
+      creatureDistance: (creatureId) => {
+        const c = this.creatures.find((x) => x.def.id === creatureId);
+        if (c === undefined) return null;
+        return Math.hypot(c.position.x - this.player.position.x, c.position.y - this.player.position.y);
+      },
     };
   }
 

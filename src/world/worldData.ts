@@ -262,6 +262,24 @@ const shelf: WorldChunkDef = {
     { id: 'shelf-pocket', kind: 'pocket', position: vec2(5600, -4600) },
     { id: 'shelf-interior', kind: 'interior', position: vec2(11800, -3900), interior: true },
   ],
+  // Authored spectacle beat S1 (WI-04a, request §11.4/§36/§67): the light
+  // school (T-03) breaks off against the east drift and the driver (T-09)
+  // stages up from below — the "distant lights resolve" moment. Internal slot
+  // id only (request §0/§68). Fires once, on first entry to the shelf band.
+  triggers: [
+    {
+      id: 'enc-beat-s1',
+      once: true,
+      condition: { type: 'enterRegion', region: 'shelf' },
+      actions: [
+        { type: 'moveBackgroundCreature', creatureId: 'T-03', to: vec2(8500, -3500) },
+        { type: 'moveBackgroundCreature', creatureId: 'T-09', to: vec2(11000, -4800) },
+        { type: 'playAudio', cueId: 'beat-s1-lights' },
+        { type: 'alterAmbient', params: { dim: 0.7 } },
+        { type: 'setStoryFlag', flag: 'beat-s1' },
+      ],
+    },
+  ],
   // Tier-1 ambient/schooling fauna (internal ids only, request §33): dense
   // open-water schooling, clear of the landmark and the wreck interior.
   creatureSpawns: [
@@ -396,6 +414,21 @@ const abyss: WorldChunkDef = {
       condition: { type: 'reachDepth', depth: 8500 },
       actions: [{ type: 'setStoryFlag', flag: 'deep-reached' }, { type: 'showRadio', textId: 'radio-deep-1' }],
     },
+    // Authored spectacle beat S2 (WI-04a, request §11.4/§36/§67): the
+    // structure-bound organism (T-22) — first read as a wreck tower — shifts
+    // west, against the east drift, at its depth line. Internal slot id only
+    // (request §0/§68). Fires once at the authored depth.
+    {
+      id: 'enc-beat-s2',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9300 },
+      actions: [
+        { type: 'moveBackgroundCreature', creatureId: 'T-22', to: vec2(22400, -9300) },
+        { type: 'playAudio', cueId: 'beat-s2-creak' },
+        { type: 'alterAmbient', params: { dim: 0.75 } },
+        { type: 'setStoryFlag', flag: 'beat-s2' },
+      ],
+    },
   ],
   // Tier-1 ambient fauna (internal ids only, request §33), clear of the
   // landmark block and the facility interior.
@@ -467,6 +500,53 @@ const hadal: WorldChunkDef = {
       once: true,
       condition: { type: 'reachDepth', depth: 9600 },
       actions: [{ type: 'setStoryFlag', flag: 'hadal-reached' }, { type: 'showRadio', textId: 'radio-hadal-1' }],
+    },
+    // Authored spectacle beat S3 (WI-04a, request §11.4/§36/§67): the sonar-
+    // scale arc — the wide framing and the pulse reaction as the player closes
+    // on the fixed-point organ (T-20) just above the strip. Internal slot id
+    // only (request §0/§68). Fires once at the authored depth line.
+    {
+      id: 'enc-beat-s3',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9550 },
+      actions: [
+        { type: 'camera', modifier: 'wide' },
+        { type: 'playAudio', cueId: 'beat-s3-pulse' },
+        { type: 'alterAmbient', params: { surge: 1.5 } },
+        { type: 'setStoryFlag', flag: 'beat-s3' },
+      ],
+    },
+    // Authored spectacle beat S4 (WI-04a, request §11.4/§36/§67): the
+    // colossal crossing (T-23) — the tight framing and the heartbeat reaction
+    // as the player enters the strip while the crossing runs. Player control
+    // stays with the player. Internal slot id only (request §0/§68). Fires
+    // once at the authored strip-entry depth line.
+    {
+      id: 'enc-beat-s4',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9640 },
+      actions: [
+        { type: 'camera', modifier: 'tight' },
+        { type: 'playAudio', cueId: 'beat-s4-heartbeat' },
+        { type: 'alterAmbient', params: { dim: 0.6 } },
+        { type: 'setStoryFlag', flag: 'beat-s4' },
+      ],
+    },
+    // Authored spectacle beat S5 (WI-04a, request §11.4/§36/§67): the
+    // headless plate cluster (T-25) crosses the band against the east drift
+    // as the player reaches its approach radius, with the camera pullback.
+    // Internal slot id only (request §0/§68). Fires once at the approach.
+    {
+      id: 'enc-beat-s5',
+      once: true,
+      condition: { type: 'approachCreature', creatureId: 'T-25', radius: 1200 },
+      actions: [
+        { type: 'moveBackgroundCreature', creatureId: 'T-25', to: vec2(22000, -9650) },
+        { type: 'camera', modifier: 'pullback' },
+        { type: 'playAudio', cueId: 'beat-s5-plates' },
+        { type: 'alterAmbient', params: { surge: 1.8 } },
+        { type: 'setStoryFlag', flag: 'beat-s5' },
+      ],
     },
   ],
   // Tier-1 ambient fauna (internal ids only, request §33): a sparse drifter

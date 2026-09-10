@@ -20,6 +20,7 @@ function ctx(overrides: Partial<TriggerContext> = {}): TriggerContext {
     regionTimeSeconds: () => 0,
     hasReturnedThrough: () => false,
     creatureState: () => null,
+    creatureDistance: () => null,
     ...overrides,
   };
 }
@@ -142,5 +143,40 @@ describe('encounter-trigger system (request §36)', () => {
     expect(state.storyFlags).toEqual(['deep-reached']);
     expect(state.lockedPaths.has('hadal-approach')).toBe(true);
     expect(state.timedEvents.get('collapse')).toBe(20);
+  });
+
+  it('an approachCreature condition fires inside the radius and never without the creature', () => {
+    const trigger: EncounterTrigger = {
+      id: 'approach',
+      once: true,
+      condition: { type: 'approachCreature', creatureId: 'fixture-organism', radius: 900 },
+      actions: [{ type: 'setStoryFlag', flag: 'approached' }],
+    };
+    const state = emptyTriggerState();
+    const system = new TriggerSystem([trigger], state);
+    // The creature is absent: the condition can never be met.
+    expect(system.update(ctx())).toEqual([]);
+    // Outside the radius: no fire.
+    expect(
+      system.update(ctx({ creatureDistance: (id) => (id === 'fixture-organism' ? 901 : null) })),
+    ).toEqual([]);
+    // Inside the radius: fires.
+    expect(
+      system.update(ctx({ creatureDistance: (id) => (id === 'fixture-organism' ? 900 : null) })),
+    ).toEqual(['approach']);
+    expect(state.storyFlags).toEqual(['approached']);
+  });
+
+  it('a moveBackgroundCreature action records a structured authored move', () => {
+    const trigger: EncounterTrigger = {
+      id: 'stage',
+      once: true,
+      condition: { type: 'reachDepth', depth: 1000 },
+      actions: [{ type: 'moveBackgroundCreature', creatureId: 'fixture-organism', to: { x: 700, y: -300 } }],
+    };
+    const state = emptyTriggerState();
+    const system = new TriggerSystem([trigger], state);
+    system.update(ctx({ depth: 1200 }));
+    expect(state.movedCreatures).toEqual([{ creatureId: 'fixture-organism', to: { x: 700, y: -300 } }]);
   });
 });
