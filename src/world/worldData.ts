@@ -287,6 +287,11 @@ const shelf: WorldChunkDef = {
         { type: 'playAudio', cueId: 'beat-s1-lights' },
         { type: 'alterAmbient', params: { dim: 0.7 } },
         { type: 'setStoryFlag', flag: 'beat-s1' },
+        // Reaction 3 (section 60): the light procession's passage drives the
+        // coast drift organism (T-31) westward — a new migration observed
+        // when the player returns to the coast band later.
+        { type: 'moveBackgroundCreature', creatureId: 'T-31', to: vec2(4000, -1200) },
+        { type: 'setStoryFlag', flag: 'react-coast-migration' },
       ],
     },
     // Puzzle 1: Blocked corridor (request §66). A debris field blocks a shortcut
@@ -311,6 +316,12 @@ const shelf: WorldChunkDef = {
         { type: 'lockPath', pathId: 'corridor-shelf', locked: false },
         { type: 'playAudio', cueId: 'puzzle-sonar-ping' },
         { type: 'setStoryFlag', flag: 'puzzle-corridor-1' },
+        // Reaction 1 (section 60): the corridor disturbance clears the debris
+        // field, and the schooling fish (T-01) flee the noise. On return to
+        // the shelf, the player notices fewer small animals — a cheap,
+        // data-driven world-state change (flag-gated via the puzzle flag).
+        { type: 'moveBackgroundCreature', creatureId: 'T-01', to: vec2(9000, -3000) },
+        { type: 'setStoryFlag', flag: 'react-shelf-fish' },
       ],
     },
   ],
@@ -400,6 +411,12 @@ const twilight: WorldChunkDef = {
         { type: 'moveBackgroundCreature', creatureId: 'T-08', to: vec2(11000, -6000) },
         { type: 'playAudio', cueId: 'puzzle-lift-click' },
         { type: 'setStoryFlag', flag: 'puzzle-lift-1' },
+        // Reaction 2 (section 60): the current lift mechanism's activation
+        // changes the industrial lights — the ambient dims slightly as the
+        // vent settles into a new flow pattern. On return to twilight, the
+        // player notices the light is different.
+        { type: 'alterAmbient', params: { dim: 0.85 } },
+        { type: 'setStoryFlag', flag: 'react-twilight-ambient' },
       ],
     },
   ],
