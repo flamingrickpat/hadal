@@ -1,0 +1,81 @@
+{
+  "port": 54323,
+  "results": [
+    {
+      "name": "the large organism renders on the spine pipeline",
+      "ok": true,
+      "detail": "active=true kind=spine"
+    },
+    {
+      "name": "the large body uses moderate spine segments (§34)",
+      "ok": true,
+      "detail": "nodes=4"
+    },
+    {
+      "name": "the large organism sits on the playable plane (not the crossing layer)",
+      "ok": true,
+      "detail": "z=10"
+    },
+    {
+      "name": "the large organism reads as large (the body is a big silhouette, not a mote)",
+      "ok": true,
+      "detail": "body span=474"
+    },
+    {
+      "name": "the colossal presence renders on the spine pipeline",
+      "ok": true,
+      "detail": "active=true kind=spine"
+    },
+    {
+      "name": "the colossal body uses moderate spine segments (§34)",
+      "ok": true,
+      "detail": "nodes=9"
+    },
+    {
+      "name": "the colossal presence is on the background crossing layer (technique B)",
+      "ok": true,
+      "detail": "z=-20 order=-2"
+    },
+    {
+      "name": "the player never gets a clean full-body view (AC-roster-large)",
+      "ok": true,
+      "detail": "16 samples, cleanSim=false"
+    },
+    {
+      "name": "the body is only ever partially realized on screen (technique A)",
+      "ok": true,
+      "detail": "realized 3..3 of 9"
+    },
+    {
+      "name": "the foreground occluder pass is live, in front of the playable plane (technique C)",
+      "ok": true,
+      "detail": "slabs=10 z=[14,14,14,14,14,14,14,14,14,14]"
+    },
+    {
+      "name": "the colossal presence's sonar readout is at impossible scale (technique E)",
+      "ok": true,
+      "detail": "size=21.5"
+    },
+    {
+      "name": "the largest tier-4 scene renders without per-frame scene growth (§34)",
+      "ok": true,
+      "detail": "children 229 -> 229, active=11"
+    },
+    {
+      "name": "the largest tier-4 scene stays smooth in the focused inspection (§34)",
+      "ok": true,
+      "detail": "median=6.9ms first=6.9ms second=7.0ms"
+    },
+    {
+      "name": "no page exceptions",
+      "ok": true,
+      "detail": "clean"
+    },
+    {
+      "name": "no console errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "failed": 0
+}
