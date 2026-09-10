@@ -289,6 +289,30 @@ const shelf: WorldChunkDef = {
         { type: 'setStoryFlag', flag: 'beat-s1' },
       ],
     },
+    // Puzzle 1: Blocked corridor (request §66). A debris field blocks a shortcut
+    // corridor. On first entry to the shelf, the corridor is locked. The debris
+    // is a T-17 silk colony; approaching it reveals that the colony can be moved
+    // aside, unlocking the corridor. Sonar-ping-like audio signals the hidden
+    // passage is open. Completion flag consumed by WI-04c.
+    {
+      id: 'puzzle-corridor-lock',
+      once: true,
+      condition: { type: 'enterRegion', region: 'shelf' },
+      actions: [
+        { type: 'lockPath', pathId: 'corridor-shelf', locked: true },
+        { type: 'setStoryFlag', flag: 'puzzle-corridor-locked' },
+      ],
+    },
+    {
+      id: 'puzzle-blocked-corridor',
+      once: true,
+      condition: { type: 'approachCreature', creatureId: 'T-17', radius: 150 },
+      actions: [
+        { type: 'lockPath', pathId: 'corridor-shelf', locked: false },
+        { type: 'playAudio', cueId: 'puzzle-sonar-ping' },
+        { type: 'setStoryFlag', flag: 'puzzle-corridor-1' },
+      ],
+    },
   ],
   // Tier-1 ambient/schooling fauna (internal ids only, request §33): dense
   // open-water schooling, clear of the landmark and the wreck interior.
@@ -302,6 +326,9 @@ const shelf: WorldChunkDef = {
     // open water, clear of the landmark and the wreck interior.
     { id: 't10-shelf', creature: 'T-10', position: vec2(7500, -3800), count: 2 },
     { id: 't31-shelf', creature: 'T-31', position: vec2(8500, -3000), count: 1 },
+    // Puzzle 1 debris field: a T-17 silk colony blocks the shortcut corridor
+    // (request §66). The player approaches it to clear the path.
+    { id: 't17-puzzle-corridor', creature: 'T-17', position: vec2(7200, -3600), count: 1 },
   ],
   ambient: { particleDensity: 0.6, light: 0.5 },
 };
@@ -361,6 +388,19 @@ const twilight: WorldChunkDef = {
       once: true,
       condition: { type: 'enterRegion', region: 'twilight' },
       actions: [{ type: 'setStoryFlag', flag: 'twilight-entered' }, { type: 'showRadio', textId: 'radio-twilight-1' }],
+    },
+    // Puzzle 2: Current lift (request §66). A vertical vent carries objects
+    // upward; a mechanism at the top is triggered by approach. The T-08 feeder
+    // serves as the mechanism — approaching it causes the object to move aside.
+    {
+      id: 'puzzle-current-lift',
+      once: true,
+      condition: { type: 'approachCreature', creatureId: 'T-08', radius: 100 },
+      actions: [
+        { type: 'moveBackgroundCreature', creatureId: 'T-08', to: vec2(11000, -6000) },
+        { type: 'playAudio', cueId: 'puzzle-lift-click' },
+        { type: 'setStoryFlag', flag: 'puzzle-lift-1' },
+      ],
     },
   ],
   // Tier-1 ambient fauna (internal ids only, request §33): the hanging feeder
@@ -457,6 +497,20 @@ const abyss: WorldChunkDef = {
         { type: 'playAudio', cueId: 'beat-s2-creak' },
         { type: 'alterAmbient', params: { dim: 0.75 } },
         { type: 'setStoryFlag', flag: 'beat-s2' },
+      ],
+    },
+    // Puzzle 3: Guardian gate (request §66). A territorial post (T-14) blocks
+    // a narrow passage. Approaching the post within its trigger radius causes
+    // it to move aside, clearing the path. The puzzle is learning its behavior:
+    // it does not attack — it simply repositions.
+    {
+      id: 'puzzle-guardian-gate',
+      once: true,
+      condition: { type: 'approachCreature', creatureId: 'T-14', radius: 150 },
+      actions: [
+        { type: 'moveBackgroundCreature', creatureId: 'T-14', to: vec2(22800, -8500) },
+        { type: 'playAudio', cueId: 'puzzle-gate-slide' },
+        { type: 'setStoryFlag', flag: 'puzzle-gate-1' },
       ],
     },
   ],
@@ -586,6 +640,20 @@ const hadal: WorldChunkDef = {
         { type: 'playAudio', cueId: 'beat-s5-plates' },
         { type: 'alterAmbient', params: { surge: 1.8 } },
         { type: 'setStoryFlag', flag: 'beat-s5' },
+      ],
+    },
+    // Puzzle 4: Deep signal (request §66). Reaching the threshold depth of the
+    // lost installation triggers a signal that activates a dormant entity. The
+    // entity's activation is the world state change; the puzzle is simply being
+    // there at the right depth.
+    {
+      id: 'puzzle-deep-signal',
+      once: true,
+      condition: { type: 'reachDepth', depth: 9700 },
+      actions: [
+        { type: 'spawnEntity', entityId: 'puzzle-signal-entity' },
+        { type: 'playAudio', cueId: 'puzzle-signal-hum' },
+        { type: 'setStoryFlag', flag: 'puzzle-signal-1' },
       ],
     },
   ],

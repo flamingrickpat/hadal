@@ -66,3 +66,26 @@ map (puzzle slots by id only) and the existing interaction surface
 (interact handling, `CurrentSystem`, `SonarSystem` in
 `src/sim/Simulation.ts`). WI-04c consumes the completion flag names this
 item defines.
+
+## Acceptance Evidence Table
+
+| Criterion | Evidence | Status |
+|---|---|---|
+| AC-enc-puzzles: 3-5 environmental puzzle moments exist near the critical path and are completable headlessly through the scenario harness | Four puzzle triggers authored in `worldData.ts` (`puzzle-corridor-lock`, `puzzle-blocked-corridor`, `puzzle-current-lift`, `puzzle-guardian-gate`, `puzzle-deep-signal`); `puzzleScenario.test.ts` drives each through the real `Simulation` and asserts the trigger fires, the world state changes, and the completion flag is set | passed |
+
+## Live Verification
+
+not run (headless sim is the proof owner for the sim capability)
+
+## Files Touched
+
+- `src/world/worldData.ts` — added four puzzle triggers and one creature spawn
+- `src/sim/puzzleScenario.test.ts` — new headless scenario test suite
+
+## Implementation Notes
+
+Completed the work item: four environmental puzzle moments authored as
+data-driven trigger compositions in the production world data. Each puzzle
+is completable headlessly through the scenario harness and sets one
+completion story flag consumed by WI-04c. No new renderer classes or
+sim rules introduced.
