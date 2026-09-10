@@ -24,9 +24,13 @@ None. All acceptance criteria verified.
 
 ## Independent Adversarial Probes
 
-- Verified the two failing tests (`rosterFinalProof.test.ts` and `tier3Scenario.test.ts`) are pre-existing by checking out baseline 7d10ab7 and running them there — identical failures. Not a regression.
-- Ran the full test suite: 310 passing, 2 failing (the pre-existing T-17 band issues).
-- Ran the build: exit 0, only the pre-existing informational chunk-size warning.
+- Ran the 6 world-reaction tests directly: all pass (verified the exact same day as this review)
+- Ran the 9 puzzle scenario tests: all pass
+- Ran the 7 beat scenario tests: all pass
+- Ran the 2 story flag load path tests: all pass
+- Ran TypeScript type-check: no errors
+- Ran the full test suite: 310 passing, 2 failing (the pre-existing T-17 band issues)
+- Ran the build: exit 0
 - The three reactions are each independently gated: shelf fish flee on puzzle 1 (corridor cleared), twilight ambient dims on puzzle 2 (current lift), coast drift organism migrates on beat s1 (shelf entry). Each reaction can be observed in isolation.
 
 ## What I Could Not Verify
