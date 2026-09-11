@@ -140,22 +140,7 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
     band: 1,
     bounds: { x: -2650, y: -1313, w: 250, h: 413 },
     terrain: [
-      {
-        id: 'west-wall-slab',
-        closed: true,
-        points: [
-          vec2(-2560, -1282),
-          vec2(-2560, -900),
-          vec2(-2496, -900),
-          vec2(-2496, -1294),
-        ],
-        visual: [
-          vec2(-2650, -1266),
-          vec2(-2650, -900),
-          vec2(-2400, -900),
-          vec2(-2400, -1313),
-        ],
-      },
+      slab('west-wall-slab', -2560, -1282, 64, 382, 1),
     ],
     exits: [],
   },
@@ -164,24 +149,9 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
     band: 1,
     bounds: { x: 2350, y: -1000, w: 300, h: 1000 },
     terrain: [
-      {
-        id: 'wall-slab',
-        closed: true,
-        // A hanging pillar from the surface: the player swims under it at the
-        // seabed level (request §4.2 — the coast feature the route threads past).
-        points: [
-          vec2(2370, 0),
-          vec2(2370, -1000),
-          vec2(2434, -1000),
-          vec2(2434, 0),
-        ],
-        visual: [
-          vec2(2350, 0),
-          vec2(2350, -1000),
-          vec2(2650, -1000),
-          vec2(2650, 0),
-        ],
-      },
+      // A hanging pillar from the surface: the player swims under it at the
+      // seabed level (request §4.2 — the coast feature the route threads past).
+      slab('wall-slab', 2370, -1000, 64, 1000, 1),
     ],
     exits: [],
   },
@@ -190,25 +160,9 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
     band: 1,
     bounds: { x: 4400, y: -1000, w: 700, h: 1000 },
     terrain: [
-      {
-        id: 'ridge-slab',
-        closed: true,
-        // A hanging pillar from the surface: the route threads under it at the
-        // seabed level (request §4.2).
-        points: [
-          vec2(4700, 0),
-          vec2(4700, -1000),
-          vec2(4764, -1000),
-          vec2(4764, 0),
-        ],
-        visual: [
-          vec2(4400, 0),
-          vec2(4400, -1000),
-          vec2(5100, -1000),
-          vec2(5100, 0),
-          vec2(4800, -1400),
-        ],
-      },
+      // A hanging pillar from the surface: the route threads under it at the
+      // seabed level (request §4.2).
+      slab('ridge-slab', 4700, -1000, 64, 1000, 1),
     ],
     exits: [],
   },
@@ -217,19 +171,10 @@ export const GREYBOX_WORLD: readonly WorldChunkDef[] = [
     band: 1,
     bounds: { x: -1260, y: -1600, w: 120, h: 1600 },
     terrain: [
-      {
-        id: 'seal-slab',
-        closed: true,
-        // A full-column wall: the pocket west of it is sealed and its node is
-        // unreachable from the start (request §32 blocked route). A sealed
-        // pocket legitimately has no exits (request §4.2).
-        points: [
-          vec2(-1260, 0),
-          vec2(-1260, -1600),
-          vec2(-1140, -1600),
-          vec2(-1140, 0),
-        ],
-      },
+      // A full-column wall: the pocket west of it is sealed and its node is
+      // unreachable from the start (request §32 blocked route). A sealed
+      // pocket legitimately has no exits (request §4.2).
+      slab('seal-slab', -1260, -1600, 120, 1600, 1),
     ],
     exits: [],
     resourceNodes: [

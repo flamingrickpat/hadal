@@ -1,3 +1,5 @@
 # Implementation Artifacts
 
-- `WI-06d-a-implementation.md` — WI-06d-a implementation report
+| File | Description |
+|------|-------------|
+| `WI-06d-a-implementation.md` | Implementation result for WI-06d-a: coast band greybox terrain replaced with organic slabs |
