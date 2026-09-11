@@ -53,6 +53,12 @@ export interface BandProfile {
   chromatic: number;
   /** Screen-space grain amount (0..1, restrained, request §14.1/§35). */
   grain: number;
+  /** Light sway amplitude (0..1); low and restrained (request §14.3/§48). Deeper bands sway less. */
+  swayAmplitude: number;
+  /** Light sway period in seconds (slow, seconds-scale, request §14.3/§48). */
+  swayPeriod: number;
+  /** Light sway phase offset (desyncs bands, request §48). */
+  swayPhase: number;
 }
 
 interface BandStop extends BandProfile {
@@ -88,6 +94,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 10,
     chromatic: 0.0008,
     grain: 0.04,
+    swayAmplitude: 0.12,
+    swayPeriod: 4.5,
+    swayPhase: 0,
   },
   {
     depth: 1600,
@@ -108,6 +117,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 16,
     chromatic: 0.0014,
     grain: 0.05,
+    swayAmplitude: 0.1,
+    swayPeriod: 5,
+    swayPhase: 1.2,
   },
   {
     depth: 4000,
@@ -128,6 +140,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 30,
     chromatic: 0.0018,
     grain: 0.055,
+    swayAmplitude: 0.07,
+    swayPeriod: 6,
+    swayPhase: 2.4,
   },
   {
     depth: 7000,
@@ -148,6 +163,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 46,
     chromatic: 0.0028,
     grain: 0.065,
+    swayAmplitude: 0.05,
+    swayPeriod: 7,
+    swayPhase: 3.6,
   },
   {
     depth: 10000,
@@ -168,6 +186,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 56,
     chromatic: 0.0035,
     grain: 0.07,
+    swayAmplitude: 0.03,
+    swayPeriod: 8,
+    swayPhase: 4.8,
   },
   {
     depth: 12000,
@@ -188,6 +209,9 @@ export const BAND_STOPS: readonly BandStop[] = [
     currentSpeed: 68,
     chromatic: 0.0045,
     grain: 0.08,
+    swayAmplitude: 0.01,
+    swayPeriod: 10,
+    swayPhase: 6.0,
   },
 ];
 
@@ -239,5 +263,8 @@ export function bandProfileAtDepth(depth: number): BandProfile {
     currentSpeed: lerp(a.currentSpeed, b.currentSpeed, t),
     chromatic: lerp(a.chromatic, b.chromatic, t),
     grain: lerp(a.grain, b.grain, t),
+    swayAmplitude: lerp(a.swayAmplitude, b.swayAmplitude, t),
+    swayPeriod: lerp(a.swayPeriod, b.swayPeriod, t),
+    swayPhase: lerp(a.swayPhase, b.swayPhase, t),
   };
 }

@@ -162,7 +162,7 @@ export class Game implements DebugPanelHost {
     this.world.updatePalette(profile);
     this.world.updateParallax(center);
     this.lighting.setHalf(half);
-    this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile);
+    this.lighting.update(center, this.sim.player.position, this.sim.player.facing, profile, frameDt);
     // The ambient particle field is driven by the ACTIVE chunks' ambient budget
     // (request §17/§14.3): the local ambient intensity scales the band's
     // particle counts (deeper bands run sparser), and a region with no active

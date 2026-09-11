@@ -3,6 +3,54 @@ import { bandProfileAtDepth, type BandProfile } from './band';
 
 const lum = (c: [number, number, number]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
+// WI-06d-b2: light-sway juice effect (request §14.3/§48).
+describe('light sway parameters (request §14.3/§48)', () => {
+  it('every band has a finite, positive sway amplitude', () => {
+    for (const depth of [0, 1600, 4000, 7000, 10000, 12000]) {
+      const p = bandProfileAtDepth(depth);
+      expect(p.swayAmplitude).toBeGreaterThan(0);
+      expect(p.swayAmplitude).toBeLessThan(1);
+    }
+  });
+
+  it('every band has a slow sway period (seconds-scale, not frame-scale)', () => {
+    for (const depth of [0, 1600, 4000, 7000, 10000, 12000]) {
+      const p = bandProfileAtDepth(depth);
+      expect(p.swayPeriod).toBeGreaterThanOrEqual(3);
+      expect(p.swayPeriod).toBeLessThanOrEqual(15);
+    }
+  });
+
+  it('deeper bands sway less (restraint envelope, request §14.3)', () => {
+    const shallow = bandProfileAtDepth(0);
+    const deep = bandProfileAtDepth(12000);
+    expect(deep.swayAmplitude).toBeLessThan(shallow.swayAmplitude);
+  });
+
+  it('deeper bands have a longer sway period (slower with depth)', () => {
+    const shallow = bandProfileAtDepth(0);
+    const deep = bandProfileAtDepth(12000);
+    expect(deep.swayPeriod).toBeGreaterThanOrEqual(shallow.swayPeriod);
+  });
+
+  it('interpolated depths carry the sway parameters', () => {
+    const p = bandProfileAtDepth(5000);
+    expect(p.swayAmplitude).toBeGreaterThan(0);
+    expect(p.swayPeriod).toBeGreaterThan(0);
+    expect(p.swayPhase).toBeGreaterThanOrEqual(0);
+  });
+
+  it('sway amplitudes stay within the low-amplitude envelope', () => {
+    // Low amplitude so the settled band palette stays recognizable in motion.
+    for (const depth of [0, 2000, 5000, 8000, 11000]) {
+      const p = bandProfileAtDepth(depth);
+      // Amplitude modulates beam intensity; keep it low enough that the
+      // light remains clearly visible (not flickering).
+      expect(p.swayAmplitude).toBeLessThanOrEqual(0.15);
+    }
+  });
+});
+
 /**
  * Count how many identity factors distinguish two band profiles.
  * Factors: palette family, particle profile, visibility, ambient,

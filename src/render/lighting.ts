@@ -9,7 +9,9 @@
  * owns: two compositing scene layers that carry the light: the camera-anchored
  *   vertical water-gradient quad (z = -50) and the additive cone/radial
  *   flashlight-beam quad (z = 12) that tracks the player position, aim, and
- *   the per-band profile (reach, intensity, ambient floor, accent color).
+ *   the per-band profile (reach, intensity, ambient floor, accent color, light
+ *   sway amplitude/period/phase). The sway is driven by a slow internal clock
+ *   (request §14.3/§48).
  * not own: the depth → profile mapping (`band`), the camera center it is
  *   anchored to (the `Renderer`), the particle field, or the terrain.
  * fails when: none — pure Three.js compositing; the shaders are fixed.
@@ -30,6 +32,7 @@ export class Lighting {
   private readonly gradientMat: THREE.ShaderMaterial;
   readonly beam: THREE.Mesh;
   private readonly beamMat: THREE.ShaderMaterial;
+  private swayTime = 0;
 
   constructor(scene: THREE.Scene) {
     this.gradientMat = new THREE.ShaderMaterial({
@@ -108,7 +111,13 @@ export class Lighting {
     this.gradient.scale.set(half.x, half.y, 1);
   }
 
-  update(center: Vec2, player: Vec2, aim: number, profile: BandProfile): void {
+  update(center: Vec2, player: Vec2, aim: number, profile: BandProfile, dt: number): void {
+    // Slow animated clock for light sway (request §14.3/§48).
+    this.swayTime += dt;
+    const sway = Math.sin(
+      (this.swayTime / profile.swayPeriod) * 2 * Math.PI + profile.swayPhase,
+    ) * profile.swayAmplitude;
+
     this.gradient.position.set(center.x, center.y, GRADIENT_Z);
     // Anchor to the diver, not the camera: at depth the camera clamps, so a
     // camera-anchored light would sit above the diver and stop tracking them.
@@ -118,7 +127,8 @@ export class Lighting {
     this.gradientMat.uniforms.uTop!.value.setRGB(profile.waterTop[0], profile.waterTop[1], profile.waterTop[2]);
     this.gradientMat.uniforms.uBottom!.value.setRGB(profile.waterBottom[0], profile.waterBottom[1], profile.waterBottom[2]);
     this.beamMat.uniforms.uReach!.value = profile.visibility;
-    this.beamMat.uniforms.uIntensity!.value = profile.lightIntensity * 1.2;
+    // Sway modulates the beam intensity: living water reads as undulating light.
+    this.beamMat.uniforms.uIntensity!.value = profile.lightIntensity * 1.2 * (1 + sway);
     this.beamMat.uniforms.uAmbient!.value = profile.ambient * 0.4;
   }
 
