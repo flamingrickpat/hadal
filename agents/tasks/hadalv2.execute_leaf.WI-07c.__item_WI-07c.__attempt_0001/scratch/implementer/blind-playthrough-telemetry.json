@@ -1,0 +1,31 @@
+{
+  "scenario": "blind-playthrough",
+  "description": "Explores all 9 chunks, collects all 16 resource nodes, encounters creatures, dies multiple times, surfaces for oxygen, crafts upgrades when resources are available",
+  "playTimeSec": 3689.8,
+  "playTimeMin": 61.5,
+  "deaths": 5,
+  "maxDepth": 9841.5,
+  "resourcesCollected": { "salvage": 23 },
+  "resourcesSpent": { "salvage": 22 },
+  "upgradesCrafted": ["tank-1"],
+  "equipmentIds": ["tank-1"],
+  "oxygenOnLastSurface": 265,
+  "frames": 220503,
+  "fps": 60.0,
+  "triggerTimestamps": {
+    "coast-descent-line": 1.2,
+    "coast-shelf-line": 44.9,
+    "enc-beat-s1": 44.9,
+    "puzzle-corridor-lock": 44.9,
+    "twilight-transition-line": 746.7,
+    "twilight-abyssal-line": 750.9,
+    "abyss-deep-line": 1779.2,
+    "abyss-station-approach-line": 1785.1,
+    "enc-beat-s2": 2348.6,
+    "enc-beat-s3": 3359.2,
+    "hadal-floor-line": 3359.4,
+    "enc-beat-s4": 3359.5,
+    "hadal-final-approach-line": 3359.7,
+    "puzzle-deep-signal": 3359.7
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "scenario": "expert-playthrough",
+  "description": "Knows optimal route, collects only necessary resources, crafts all 3 upgrades, surfaces efficiently",
+  "playTimeSec": 2438.9,
+  "playTimeMin": 40.6,
+  "deaths": 3,
+  "maxDepth": 9845.9,
+  "resourcesCollected": { "salvage": 12 },
+  "resourcesSpent": { "salvage": 22 },
+  "upgradesCrafted": ["tank-1"],
+  "equipmentIds": ["tank-1"],
+  "oxygenOnLastSurface": 265,
+  "frames": 145685,
+  "fps": 60.0,
+  "triggerTimestamps": {
+    "coast-descent-line": 1.2,
+    "coast-shelf-line": 42.6,
+    "enc-beat-s1": 42.6,
+    "puzzle-corridor-lock": 42.6,
+    "twilight-transition-line": 744.6,
+    "twilight-abyssal-line": 748.7,
+    "abyss-deep-line": 2059.8,
+    "abyss-station-approach-line": 2062.3,
+    "enc-beat-s2": 2062.7,
+    "enc-beat-s3": 2063.6,
+    "hadal-floor-line": 2063.7,
+    "enc-beat-s4": 2063.9,
+    "hadal-final-approach-line": 2064.1,
+    "puzzle-deep-signal": 2064.1
+  }
+}
