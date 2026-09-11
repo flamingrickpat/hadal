@@ -38,7 +38,7 @@ import {
   TOOL_NOISE_STRENGTH,
 } from '../game/constants';
 import { GameState } from '../game/GameState';
-import type { SaveGameV1 } from '../game/save';
+import type { SaveGame, SaveGameV2 } from '../game/save';
 import { findItem } from '../content/items';
 import { RECIPE_BY_ID } from '../content/recipes';
 import { BASE_RETURN_LINES, TRIGGER_RADIO_LINES } from '../content/dialogue';
@@ -237,6 +237,12 @@ export class Simulation {
   storyFlags: string[] = [];
   /** The win condition state: set exactly once when the final descent sequence completes (request §45). */
   endingTriggered = false;
+  /** The ending variant chosen (WI-05cb). */
+  endingVariant: string | undefined;
+  /** The final sequence step reached (WI-05cb). */
+  finalSequenceStep: string | undefined;
+  /** The autosave milestones reached (WI-05cb). */
+  autosaveMilestones: string[] = [];
   collectedUniqueIds = new Set<string>();
   lastStoryLine: string | null = null;
   lastRadioText: string | null = null;
@@ -467,6 +473,11 @@ export class Simulation {
     // One-shot semantics: endingTriggered is set exactly once (request §70).
     if (!this.endingTriggered && this.storyFlags.includes('ending-triggered')) {
       this.endingTriggered = true;
+      // WI-05cb: Post-trigger autosave milestone.
+      if (!this.autosaveMilestones.includes('post-trigger')) {
+        this.autosaveMilestones.push('post-trigger');
+        this.autosaveRequested = true;
+      }
     }
     // WI-05b: Activate the final descent sequence when the macguffin is
     // retrieved. This is done in the simulation step rather than as a
@@ -478,6 +489,11 @@ export class Simulation {
       this.storyFlags.push('final-descent-active');
       this.triggerState.ambient['final-descent-current'] = 2.0;
       this.triggerState.ambient['final-descent-dim'] = 0.1;
+      // WI-05cb: Pre-descent autosave milestone.
+      if (!this.autosaveMilestones.includes('pre-descent')) {
+        this.autosaveMilestones.push('pre-descent');
+        this.autosaveRequested = true;
+      }
     }
     // Consume one-shot actions so a reused input object does not re-apply them.
     input.craftRequest = null;
@@ -1619,10 +1635,10 @@ export class Simulation {
     this.loadFromSave(save);
   }
 
-  toSave(): SaveGameV1 {
+  toSave(): import('../game/save').SaveGameV2 {
     const p = this.player;
     return {
-      version: 1,
+      version: 2,
       playTimeSec: this.state.timeSec,
       player: {
         health: p.health,
@@ -1638,13 +1654,16 @@ export class Simulation {
         storyFlags: [...this.storyFlags],
         maxDepth: p.maxDepth,
         endingTriggered: this.endingTriggered,
+        endingVariant: this.endingVariant,
+        finalSequenceStep: this.finalSequenceStep,
+        autosaveMilestones: [...this.autosaveMilestones],
       },
       settings: { masterVolume: 1 },
     };
   }
 
   /** Restore from a save into this simulation (the player is at the base). */
-  loadFromSave(save: SaveGameV1): void {
+  loadFromSave(save: import('../game/save').SaveGame): void {
     const p = this.player;
     this.state.timeSec = save.playTimeSec;
     p.equipmentIds = [...save.player.equipmentIds];
@@ -1669,6 +1688,9 @@ export class Simulation {
     this.storyFlags.length = 0;
     this.storyFlags.push(...save.world.storyFlags);
     this.endingTriggered = save.world.endingTriggered ?? false;
+    this.endingVariant = save.world.endingVariant ?? undefined;
+    this.finalSequenceStep = save.world.finalSequenceStep ?? undefined;
+    this.autosaveMilestones = [...save.world.autosaveMilestones];
     this.updateCargo();
     this.wasAtBase = true;
   }

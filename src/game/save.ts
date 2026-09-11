@@ -15,9 +15,9 @@
  *   is missing required fields — `parseSave` throws `SaveParseError` and
  *   `loadFromStorage` backs up the bad value and resets instead of crashing.
  */
-export const SAVE_VERSION = 1;
-export const SAVE_KEY = 'hadal.save.v1';
-export const SAVE_BACKUP_KEY = 'hadal.save.v1.bak';
+export const SAVE_VERSION = 2;
+export const SAVE_KEY = 'hadal.save.v2';
+export const SAVE_BACKUP_KEY = 'hadal.save.v2.bak';
 
 export interface SaveGameV1 {
   version: 1;
@@ -42,9 +42,38 @@ export interface SaveGameV1 {
   };
 }
 
+export interface SaveGameV2 {
+  version: 2;
+  playTimeSec: number;
+  player: {
+    health: number;
+    oxygenUpgrade: number;
+    equipmentIds: string[];
+    inventory: Record<string, number>;
+    banked: Record<string, number>;
+  };
+  world: {
+    discoveredChunks: string[];
+    openedShortcuts: string[];
+    collectedUniqueIds: string[];
+    storyFlags: string[];
+    maxDepth: number;
+    endingTriggered?: boolean;
+    // Endgame milestone fields (WI-05cb).
+    endingVariant?: string;
+    finalSequenceStep?: string;
+    autosaveMilestones: string[];
+  };
+  settings: {
+    masterVolume: number;
+  };
+}
+
+export type SaveGame = SaveGameV1 | SaveGameV2;
+
 export class SaveParseError extends Error {}
 
-export function freshSave(): SaveGameV1 {
+export function freshSave(): SaveGameV2 {
   return {
     version: SAVE_VERSION,
     playTimeSec: 0,
@@ -61,6 +90,7 @@ export function freshSave(): SaveGameV1 {
       collectedUniqueIds: [],
       storyFlags: [],
       maxDepth: 0,
+      autosaveMilestones: [],
     },
     settings: {
       masterVolume: 1,
@@ -68,7 +98,7 @@ export function freshSave(): SaveGameV1 {
   };
 }
 
-export function serializeSave(save: SaveGameV1): string {
+export function serializeSave(save: SaveGame): string {
   return JSON.stringify(save);
 }
 
@@ -76,7 +106,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function parseSave(raw: string): SaveGameV1 {
+export function parseSave(raw: string): SaveGame {
   let data: unknown;
   try {
     data = JSON.parse(raw);
@@ -85,9 +115,22 @@ export function parseSave(raw: string): SaveGameV1 {
     throw new SaveParseError('save is not valid JSON');
   }
   if (!isRecord(data)) throw new SaveParseError('save is not an object');
-  if (data.version !== SAVE_VERSION) {
-    throw new SaveParseError(`unsupported save version: ${String(data.version)}`);
+
+  // Validate version and migrate.
+  let saveVersion = data.version;
+  if (saveVersion === 1) {
+    // Trivial migration: add defaults for new endgame fields.
+    data.version = 2;
+    if (!isRecord(data.world)) throw new SaveParseError('save.world is missing');
+    const w = data.world;
+    if (!Array.isArray(w.autosaveMilestones)) w.autosaveMilestones = [];
+    saveVersion = 2;
   }
+
+  if (saveVersion !== SAVE_VERSION) {
+    throw new SaveParseError(`unsupported save version: ${String(saveVersion)}`);
+  }
+
   const p = data.player;
   if (!isRecord(p)) throw new SaveParseError('save.player is missing');
   if (typeof p.health !== 'number') throw new SaveParseError('save.player.health is not a number');
@@ -103,7 +146,7 @@ export function parseSave(raw: string): SaveGameV1 {
   const s = data.settings;
   if (!isRecord(s)) throw new SaveParseError('save.settings is missing');
   if (typeof s.masterVolume !== 'number') throw new SaveParseError('save.settings.masterVolume is not a number');
-  return data as unknown as SaveGameV1;
+  return data as unknown as SaveGame;
 }
 
 export interface StorageLike {
@@ -113,7 +156,7 @@ export interface StorageLike {
 }
 
 export interface LoadedSave {
-  save: SaveGameV1;
+  save: SaveGame;
   reset: boolean;
   backedUp: boolean;
 }
@@ -132,7 +175,7 @@ export function loadFromStorage(storage: StorageLike): LoadedSave {
   }
 }
 
-export function saveToStorage(storage: StorageLike, save: SaveGameV1): void {
+export function saveToStorage(storage: StorageLike, save: SaveGame): void {
   storage.setItem(SAVE_KEY, serializeSave(save));
 }
 

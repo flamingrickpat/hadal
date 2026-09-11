@@ -26,7 +26,7 @@ describe('§30 simulation boundary', () => {
     const sim = createSimulation(makeSimWorld(), 0);
     expect(sim.player.position.x).toBe(PLAYER_START.x);
     sim.step(emptyInput(), FIXED_DT);
-    expect(sim.toSave().version).toBe(1);
+    expect(sim.toSave().version).toBe(2);
   });
 });
 

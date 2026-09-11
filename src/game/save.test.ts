@@ -9,10 +9,10 @@ import {
   SAVE_BACKUP_KEY,
   SAVE_VERSION,
   serializeSave,
-  type SaveGameV1,
+  type SaveGameV2,
 } from './save';
 
-function populatedSave(): SaveGameV1 {
+function populatedSave(): SaveGameV2 {
   const s = freshSave();
   s.playTimeSec = 1234.5;
   s.player.health = 42;
@@ -27,10 +27,10 @@ function populatedSave(): SaveGameV1 {
   return s;
 }
 
-describe('SaveGameV1 (request §42, §70)', () => {
-  it('has version 1', () => {
-    expect(SAVE_VERSION).toBe(1);
-    expect(freshSave().version).toBe(1);
+describe('SaveGameV2 (request §42, §70, WI-05cb)', () => {
+  it('has version 2', () => {
+    expect(SAVE_VERSION).toBe(2);
+    expect(freshSave().version).toBe(2);
   });
 
   it('serialize -> deserialize round-trips exactly', () => {
@@ -46,7 +46,7 @@ describe('SaveGameV1 (request §42, §70)', () => {
   it('preserves the version field through the round trip', () => {
     const save = populatedSave();
     const restored = parseSave(serializeSave(save));
-    expect(restored.version).toBe(1);
+    expect(restored.version).toBe(2);
     expect(restored.player.equipmentIds).toEqual(['tank-1', 'fins-1']);
     expect(restored.world.maxDepth).toBe(875);
   });
@@ -72,7 +72,7 @@ describe('SaveGameV1 (request §42, §70)', () => {
     const { save, reset, backedUp } = loadFromStorage(storage);
     expect(reset).toBe(true);
     expect(backedUp).toBe(true);
-    expect(save.version).toBe(1);
+    expect(save.version).toBe(2);
     expect(storage.getItem(SAVE_KEY)).toBe(null);
     expect(storage.getItem(SAVE_BACKUP_KEY)).toBe('{ this is not valid');
   });
@@ -81,7 +81,7 @@ describe('SaveGameV1 (request §42, §70)', () => {
     const storage = makeMemoryStorage();
     const { save, reset } = loadFromStorage(storage);
     expect(reset).toBe(true);
-    expect(save.version).toBe(1);
+    expect(save.version).toBe(2);
   });
 
   it('loads a valid stored save without resetting', () => {
