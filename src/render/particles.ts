@@ -62,7 +62,7 @@ export function stepParticleType(
   state: { center: Vec2; half: Vec2; time: number },
   dt: number,
   profile: BandProfile,
-  currentAt?: (pos: Vec2, time: number) => Vec2,
+  currentAt?: (pos: Vec2, time: number, out: Vec2) => void,
 ): void {
   const { center, half, time } = state;
   const useField = currentAt !== undefined;
@@ -187,7 +187,7 @@ export class ParticleField {
     half: Vec2,
     profile: BandProfile,
     depth: number,
-    currentAt?: (pos: Vec2, time: number) => Vec2,
+    currentAt?: (pos: Vec2, time: number, out: Vec2) => void,
     ambientScale: number = 1,
   ): void {
     this.time += dt;

@@ -169,7 +169,7 @@ try {
   const browser = await chromium.launch({
     executablePath: resolveBrowser(),
     headless: true,
-    args: ['--no-sandbox', '--disable-gpu'],
+    args: ['--no-sandbox'],
   });
 
   try {
