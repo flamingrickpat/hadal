@@ -22,6 +22,32 @@ describe('audioProfileAtDepth', () => {
     }
   });
 
+  it('mixing curve is strictly monotonic: highCutoff strictly falls, lowRumble and reverb strictly rise', () => {
+    const stops = AUDIO_STOPS;
+    for (let i = 1; i < stops.length; i += 1) {
+      const prev = stops[i - 1]!;
+      const curr = stops[i]!;
+      expect(curr.highCutoff).toBeLessThan(prev.highCutoff);
+      expect(curr.lowRumble).toBeGreaterThan(prev.lowRumble);
+      expect(curr.reverb).toBeGreaterThan(prev.reverb);
+    }
+  });
+
+  it('audioProfileAtDepth at each band stop resolves to the authored values', () => {
+    for (const stop of AUDIO_STOPS) {
+      const profile = audioProfileAtDepth(stop.depth);
+      expect(profile.depth).toBe(stop.depth);
+      expect(profile.highCutoff).toBe(stop.highCutoff);
+      expect(profile.lowRumble).toBe(stop.lowRumble);
+      expect(profile.reverb).toBe(stop.reverb);
+      expect(profile.drone).toBe(stop.drone);
+      expect(profile.oceanBed).toBe(stop.oceanBed);
+      expect(profile.currentRumble).toBe(stop.currentRumble);
+      expect(profile.hull).toBe(stop.hull);
+      expect(profile.breathing).toBe(stop.breathing);
+    }
+  });
+
   it('is full-spectrum and light at the surface, muffled and deep at the floor', () => {
     const shallow = audioProfileAtDepth(0);
     const deep = audioProfileAtDepth(12000);
