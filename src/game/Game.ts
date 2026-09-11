@@ -38,6 +38,7 @@ import { bandProfileAtDepth } from '../render/band';
 import { AudioSystem } from '../systems/AudioSystem';
 import { shouldTriggerImpulse } from '../render/impulseFlag';
 import { bodyExtent } from '../creatures/CreatureDef';
+import { CREATURE_AUDIO_PROFILES, depthBandIndex } from '../util/creatureAudio';
 import type { Vec2 } from '../util/math';
 import type { DebugPanelHost } from '../util/debug';
 
@@ -62,6 +63,8 @@ export class Game implements DebugPanelHost {
   private lastShownLine: string | null = null;
   private paused = false;
   private sonarHeld = false;
+  /** Creatures whose early cue has already played (resets when they leave cue range). */
+  private readonly cuePlayed = new Set<string>();
 
   constructor(renderer: Renderer) {
     this.renderer = renderer;
@@ -118,6 +121,31 @@ export class Game implements DebugPanelHost {
 
     if (!mapOpen) {
       this.sim.step(this.sim.controller.input, dt);
+      // Creature proximity cues: when a major creature enters its cue range
+      // (the distance at which it becomes audible before visible), play its
+      // early cue. The cue plays once per approach; it resets when the
+      // creature leaves the cue range.
+      const playerDepth = this.sim.player.depth;
+      const bandIdx = depthBandIndex(playerDepth);
+      const bandProfile = bandProfileAtDepth(playerDepth);
+      const playerPos = this.sim.player.position;
+      for (const c of this.sim.creatures) {
+        if (!c.active) continue;
+        const profile = CREATURE_AUDIO_PROFILES[c.def.id];
+        if (profile === undefined) continue;
+        const dist = Math.hypot(c.position.x - playerPos.x, c.position.y - playerPos.y);
+        const leadTime = profile.cueLeadTimePerBand[bandIdx];
+        if (leadTime === undefined) continue;
+        const cueDist = bandProfile.visibility + leadTime;
+        if (dist <= cueDist) {
+          if (!this.cuePlayed.has(c.def.id)) {
+            this.cuePlayed.add(c.def.id);
+            this.audio.playCreatureCue(profile, c.position.x, playerPos.x, dist, bandIdx);
+          }
+        } else {
+          this.cuePlayed.delete(c.def.id);
+        }
+      }
       // Check for distant large motion to trigger the camera impulse nudge
       // (request §48: a big creature passing far away or an environmental event
       // causes a low-amplitude camera nudge). Evaluate each active creature's

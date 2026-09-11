@@ -109,3 +109,15 @@ export function cueLeadTimeForBand(profile: CreatureAudioProfile, bandIndex: num
   const vis = BAND_STOPS[idx]!.visibility;
   return cueDistanceForBand(vis, band.multiplier) - vis;
 }
+
+/**
+ * The depth band index at a given depth. The band index is used to select the
+ * per-band audio profile and the per-band cue lead time.
+ */
+export function depthBandIndex(depth: number): number {
+  let idx = 0;
+  for (let i = 0; i < BAND_STOPS.length; i += 1) {
+    if (depth >= BAND_STOPS[i]!.depth) idx = i;
+  }
+  return idx;
+}

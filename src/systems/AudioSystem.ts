@@ -611,10 +611,6 @@ export class AudioSystem {
     const ctx = this.ctx!;
     if (ctx === null) return;
     const now = ctx.currentTime;
-    const band = Math.min(depthBand, CUE_LEAD_TIME_BANDS.length - 1);
-    const lead = profile.cueLeadTimePerBand[band]!;
-    const leadBand = CUE_LEAD_TIME_BANDS[band]!;
-    const cueDist = Math.floor(leadBand.multiplier * BAND_STOPS[band]!.visibility) - leadBand.multiplier * 0;
     const pan = worldPan(worldX, playerX);
     const level = distanceGain(distance) * (0.15 + 0.05 * depthBand);
     this.playCreatureSynthesis(now, profile.vocabulary, pan, level);

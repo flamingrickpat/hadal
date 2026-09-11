@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CREATURE_AUDIO_PROFILES, SECTION_58_VOCABULARY, CUE_LEAD_TIME_BANDS } from './creatureAudio';
+import { CREATURE_AUDIO_PROFILES, SECTION_58_VOCABULARY, CUE_LEAD_TIME_BANDS, cueDistanceForBand } from './creatureAudio';
 import { HIDDEN_CREATURES, TIER1_IDS, TIER2_IDS, TIER3_IDS, TIER4_IDS } from '../content/secret/hiddenCreatures';
+import { BAND_STOPS } from '../render/band';
 
 const MAJOR_CREATURE_IDS = [...TIER1_IDS, ...TIER2_IDS, ...TIER3_IDS, ...TIER4_IDS];
 
@@ -36,5 +37,16 @@ describe('CREATURE_AUDIO_PROFILES', () => {
     }
     const tagNames = Object.keys(tagCounts);
     expect(tagNames.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('cue distance stays ahead of visibility for all creatures and bands', () => {
+    for (const [id, profile] of Object.entries(CREATURE_AUDIO_PROFILES)) {
+      for (let i = 0; i < BAND_STOPS.length; i += 1) {
+        const band = BAND_STOPS[i]!;
+        const leadTime = profile.cueLeadTimePerBand[i]!;
+        const cueDist = band.visibility + leadTime;
+        expect(cueDist, `${id} at depth ${band.depth}: cue distance must exceed visibility`).toBeGreaterThan(band.visibility);
+      }
+    }
   });
 });

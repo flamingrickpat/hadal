@@ -95,17 +95,17 @@ and the trigger seam in `src/world/triggers.ts`
 
 ## Implementation Result (item-implementer)
 
-**Result line:** All 22 major creatures have section 58 sound profiles with per-band cue lead times; AudioSystem extended with playCreatureCue for procedural early cues.
+**Result line:** All 22 major creatures have section 58 sound profiles with per-band cue lead times; AudioSystem extended with playCreatureCue wired up in Game.update() for procedural early cues.
 
 ### Acceptance Evidence Table
 
 | Criterion | Artifact | Status |
 |---|---|---|
 | AC-art-sound: depth audio changes with depth | src/util/creatureAudio.ts profiles | passed |
-| AC-art-sound: major creatures audible well before visible | src/systems/AudioSystem.ts playCreatureCue | passed |
+| AC-art-sound: major creatures audible well before visible | src/game/Game.ts update() calls playCreatureCue | passed |
 | AC-art-sound: section 58 vocabulary varied | CREATURE_AUDIO_PROFILES vocabulary diversity | passed |
 | AC-art-sound: per-band cue lead times | CREATURE_AUDIO_PROFILES cueLeadTimePerBand | passed |
-| AC-art-sound: Node test validates all profiles | src/util/creatureAudio.test.ts (4/4 passed) | passed |
+| AC-art-sound: Node test validates all profiles | src/util/creatureAudio.test.ts (5/5 passed) | passed |
 
 ### Live Verification
 
@@ -117,17 +117,23 @@ None.
 
 ### Files Touched
 
-- src/util/creatureAudio.ts (new)
-- src/util/creatureAudio.test.ts (new)
-- src/systems/AudioSystem.ts (extended)
+- src/util/creatureAudio.ts (added depthBandIndex helper)
+- src/util/creatureAudio.test.ts (added cue distance > visibility test)
+- src/systems/AudioSystem.ts (removed dead code in playCreatureCue)
+- src/game/Game.ts (wired up creature proximity cue emission)
 
 ### Notes for Reviewer
 
-Shrink/Flatten: no unused extension points, pass-through wrappers, or one-use interfaces. The data module is a focused information holder; the AudioSystem extension adds exactly the methods needed for cue emission. Comments are documentation, not noise.
+Shrink/Flatten: removed unused lead/cueDist variables from playCreatureCue. The Game.update() creature proximity loop reuses the existing camera impulse loop pattern. The cuePlayed Set prevents repeated cues per approach while allowing re-triggering when creatures leave range.
+
+Fixes review findings:
+1. playCreatureCue is now called from Game.update() when creatures enter cue range
+2. Dead code (unused lead/cueDist variables) removed from playCreatureCue
+3. Added test verifying cue distance > visibility for all creatures and bands
 
 ### Commit
 
-0bd9dc9 — [audio][creatures] add procedural sound profiles and pre-visibility cues
+[audio][creatures] wire up creature proximity cues in game loop
 
 ### Next Work Item
 
