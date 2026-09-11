@@ -59,6 +59,36 @@ export const AUDIO_STOPS: readonly AudioProfile[] = [
   { depth: 12000, highCutoff: 1900, lowRumble: 1.0, oceanBed: 0.7, currentRumble: 1.0, hull: 0.06, reverb: 1.0, drone: 0.04, breathing: 0.75 },
 ];
 
+/**
+ * Sparse musical moment definitions tied to authored story/encounter trigger
+ * flags (request §58). Each moment is a procedural WebAudio event fired when
+ * its corresponding trigger fires. The `cueId` matches the trigger's `playAudio`
+ * action's `cueId`.
+ */
+export interface MusicMomentDefinition {
+  id: string;
+  cueId: string;
+  /** Type of musical moment: pad, swell, chord, or theme. */
+  type: 'ambient-pad' | 'harmonic-swell' | 'drone-chord' | 'sparse-theme';
+  /** Intensity scale 0.1..1.0. */
+  scale: number;
+  /** Duration in seconds. */
+  duration: number;
+  /** Base frequency in Hz (or -1 for a scale-based progression). */
+  frequency: number;
+}
+
+export const MUSIC_MOMENTS: readonly MusicMomentDefinition[] = [
+  // Major story beats: sparse, evocative musical moments.
+  { id: 'beat-s1-lights', cueId: 'beat-s1-lights', type: 'harmonic-swell', scale: 0.4, duration: 4, frequency: 220 },
+  { id: 'beat-s2-creak', cueId: 'beat-s2-creak', type: 'drone-chord', scale: 0.35, duration: 5, frequency: 110 },
+  { id: 'beat-s3-pulse', cueId: 'beat-s3-pulse', type: 'ambient-pad', scale: 0.5, duration: 6, frequency: 165 },
+  { id: 'beat-s4-heartbeat', cueId: 'beat-s4-heartbeat', type: 'ambient-pad', scale: 0.6, duration: 8, frequency: 130.81 },
+  { id: 'beat-s5-plates', cueId: 'beat-s5-plates', type: 'harmonic-swell', scale: 0.45, duration: 4, frequency: 330 },
+  // The final theme incorporates the sonar/creature interval (request §58).
+  { id: 'ending-triggered', cueId: 'ending-triggered', type: 'sparse-theme', scale: 0.7, duration: 12, frequency: -1 },
+];
+
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 /**

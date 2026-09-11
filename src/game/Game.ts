@@ -36,6 +36,7 @@ import { PostFX } from '../render/postfx';
 import { SonarVisuals } from '../render/sonar';
 import { bandProfileAtDepth } from '../render/band';
 import { AudioSystem } from '../systems/AudioSystem';
+import { MUSIC_MOMENTS } from '../util/audio';
 import { shouldTriggerImpulse } from '../render/impulseFlag';
 import { bodyExtent } from '../creatures/CreatureDef';
 import { CREATURE_AUDIO_PROFILES, depthBandIndex } from '../util/creatureAudio';
@@ -100,6 +101,7 @@ export class Game implements DebugPanelHost {
     if (new URLSearchParams(window.location.search).has('debug')) {
       (window as unknown as Record<string, unknown>).__HADAL_AUDIO__ = this.audio;
       (window as unknown as Record<string, unknown>).__HADAL_GAME__ = this;
+      (window as unknown as Record<string, unknown>).MUSIC_MOMENTS = MUSIC_MOMENTS;
     }
     this.radio = document.createElement('div');
     this.radio.className = 'radio-message';
@@ -144,6 +146,16 @@ export class Game implements DebugPanelHost {
           }
         } else {
           this.cuePlayed.delete(c.def.id);
+        }
+      }
+      // Sparse musical moments (request §58): consume trigger-fired audio cues
+      // and play the corresponding procedural music moment. Each moment plays
+      // once; silence between moments is preferred.
+      const newCues = this.sim.triggerState.audioCues;
+      for (const cueId of newCues) {
+        const moment = MUSIC_MOMENTS.find((m) => m.cueId === cueId);
+        if (moment !== undefined) {
+          this.audio.playMusicMoment(moment);
         }
       }
       // Check for distant large motion to trigger the camera impulse nudge

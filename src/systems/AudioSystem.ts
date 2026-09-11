@@ -28,7 +28,7 @@
  *   request §34); the music bed is sparse and evolving, never an obvious
  *   looped track (request §58).
  */
-import { AUDIO_STOPS, audioProfileAtDepth, distanceGain, worldPan, type AudioProfile } from '../util/audio';
+import { AUDIO_STOPS, MUSIC_MOMENTS, audioProfileAtDepth, distanceGain, worldPan, type AudioProfile, type MusicMomentDefinition } from '../util/audio';
 import { BAND_STOPS } from '../render/band';
 import { CREATURE_AUDIO_PROFILES, CUE_LEAD_TIME_BANDS, type CreatureAudioProfile } from '../util/creatureAudio';
 import { createRng } from '../util/rng';
@@ -693,6 +693,123 @@ export class AudioSystem {
         break;
       }
     }
+  }
+
+  /**
+   * Play a sparse musical moment defined by a `MusicMomentDefinition` (request §58).
+   * The moment is procedurally synthesized and layered into the existing drone/music-bed
+   * path so it recedes with depth like the rest of the mix.
+   */
+  playMusicMoment(def: MusicMomentDefinition): void {
+    const ctx = this.ctx;
+    if (ctx === null) return;
+    const now = ctx.currentTime;
+    switch (def.type) {
+      case 'ambient-pad':
+        this.playAmbientPad(now, def.frequency, def.scale, def.duration);
+        break;
+      case 'harmonic-swell':
+        this.playHarmonicSwell(now, def.frequency, def.scale, def.duration);
+        break;
+      case 'drone-chord':
+        this.playDroneChord(now, def.frequency, def.scale, def.duration);
+        break;
+      case 'sparse-theme':
+        this.playSparseTheme(now, def.scale, def.duration);
+        break;
+    }
+  }
+
+  /** A warm ambient pad built from a low triad. */
+  private playAmbientPad(now: number, freq: number, scale: number, duration: number): void {
+    const ctx = this.ctx!;
+    const env = this.routedEnv(ctx, 0);
+    const chord = freq > 0 ? [freq, freq * 1.5, freq * 2] : [110, 165, 220];
+    for (const f of chord) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      osc.connect(env);
+      osc.start(now);
+      osc.stop(now + duration + 0.1);
+    }
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(scale * 0.25, now + duration * 0.2);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  }
+
+  /** A slow harmonic swell: rising partials. */
+  private playHarmonicSwell(now: number, freq: number, scale: number, duration: number): void {
+    const ctx = this.ctx!;
+    const env = this.routedEnv(ctx, 0);
+    const freqs = freq > 0 ? [freq, freq * 1.2, freq * 1.5, freq * 2, freq * 2.5] : [146.83, 176, 220, 293.66, 369.99];
+    for (let i = 0; i < freqs.length; i++) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freqs[i]!;
+      osc.connect(env);
+      osc.start(now + i * duration / freqs.length / 2);
+      osc.stop(now + duration + 0.1);
+    }
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(scale * 0.2, now + duration * 0.5);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  }
+
+  /** A low drone chord with slow detune drift. */
+  private playDroneChord(now: number, freq: number, scale: number, duration: number): void {
+    const ctx = this.ctx!;
+    const env = this.routedEnv(ctx, 0);
+    const root = freq > 0 ? freq : 98;
+    const chord = [root, root * 1.25, root * 1.5];
+    for (const f of chord) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      osc.detune.value = (this.rng() - 0.5) * 8;
+      osc.connect(env);
+      osc.start(now);
+      osc.stop(now + duration + 0.1);
+    }
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(scale * 0.3, now + duration * 0.3);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  }
+
+  /**
+   * The sparse final theme (request §58): incorporates an earlier sonar/creature
+   * interval (the sonar ping's C-E-G-F motif is echoed back in a slower, deeper
+   * register). Plays once, no loop.
+   */
+  private playSparseTheme(now: number, scale: number, duration: number): void {
+    const ctx = this.ctx!;
+    const env = this.routedEnv(ctx, 0);
+    // Sonar interval: 1400 -> 320. In a lower register as a slow, sparse motif.
+    // Transposed to C (261.63) / E (329.63) / G (392) / F (349.23) at half speed.
+    const notes = [
+      { t: now, f: 65.41, dur: 3 },
+      { t: now + 2, f: 82.41, dur: 2.5 },
+      { t: now + 4, f: 98, dur: 3 },
+      { t: now + 7, f: 87.31, dur: 5 },
+    ];
+    for (const note of notes) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = note.f;
+      osc.connect(env);
+      osc.start(note.t);
+      osc.stop(note.t + note.dur + 0.1);
+      const noteEnv = ctx.createGain();
+      noteEnv.gain.setValueAtTime(0.0001, note.t);
+      noteEnv.gain.exponentialRampToValueAtTime(scale * 0.15, note.t + 0.3);
+      noteEnv.gain.exponentialRampToValueAtTime(0.0001, note.t + note.dur);
+      osc.connect(noteEnv);
+      noteEnv.connect(env);
+    }
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(1, now + 0.5);
+    env.gain.setValueAtTime(1, now + duration - 0.5);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
   }
 
   private playDepthMotif(now: number, band: number): void {
