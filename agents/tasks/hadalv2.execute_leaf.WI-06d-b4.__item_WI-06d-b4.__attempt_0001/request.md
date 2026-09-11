@@ -1,0 +1,24 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf.WI-06d-b4.__item_WI-06d-b4",
+  "input": {
+    "selection": {
+      "id": "WI-06d-b4",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "parent": "WI-06d-b",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-06d-b/workitems/WI-06d-b4.md",
+      "specification": "---\nid: WI-06d-b4\nkind: work_item\nparent: WI-06d-b\nchildren: []\ndepends_on: [\"WI-06a\", \"WI-06b\", \"WI-06c\"]\ncriteria:\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\n  AC-juice-impulse: \"A low-amplitude camera nudge triggers on distant large motion (creature or environmental) and sets the presentation flag WI-06d-c's shake path gates, with trigger params covered by Node unit tests and no steering or balance changes\"\nbehavior: \"Implement the distant-motion impulse: low-amplitude camera nudge plus the presentation flag WI-06d-c's shake path gates\"\nsubsystems: [\"rendering - camera nudge and impulse flag\"]\nverification: \"Node unit tests pass for the impulse trigger params and flag transitions; browser clip or screenshot of the nudge on a distant large motion; headless suite and build stay green; integration of the flag with WI-06d-c's shake gate is proven there, not here\"\n---\n\n# WI-06d-b4 — Distant-motion impulse\n\n## Goal\n\nImplement the section 48 distant-motion impulse: when a large distant\nmotion happens (a big creature passing far away, or an environmental\nevent), the camera takes a low-amplitude nudge, and a presentation\nflag is set that WI-06d-c's low-frequency shake path will gate on.\nThis item implements the trigger and the nudge — not the low-frequency\ngate or the amplitude budget, which belong to WI-06d-c.\n\n## Changed responsibilities (the only owners that change)\n\n1. `src/render/Renderer.ts` — the camera follow path: apply a decaying\n   low-amplitude offset (the nudge) on top of the existing smooth\n   follow, without touching the follow lag or bounds-clamping\n   invariants.\n2. The presentation flag — a small shared presentation-state module\n   (new file in `src/render/` or `src/game/`) exposing the impulse\n   flag WI-06d-c's shake path will read; no other consumers exist\n   yet.\n3. The impulse trigger parameters — data module (trigger distance\n  band, motion threshold, nudge amplitude, decay time) as pure data,\n  Node-testable.\n\nTests do not count as additional responsibilities.\n\n## Deliverables (checkable)\n\n- Trigger: distant large motion (creature or environmental) sets the\n  impulse; nearby motion and small distant motion do not.\n- Nudge: low amplitude, short decay, no steering or balance effect.\n- Flag: set for the trigger duration; WI-06d-c reads it (its\n  integration proof lives in WI-06d-c).\n\n## Tests\n\n- Node: unit tests for trigger params (threshold/distance boundaries)\n  and flag transitions (set on distant large motion, cleared after\n  decay, not set by near or small motion).\n- Browser (local proof): clip or screenshot of the nudge firing on a\n  distant large motion in an early/fixture area. The final proof\n  owner of the AC-art-geometry juice-part browser union is\n  WI-06d-b6 — do not re-assert the six-effect union here.\n\n## Constraints, assumptions, non-goals\n\n- No steering rules, no creature AI, no balance changes — the nudge\n  is presentation only.\n- The low-frequency gate and amplitude budget of the section 16 shake\n  rules are WI-06d-c's scope; do not implement them here.\n- The a11y reduced-flashing toggle (WI-06g) will gate this nudge\n  downstream; the flag design must let a single boolean suppress it.\n- No changes to particles (WI-06d-b1), lighting (WI-06d-b2), HUD\n  (WI-06d-b3) or schools (WI-06d-b5); no audio.\n\n## Fresh-session handoff\n\nRead WI-06d-b/plan.md (story scope and proof ownership) and WI-06d-c\nfor the shake path this flag feeds. Inspect `src/render/Renderer.ts`\n(camera follow, lag constant) and how creature/environmental motion\nis observable from the render layer. Request sections: 14.3, 16, 34,\n35, 48, 70.\n",
+      "fingerprint": "c9154f0c019e3d5ed8e8820943ed88819ee7cee1180c276eadecf7be5e078184",
+      "base_rev": "3844c9f1182fbb99aee9f5ea20add853f68d4100",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06d-b4.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
