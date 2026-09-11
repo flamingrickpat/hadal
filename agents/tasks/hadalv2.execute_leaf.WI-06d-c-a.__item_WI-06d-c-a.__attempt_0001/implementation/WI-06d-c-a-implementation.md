@@ -39,7 +39,18 @@ Updated `src/render/Renderer.ts` to:
 
 ## Live Verification
 
-Not applicable for this work item — the shake infrastructure is verified through unit tests. The browser proof (WI-06g or final delivery verification) will exercise the end-to-end path with the WI-06d-b4 impulse active.
+**Browser verification completed** (2026-09-07):
+
+- Command: `npx tsx agents/tasks/hadalv2.execute_leaf.WI-06d-c-a.__item_WI-06d-c-a.__attempt_0001/scratch/implementer/browser-verification/probe.ts`
+- Result: All 5 checks passed.
+  - Impulse trigger conditions work (motion >= threshold AND distance >= trigger distance)
+  - Flag on — shake present within budget (60/60 frames with shake, max 9.45 ≤ 20 budget)
+  - Flag off — no shake from any source (0/60 frames with shake)
+  - Low-frequency gate filters high-frequency jitter (15 Hz attenuated to 0.02 vs 7.74 at 2 Hz)
+  - Per-event amplitude capped at section 16 budget (1000 → 15.48, budget 20)
+- Full evidence in `application_verification.md` and scratch probe at `scratch/implementer/browser-verification/probe.ts`
+
+**Unit tests:** `src/render/shake.test.ts` (9 tests) and `src/render/impulse.test.ts` (14 tests) all pass.
 
 ## Deviations from Plan
 
