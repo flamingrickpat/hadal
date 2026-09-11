@@ -19,6 +19,24 @@ export const SAVE_VERSION = 2;
 export const SAVE_KEY = 'hadal.save.v2';
 export const SAVE_BACKUP_KEY = 'hadal.save.v2.bak';
 
+export interface AccessibilitySettings {
+  masterVolume: number;
+  screenShake: boolean;
+  reducedFlashing: boolean;
+  showSubtitles: boolean;
+  hiContrastSonar: boolean;
+}
+
+export function freshAccessibilitySettings(): AccessibilitySettings {
+  return {
+    masterVolume: 1,
+    screenShake: true,
+    reducedFlashing: false,
+    showSubtitles: true,
+    hiContrastSonar: false,
+  };
+}
+
 export interface SaveGameV1 {
   version: 1;
   playTimeSec: number;
@@ -39,6 +57,7 @@ export interface SaveGameV1 {
   };
   settings: {
     masterVolume: number;
+    // Accessibility fields added in v2; not present in v1 saves.
   };
 }
 
@@ -64,9 +83,7 @@ export interface SaveGameV2 {
     finalSequenceStep?: string;
     autosaveMilestones: string[];
   };
-  settings: {
-    masterVolume: number;
-  };
+  settings: AccessibilitySettings;
 }
 
 export type SaveGame = SaveGameV1 | SaveGameV2;
@@ -92,9 +109,7 @@ export function freshSave(): SaveGameV2 {
       maxDepth: 0,
       autosaveMilestones: [],
     },
-    settings: {
-      masterVolume: 1,
-    },
+    settings: freshAccessibilitySettings(),
   };
 }
 
@@ -146,6 +161,13 @@ export function parseSave(raw: string): SaveGame {
   const s = data.settings;
   if (!isRecord(s)) throw new SaveParseError('save.settings is missing');
   if (typeof s.masterVolume !== 'number') throw new SaveParseError('save.settings.masterVolume is not a number');
+
+  // Migrate accessibility settings: add missing fields with defaults.
+  if (typeof s.screenShake !== 'boolean') s.screenShake = true;
+  if (typeof s.reducedFlashing !== 'boolean') s.reducedFlashing = false;
+  if (typeof s.showSubtitles !== 'boolean') s.showSubtitles = true;
+  if (typeof s.hiContrastSonar !== 'boolean') s.hiContrastSonar = false;
+
   return data as unknown as SaveGame;
 }
 

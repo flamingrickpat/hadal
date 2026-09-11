@@ -23,10 +23,11 @@ import { Renderer } from '../render/Renderer';
 import { World } from '../world/World';
 import { Hud } from '../ui/hud';
 import { CraftingMenu } from '../ui/menu';
+import { SettingsOverlay } from '../ui/settings';
 import { MapOverlay } from '../ui/mapOverlay';
 import { buildMapViewModel } from '../ui/mapView';
 import { createSimulation, makeSimWorld, type Simulation } from '../sim/Simulation';
-import { loadFromStorage, resetSave, saveToStorage } from './save';
+import { loadFromStorage, resetSave, saveToStorage, freshAccessibilitySettings, type AccessibilitySettings } from './save';
 import { PLAYER_PLANE_Z } from './constants';
 import { Lighting } from '../render/lighting';
 import { CreatureRenderer } from '../render/creatureRender';
@@ -64,6 +65,8 @@ export class Game implements DebugPanelHost {
   private lastShownLine: string | null = null;
   private paused = false;
   private sonarHeld = false;
+  private settings: AccessibilitySettings;
+  private readonly settingsOverlay: SettingsOverlay;
   /** Creatures whose early cue has already played (resets when they leave cue range). */
   private readonly cuePlayed = new Set<string>();
 
@@ -71,7 +74,13 @@ export class Game implements DebugPanelHost {
     this.renderer = renderer;
     this.sim = createSimulation(makeSimWorld(), GAME_SEED);
     // Browser storage adapter: a malformed save resets gracefully (request §25).
-    this.sim.loadFromSave(loadFromStorage(window.localStorage).save);
+    const loaded = loadFromStorage(window.localStorage);
+    this.sim.loadFromSave(loaded.save);
+    // Load saved accessibility settings, applying them to the loaded save state.
+    this.settings = freshAccessibilitySettings();
+    if (loaded.save.version === 2) {
+      Object.assign(this.settings, loaded.save.settings);
+    }
     this.world = new World(renderer.scene, this.sim.chunks);
     renderer.setWorldBounds(this.world.bounds);
     this.lighting = new Lighting(renderer.scene);
@@ -90,6 +99,40 @@ export class Game implements DebugPanelHost {
     this.menu = new CraftingMenu(document.body, this.sim);
     this.map = new MapOverlay(document.body, this.sim.chunks);
     this.audio = new AudioSystem();
+    this.settingsOverlay = new SettingsOverlay(document.body, {
+      onMasterVolume: (v) => {
+        this.settings.masterVolume = v;
+        this.audio.setMasterVolume(v);
+        this.saveAccessibilitySettings();
+      },
+      onScreenShake: (v) => {
+        this.settings.screenShake = v;
+        renderer.setShakeEnabled(v);
+        this.saveAccessibilitySettings();
+      },
+      onReducedFlashing: (v) => {
+        this.settings.reducedFlashing = v;
+        this.hud.setReducedFlashing(v);
+        this.sonarVisuals.setReducedFlashing(v);
+        this.saveAccessibilitySettings();
+      },
+      onShowSubtitles: (v) => {
+        this.settings.showSubtitles = v;
+        this.saveAccessibilitySettings();
+      },
+      onHiContrastSonar: (v) => {
+        this.settings.hiContrastSonar = v;
+        this.sonarVisuals.setHiContrast(v);
+        this.saveAccessibilitySettings();
+      },
+    });
+    // Apply saved accessibility settings to live systems and the overlay UI.
+    this.settingsOverlay.applyState(this.settings);
+    this.audio.setMasterVolume(this.settings.masterVolume);
+    renderer.setShakeEnabled(this.settings.screenShake);
+    this.sonarVisuals.setHiContrast(this.settings.hiContrastSonar);
+    this.sonarVisuals.setReducedFlashing(this.settings.reducedFlashing);
+    this.hud.setReducedFlashing(this.settings.reducedFlashing);
     // Audio unlocks on the first user gesture so the browser autoplay rules are
     // respected (request §27, §70); the AudioContext is created only here.
     const unlockAudio = (): void => {
@@ -112,6 +155,9 @@ export class Game implements DebugPanelHost {
       if (e.code === 'Tab') {
         e.preventDefault();
         this.toggleMap();
+      }
+      if (e.code === 'KeyI') {
+        this.toggleSettings();
       }
     });
   }
@@ -249,6 +295,8 @@ export class Game implements DebugPanelHost {
       this.lastShownLine = this.sim.lastStoryLine;
       this.radio.textContent = this.lastShownLine ?? '';
     }
+    // Toggle subtitle line visibility based on the showSubtitles setting.
+    this.radio.style.display = this.settings.showSubtitles ? 'block' : 'none';
   }
 
   private buildPlayerMesh(): THREE.Group {
@@ -269,6 +317,17 @@ export class Game implements DebugPanelHost {
     const wasOpen = this.map.toggle();
     // Pause the game while the map is open
     this.hud.setPaused(wasOpen || this.paused);
+  }
+
+  private toggleSettings(): void {
+    this.settingsOverlay.toggle();
+  }
+
+  private saveAccessibilitySettings(): void {
+    if (this.sim.toSave().version !== 2) return;
+    const save = this.sim.toSave();
+    save.settings = { ...this.settings };
+    saveToStorage(window.localStorage, save);
   }
 
   // Debug host (request §33): drive the simulation and storage from the panel.

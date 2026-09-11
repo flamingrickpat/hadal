@@ -98,4 +98,83 @@ describe('SaveGameV2 (request §42, §70, WI-05cb)', () => {
     saveToStorage(storage, save);
     expect(parseSave(storage.getItem(SAVE_KEY)!)).toEqual(save);
   });
+
+  // Accessibility settings (WI-06g, request §43)
+  it('has accessibility settings with defaults', () => {
+    const save = freshSave();
+    expect(save.settings.screenShake).toBe(true);
+    expect(save.settings.reducedFlashing).toBe(false);
+    expect(save.settings.showSubtitles).toBe(true);
+    expect(save.settings.hiContrastSonar).toBe(false);
+  });
+
+  it('round-trips accessibility settings exactly', () => {
+    const save = populatedSave();
+    save.settings.screenShake = false;
+    save.settings.reducedFlashing = true;
+    save.settings.showSubtitles = false;
+    save.settings.hiContrastSonar = true;
+    const restored = parseSave(serializeSave(save)) as SaveGameV2;
+    expect(restored.settings.screenShake).toBe(false);
+    expect(restored.settings.reducedFlashing).toBe(true);
+    expect(restored.settings.showSubtitles).toBe(false);
+    expect(restored.settings.hiContrastSonar).toBe(true);
+  });
+
+  it('migrates a v1 save without accessibility fields to defaults', () => {
+    const oldSave = {
+      version: 1,
+      playTimeSec: 100,
+      player: {
+        health: 80,
+        oxygenUpgrade: 0,
+        equipmentIds: ['tank-1'],
+        inventory: { salvage: 3 },
+        banked: { salvage: 0 },
+      },
+      world: {
+        discoveredChunks: ['seabed'],
+        openedShortcuts: [],
+        collectedUniqueIds: [],
+        storyFlags: [],
+        maxDepth: 100,
+      },
+      settings: { masterVolume: 0.8 },
+    };
+    const restored = parseSave(serializeSave(oldSave)) as SaveGameV2;
+    expect(restored.version).toBe(2);
+    expect(restored.settings.screenShake).toBe(true);
+    expect(restored.settings.reducedFlashing).toBe(false);
+    expect(restored.settings.showSubtitles).toBe(true);
+    expect(restored.settings.hiContrastSonar).toBe(false);
+  });
+
+  it('migrates a v2 save without accessibility fields to defaults', () => {
+    const oldSave = {
+      version: 2,
+      playTimeSec: 200,
+      player: {
+        health: 70,
+        oxygenUpgrade: 1,
+        equipmentIds: ['fins-1'],
+        inventory: { salvage: 2 },
+        banked: { salvage: 1 },
+      },
+      world: {
+        discoveredChunks: [],
+        openedShortcuts: [],
+        collectedUniqueIds: [],
+        storyFlags: [],
+        maxDepth: 50,
+        endingTriggered: false,
+        autosaveMilestones: [],
+      },
+      settings: { masterVolume: 0.5 },
+    };
+    const restored = parseSave(serializeSave(oldSave)) as SaveGameV2;
+    expect(restored.settings.screenShake).toBe(true);
+    expect(restored.settings.reducedFlashing).toBe(false);
+    expect(restored.settings.showSubtitles).toBe(true);
+    expect(restored.settings.hiContrastSonar).toBe(false);
+  });
 });

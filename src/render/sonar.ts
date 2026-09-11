@@ -61,6 +61,8 @@ export class SonarVisuals {
   private readonly echoCol: Float32Array;
   readonly echoSize: Float32Array;
   private readonly accent: THREE.Color;
+  private hiContrast = false;
+  private reducedFlashing = false;
 
   constructor(scene: THREE.Scene, private readonly sonar: SonarSystem) {
     const ringPts: THREE.Vector3[] = [];
@@ -113,6 +115,22 @@ export class SonarVisuals {
     this.accent = new THREE.Color(0x9fd8e8);
   }
 
+  /** Enable high-contrast sonar rendering (request §43 accessibility). */
+  setHiContrast(enabled: boolean): void {
+    this.hiContrast = enabled;
+    if (enabled) {
+      // Bright yellow, maximum contrast against dark water
+      this.accent.setRGB(1, 1, 0.2);
+    } else {
+      this.accent.setRGB(0.62, 0.85, 0.91);
+    }
+  }
+
+  /** Enable reduced flashing: remove the ring's opacity fade. */
+  setReducedFlashing(enabled: boolean): void {
+    this.reducedFlashing = enabled;
+  }
+
   /** Draw the current sonar state (request §18): ring, tags, and echoes. */
   update(time: number): void {
     if (this.sonar.ringActive) {
@@ -120,8 +138,13 @@ export class SonarVisuals {
       this.ring.position.set(this.sonar.ringOrigin.x, this.sonar.ringOrigin.y, SONAR_Z);
       const r = Math.max(1, this.sonar.ringRadius);
       this.ring.scale.set(r, r, 1);
-      const progress = this.sonar.ringRadius / this.sonar.ringMaxRadius;
-      this.ringMat.opacity = Math.max(0, 1 - progress) * 0.9;
+      if (this.reducedFlashing) {
+        // Static visibility, no fade animation
+        this.ringMat.opacity = 0.9;
+      } else {
+        const progress = this.sonar.ringRadius / this.sonar.ringMaxRadius;
+        this.ringMat.opacity = Math.max(0, 1 - progress) * 0.9;
+      }
     } else {
       this.ring.visible = false;
     }

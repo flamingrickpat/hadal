@@ -30,6 +30,7 @@ export class Hud {
   private readonly depthText: HTMLElement;
   private readonly toolText: HTMLElement;
   private readonly pauseOverlay: HTMLElement;
+  private reducedFlashing = false;
 
   constructor(container: HTMLElement) {
     if (!(container instanceof HTMLElement)) {
@@ -94,10 +95,16 @@ export class Hud {
 
   /** Brief HUD-adjacent tick cue: one flash on the depth readout. */
   private fireDepthTick(): void {
+    if (this.reducedFlashing) return;
     this.depthText.classList.add('depth-tick');
     setTimeout(() => {
       this.depthText.classList.remove('depth-tick');
     }, 1200);
+  }
+
+  /** Enable reduced flashing mode (request §43 accessibility). */
+  setReducedFlashing(enabled: boolean): void {
+    this.reducedFlashing = enabled;
   }
 
   setPaused(paused: boolean): void {
