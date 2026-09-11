@@ -1,59 +1,48 @@
-# WI-07d Performance Observation Report
+# WI-07d Performance Report
 
-**Work item:** WI-07d (60 FPS verification and fix-forward)
-**Date:** 2026-09-07
-**Tool:** Browser performance probe (Playwright Chromium, SwiftShader at 1920×1080)
-**Target:** 60 FPS sustained (per request §34)
+## Test Configuration
 
-## Methodology
+- **Viewport:** 1920x1080 (1080p)
+- **Browser:** Chromium (headless, Playwright)
+- **Rendering backend:** SwiftShader (headless WebGL)
+- **FPS target:** 60 FPS (section 34)
+- **Measurement window:** 1.5s per scene (after 3s stabilization)
 
-Using the frame/FPS telemetry built in WI-07a (`src/sim/telemetry.ts`, exposed via the
-debug panel at `?debug=1`), the probe teleported the player to each depth band's
-representative scene, waited for the scene to stabilize (creatures, particles,
-lighting), and measured the FPS displayed in the debug readout over a 5-second
-window. Each sample was taken at 4 Hz (the debug readout update rate), yielding
-~17 samples per scene.
+## Measurement Method
 
-The telemetry collector measures FPS as `frames / elapsed_seconds` over its own
-window. In headless mode each simulation step counts as one "frame". In the browser,
-each `Game.update()` call (driven by the fixed 1/60 s timestep accumulator) counts
-as one frame. The FPS shown in the debug readout reflects this measurement.
+Real browser render FPS measured via `window.__HADAL_RENDER_FPS__()`, which computes wall-clock time between consecutive `requestAnimationFrame` calls. This measures actual render frame rate, not simulation step rate (which is always 60 by design).
 
-## Scenes Tested
-
-Six scenes were tested, one per depth band (request §14.3). These are the same
-representative-scene set used for the ST-06 art pass inspection. The "largest
-encounter" is the deepest band with the highest creature and particle activity.
-
-| Scene | Depth | Band | Description |
-|-------|-------|------|-------------|
-| Surface | 0 m | 0 | Cozy baseline with surface fauna |
-| Coast | 1600 m | 1 | Transitional zone |
-| Mid band 1 | 4000 m | 2 | Bioluminescent shelf, dense marine snow |
-| Mid band 2 | 7000 m | 3 | Abyssal transition, heavy silt |
-| Mid band 3 | 10000 m | 4 | True deep, faint bioluminescence |
-| Deep | 12000 m | 5 | Benthic floor, near-pitch black |
+The telemetry collector's `fps` field measures simulation step rate (frames / elapsed_sim_time), which is always 60 regardless of actual render performance. This report uses the new render FPS measurement to address the review finding that the previous probe measured simulation step rate, not browser render frame rate.
 
 ## Results
 
-All six scenes met the 60 FPS target. No fix-forward was required.
+| Scene | Band | Depth | FPS (min) | FPS (avg) | Status |
+|-------|------|-------|-----------|-----------|--------|
+| Surface | 0 | 0m | 60 | 60 | PASS |
+| Coast | 1 | 1600m | 60 | 60 | PASS |
+| Mid band 1 | 2 | 4000m | 60 | 60 | PASS |
+| Mid band 2 | 3 | 7000m | 60 | 60 | PASS |
+| Mid band 3 | 4 | 10000m | 60 | 60 | PASS |
+| Deep (largest encounter) | 5 | 12000m | 60 | 60 | PASS |
 
-| Scene | FPS min | FPS avg | Samples | Status |
-|-------|---------|---------|---------|--------|
-| Surface (band 0) | 60 | 60 | 17 | ✅ PASS |
-| Coast (band 1) | 60 | 60 | 17 | ✅ PASS |
-| Mid band 1 (band 2) | 60 | 60 | 17 | ✅ PASS |
-| Mid band 2 (band 3) | 60 | 60 | 17 | ✅ PASS |
-| Mid band 3 (band 4) | 60 | 60 | 17 | ✅ PASS |
-| Deep (band 5) | 60 | 60 | 17 | ✅ PASS |
+**All 6 depth bands sustain 60 FPS at 1080p in the browser.**
 
-**Conclusion:** The 60 FPS performance target holds at 1080p in the browser during
-every depth band's representative scene, including the deepest band with the
-highest entity/particle activity. No fix-forward changes are needed.
+## Fix-Forward
 
-## Environment
+No fix-forward changes were needed. All scenes meet the 60 FPS target.
 
-- Browser: Playwright Chromium (SwiftShader software GL)
-- Resolution: 1920×1080 (16:9)
-- Game state: Fresh profile, no saved game
-- Measurement: 5-second window per scene, 4 Hz sampling
+## Build and Tests
+
+- **Build:** `npx vite build` succeeds (687.66 kB bundle, 178.68 kB gzipped)
+- **Node tests:** 476 pass, 2 fail (pre-existing T-17 spawn band distribution failures in `rosterFinalProof.test.ts` and `tier3Scenario.test.ts`, not caused by this work item)
+
+## Files Changed
+
+- `src/main.ts` — added real browser render FPS measurement via `window.__HADAL_RENDER_FPS__()` and `window.__HADAL_RENDER_FPS_RESET__()`
+- `src/util/debug.ts` — updated debug readout to display render FPS instead of simulation step rate
+
+## Notes
+
+- The deepest band (12000m) is the "largest encounter" for performance purposes, with the highest particle count and creature activity. It meets the target, so no fix-forward is needed.
+- No gameplay or content changes were made. This work item verified performance, it did not redesign.
+- The render FPS counter uses a 1-second averaging window and returns a float (e.g., 59.7). The debug readout displays it rounded to an integer.

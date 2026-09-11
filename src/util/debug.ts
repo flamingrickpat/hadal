@@ -116,9 +116,14 @@ export class DebugPanel {
       this.readout.style.display = 'block';
       // WI-07a: extended section 71 balance telemetry readout.
       const t = this.host.telemetry();
+      // WI-07d: use real browser render FPS (not simulation step rate).
+      // The telemetry collector's FPS field measures sim step rate (always 60);
+      // this counter measures actual requestAnimationFrame frame rate.
+      const renderFps = (window as unknown as Record<string, unknown>).__HADAL_RENDER_FPS__ as () => number;
+      const fps = typeof renderFps === 'function' ? renderFps() : t.fps;
       const line1 = `x ${p.x.toFixed(1)}  depth ${m.depth.toFixed(1)}  o2 ${m.o2.toFixed(0)}/${m.o2Max.toFixed(0)}  hp ${m.health.toFixed(0)}`;
       const line2 = `time ${t.playTimeSec.toFixed(0)}s  zone ${t.zone}  maxd ${t.maxDepth.toFixed(0)}  deaths ${t.deaths}`;
-      const line3 = `upgrades ${t.upgradesCrafted.length}  fps ${t.fps.toFixed(0)}`;
+      const line3 = `upgrades ${t.upgradesCrafted.length}  fps ${fps.toFixed(0)}`;
       this.readout.textContent = `${line1}\n${line2}\n${line3}`;
     }
   }

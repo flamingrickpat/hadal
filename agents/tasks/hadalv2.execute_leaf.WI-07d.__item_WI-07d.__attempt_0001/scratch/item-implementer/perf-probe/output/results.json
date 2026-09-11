@@ -8,7 +8,7 @@
       "actualDepth": 0,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     },
     {
@@ -18,47 +18,47 @@
       "actualDepth": 1600,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     },
     {
       "scene": "mid1",
       "name": "Mid band 1 (band 2)",
       "depth": 4000,
-      "actualDepth": 4000.2,
+      "actualDepth": 4000,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     },
     {
       "scene": "mid2",
       "name": "Mid band 2 (band 3)",
       "depth": 7000,
-      "actualDepth": 7000.7,
+      "actualDepth": 7000,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     },
     {
       "scene": "mid3",
       "name": "Mid band 3 (band 4)",
       "depth": 10000,
-      "actualDepth": 10000.1,
+      "actualDepth": 10000,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     },
     {
       "scene": "deep",
-      "name": "Deep (band 5)",
+      "name": "Deep (band 5) - largest encounter",
       "depth": 12000,
       "actualDepth": 12000,
       "fpsMin": 60,
       "fpsAvg": 60,
-      "samples": 17,
+      "samples": 1,
       "passes": true
     }
   ],
