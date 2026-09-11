@@ -20,7 +20,8 @@ import { vec2, type Rect, type Vec2 } from '../util/math';
 /** A current field attached to a region (request §64). */
 export interface CurrentField {
   bounds: Rect;
-  velocityAt(pos: Vec2, time: number): Vec2;
+  /** Writes the field's velocity at (pos, time) into out (no allocation). */
+  velocityAt(pos: Vec2, time: number, out: Vec2): void;
 }
 
 /** A constant horizontal/vertical drift (request §64). */
@@ -28,7 +29,10 @@ export function driftField(bounds: Rect, dir: Vec2, speed: number): CurrentField
   const len = Math.hypot(dir.x, dir.y) || 1;
   const vx = (dir.x / len) * speed;
   const vy = (dir.y / len) * speed;
-  return { bounds, velocityAt: () => vec2(vx, vy) };
+  return {
+    bounds,
+    velocityAt(_pos, _time, out) { out.x = vx; out.y = vy; },
+  };
 }
 
 /** A vertical vent: upward flow, strongest at the center, parabolic falloff. */
@@ -37,10 +41,11 @@ export function ventField(bounds: Rect, riseSpeed: number): CurrentField {
   const halfW = bounds.w / 2;
   return {
     bounds,
-    velocityAt(pos) {
+    velocityAt(pos, _time, out) {
       const dx = halfW > 0 ? (pos.x - cx) / halfW : 0;
       const falloff = Math.max(0, 1 - dx * dx);
-      return vec2(0, riseSpeed * falloff);
+      out.x = 0;
+      out.y = riseSpeed * falloff;
     },
   };
 }
@@ -52,9 +57,10 @@ export function pulsingCurrentField(bounds: Rect, dir: Vec2, maxSpeed: number, p
   const vy = (dir.y / len) * maxSpeed;
   return {
     bounds,
-    velocityAt(_pos, time) {
+    velocityAt(_pos, time, out) {
       const pulse = (Math.sin((time / period) * 2 * Math.PI) + 1) / 2;
-      return vec2(vx * pulse, vy * pulse);
+      out.x = vx * pulse;
+      out.y = vy * pulse;
     },
   };
 }
@@ -65,31 +71,38 @@ export function eddyField(bounds: Rect, radius: number, swirlSpeed: number): Cur
   const cy = bounds.y + bounds.h / 2;
   return {
     bounds,
-    velocityAt(pos) {
+    velocityAt(pos, _time, out) {
       const dx = pos.x - cx;
       const dy = pos.y - cy;
       const d = Math.hypot(dx, dy) || 1;
       const falloff = Math.max(0, 1 - d / radius);
-      return vec2((-dy / d) * swirlSpeed * falloff, (dx / d) * swirlSpeed * falloff);
+      out.x = (-dy / d) * swirlSpeed * falloff;
+      out.y = (dx / d) * swirlSpeed * falloff;
     },
   };
 }
+
+// Shared temp for field summation (request §34: no per-frame allocation).
+const tempSum = { x: 0, y: 0 };
 
 /** Sums the current velocity over all fields whose bounds contain the position. */
 export class CurrentSystem {
   constructor(private readonly fields: readonly CurrentField[]) {}
 
-  /** The local water velocity at (pos, time): the sum of the containing fields (request §64). */
-  velocityAt(pos: Vec2, time: number): Vec2 {
+  /** The local water velocity at (pos, time): the sum of the containing fields (request §64). Writes into out. */
+  velocityAt(pos: Vec2, time: number, out: Vec2): void {
     let vx = 0;
     let vy = 0;
     for (const f of this.fields) {
       const b = f.bounds;
       if (pos.x < b.x || pos.x > b.x + b.w || pos.y < b.y || pos.y > b.y + b.h) continue;
-      const v = f.velocityAt(pos, time);
-      vx += v.x;
-      vy += v.y;
+      tempSum.x = 0;
+      tempSum.y = 0;
+      f.velocityAt(pos, time, tempSum);
+      vx += tempSum.x;
+      vy += tempSum.y;
     }
-    return vec2(vx, vy);
+    out.x = vx;
+    out.y = vy;
   }
 }

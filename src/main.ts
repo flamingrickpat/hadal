@@ -59,3 +59,6 @@ const frame = (now: number): void => {
   renderFpsFrames = 0;
   renderFpsLastTime = 0;
 };
+
+// Start the frame loop.
+requestAnimationFrame(frame);

@@ -6,61 +6,109 @@
       "name": "Surface (band 0)",
       "depth": 0,
       "actualDepth": 0,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "fpsMin": 22.3,
+      "fpsAvg": 23.4,
+      "samples": [
+        23.2,
+        24.2,
+        23.2,
+        22.3,
+        24.2
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     },
     {
       "scene": "coast",
       "name": "Coast (band 1)",
       "depth": 1600,
       "actualDepth": 1600,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "fpsMin": 19.7,
+      "fpsAvg": 20.8,
+      "samples": [
+        21.3,
+        22,
+        20.3,
+        20.7,
+        19.7
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     },
     {
       "scene": "mid1",
       "name": "Mid band 1 (band 2)",
       "depth": 4000,
-      "actualDepth": 4000,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "actualDepth": 4000.067986926848,
+      "fpsMin": 22.6,
+      "fpsAvg": 22.8,
+      "samples": [
+        22.9,
+        22.6,
+        22.6,
+        23,
+        22.9
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     },
     {
       "scene": "mid2",
       "name": "Mid band 2 (band 3)",
       "depth": 7000,
-      "actualDepth": 7000,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "actualDepth": 7000.067986926848,
+      "fpsMin": 23.8,
+      "fpsAvg": 24.2,
+      "samples": [
+        24.2,
+        24.8,
+        23.8,
+        24.2,
+        24
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     },
     {
       "scene": "mid3",
       "name": "Mid band 3 (band 4)",
       "depth": 10000,
-      "actualDepth": 10000,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "actualDepth": 10000.067986926848,
+      "fpsMin": 22.9,
+      "fpsAvg": 23.5,
+      "samples": [
+        24,
+        23.6,
+        23.6,
+        22.9,
+        23.2
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     },
     {
       "scene": "deep",
       "name": "Deep (band 5) - largest encounter",
       "depth": 12000,
       "actualDepth": 12000,
-      "fpsMin": 60,
-      "fpsAvg": 60,
-      "samples": 1,
-      "passes": true
+      "fpsMin": 22.6,
+      "fpsAvg": 23.1,
+      "samples": [
+        24,
+        23.2,
+        23,
+        22.6,
+        22.9
+      ],
+      "sampleCount": 5,
+      "isLoopRunning": true,
+      "passes": false
     }
   ],
-  "allPass": true
+  "allPass": false
 }

@@ -272,7 +272,7 @@ export class Game implements DebugPanelHost {
     // §17 streaming criterion, consumed here rather than left unobserved.
     const ambient = this.sim.ambientIntensityAt(center);
     const ambientScale = ambient > 0 ? Math.min(1, 0.35 + ambient) : 0;
-    this.particles.update(frameDt, center, half, profile, this.sim.player.depth, (pos, time) => this.sim.currents.velocityAt(pos, time), ambientScale);
+    this.particles.update(frameDt, center, half, profile, this.sim.player.depth, (pos, time, out) => this.sim.currents.velocityAt(pos, time, out), ambientScale);
     // Creatures are a pure render view of the sim state (request §30): the
     // procedural bodies (request §13) are redrawn from the creature list
     // every frame, driven by the simulation clock. The camera's current view

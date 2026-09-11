@@ -545,7 +545,8 @@ export class Simulation {
    * upgrade they resist most of it, so the current is noticeably weaker.
    */
   private applyCurrent(dt: number): void {
-    const cur = this.currents.velocityAt(this.player.position, this.state.timeSec);
+    const cur = { x: 0, y: 0 };
+    this.currents.velocityAt(this.player.position, this.state.timeSec, cur);
     const speed = Math.hypot(cur.x, cur.y);
     if (speed < 1e-6) return;
     const control = this.player.capabilities.has('boost') ? CURRENT_CONTROL_WITH_PROPULSION : CURRENT_CONTROL_BASE;
@@ -773,7 +774,8 @@ export class Simulation {
     // weakest nudge, applied on top of anything above. Desired velocity
     // along the current, scaled to the creature's max speed.
     if (eco.filterFeeder) {
-      const cur = this.currents.velocityAt(c.position, t);
+      const cur = { x: 0, y: 0 };
+      this.currents.velocityAt(c.position, t, cur);
       const speed = Math.hypot(cur.x, cur.y);
       if (speed > 4) {
         this.desiredOut.x = (cur.x / speed) * m.maxSpeed;
@@ -1264,7 +1266,8 @@ export class Simulation {
     }
     if (nearest === null) return;
     herder.target = vec2(nearest.position.x, nearest.position.y);
-    const cur = this.currents.velocityAt(herder.position, t);
+    const cur = { x: 0, y: 0 };
+    this.currents.velocityAt(herder.position, t, cur);
     for (const m of this.creatures) {
       if (!m.active || m.def.id !== 'T-03') continue;
       const d = Math.hypot(m.position.x - herder.position.x, m.position.y - herder.position.y);

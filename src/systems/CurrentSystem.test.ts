@@ -23,6 +23,9 @@ function makeType(count: number, sink: number, seed: number, start: { x: number;
   return { name: 'silt', positions, seeds, count, sink, rise: 0, z: 0 };
 }
 
+// Shared temp object for velocityAt calls (request §34: no per-frame allocation).
+const temp = { x: 0, y: 0 };
+
 /**
  * The current system (request §64): the four field types compute the local
  * velocity, the system sums the fields, the player is carried by the field,
@@ -32,33 +35,40 @@ function makeType(count: number, sink: number, seed: number, start: { x: number;
 describe('current fields (request §64)', () => {
   it('a horizontal drift field gives a constant velocity', () => {
     const field = driftField({ x: 0, y: -1000, w: 1000, h: 1000 }, vec2(1, 0), 40);
-    const v = field.velocityAt(vec2(500, -500), 0);
-    expect(v.x).toBeCloseTo(40);
-    expect(v.y).toBeCloseTo(0);
+    field.velocityAt(vec2(500, -500), 0, temp);
+    expect(temp.x).toBeCloseTo(40);
+    expect(temp.y).toBeCloseTo(0);
   });
 
   it('a vertical vent rises, strongest at the centre', () => {
     const field = ventField({ x: 0, y: -1000, w: 1000, h: 1000 }, 30);
-    const centre = field.velocityAt(vec2(500, -500), 0);
-    const edge = field.velocityAt(vec2(0, -500), 0);
-    expect(centre.y).toBeCloseTo(30);
-    expect(centre.y).toBeGreaterThan(edge.y);
+    field.velocityAt(vec2(500, -500), 0, temp);
+    const centreY = temp.y;
+    field.velocityAt(vec2(0, -500), 0, temp);
+    const edgeY = temp.y;
+    expect(centreY).toBeCloseTo(30);
+    expect(centreY).toBeGreaterThan(edgeY);
   });
 
   it('a pulsing current oscillates over time', () => {
     const field = pulsingCurrentField({ x: 0, y: -1000, w: 1000, h: 1000 }, vec2(1, 0), 40, 4);
-    const vHigh = field.velocityAt(vec2(500, -500), 1); // peak (sin = +1)
-    const vLow = field.velocityAt(vec2(500, -500), 3); // trough (sin = -1)
-    expect(vHigh.x).toBeGreaterThan(vLow.x);
-    expect(vHigh.x).toBeCloseTo(40);
+    field.velocityAt(vec2(500, -500), 1, temp); // peak (sin = +1)
+    const vHighX = temp.x;
+    field.velocityAt(vec2(500, -500), 3, temp); // trough (sin = -1)
+    const vLowX = temp.x;
+    expect(vHighX).toBeGreaterThan(vLowX);
+    expect(vHighX).toBeCloseTo(40);
   });
 
   it('an eddy swirls around the centre with radial falloff', () => {
     const field = eddyField({ x: 0, y: -1000, w: 1000, h: 1000 }, 400, 20);
-    const near = field.velocityAt(vec2(800, -500), 0); // 300 right of centre
-    const far = field.velocityAt(vec2(980, -500), 0); // 480 right of centre (near the edge)
-    expect(Math.abs(near.y)).toBeGreaterThan(0); // the swirl has a vertical component
-    expect(Math.hypot(near.x, near.y)).toBeGreaterThan(Math.hypot(far.x, far.y)); // falloff with distance
+    field.velocityAt(vec2(800, -500), 0, temp); // 300 right of centre
+    const nearY = temp.y;
+    const nearMag = Math.hypot(temp.x, temp.y);
+    field.velocityAt(vec2(980, -500), 0, temp); // 480 right of centre (near the edge)
+    const farMag = Math.hypot(temp.x, temp.y);
+    expect(Math.abs(nearY)).toBeGreaterThan(0); // the swirl has a vertical component
+    expect(nearMag).toBeGreaterThan(farMag); // falloff with distance
   });
 
   it('the system sums the fields whose bounds contain the position', () => {
@@ -66,11 +76,12 @@ describe('current fields (request §64)', () => {
       driftField({ x: 0, y: -1000, w: 1000, h: 1000 }, vec2(1, 0), 30),
       ventField({ x: 0, y: -1000, w: 1000, h: 1000 }, 20),
     ]);
-    const v = system.velocityAt(vec2(500, -500), 0);
-    expect(v.x).toBeCloseTo(30);
-    expect(v.y).toBeCloseTo(20);
+    system.velocityAt(vec2(500, -500), 0, temp);
+    expect(temp.x).toBeCloseTo(30);
+    expect(temp.y).toBeCloseTo(20);
     // Outside every field: no current.
-    expect(system.velocityAt(vec2(5000, -500), 0)).toEqual({ x: 0, y: 0 });
+    system.velocityAt(vec2(5000, -500), 0, temp);
+    expect(temp).toEqual({ x: 0, y: 0 });
   });
 });
 
@@ -104,7 +115,7 @@ describe('currents move the player and the particles (request §64)', () => {
     const tField = makeType(1, 0, 0.5, { x: 0, y: 0 });
     const stateField = { center: { x: 0, y: 0 }, half: { x: 1000, y: 1000 }, time: 0 };
     for (let i = 0; i < 30; i += 1) {
-      stepParticleType(tField, stateField, 0.1, profile, (pos, time) => system.velocityAt(pos, time));
+      stepParticleType(tField, stateField, 0.1, profile, (pos, time, out) => system.velocityAt(pos, time, out));
       stateField.time += 0.1;
     }
     const driftWithField = tField.positions[0]!;

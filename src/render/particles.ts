@@ -53,6 +53,10 @@ export interface ParticleType {
  * that moves the player); otherwise it falls back to the per-band profile
  * current (`profile.currentDir * currentSpeed`), the greybox behaviour.
  */
+// Shared temp objects for the particle step loop (request §34: no per-frame allocation).
+const tempPos = { x: 0, y: 0 };
+const tempVel = { x: 0, y: 0 };
+
 export function stepParticleType(
   type: ParticleType,
   state: { center: Vec2; half: Vec2; time: number },
@@ -80,9 +84,11 @@ export function stepParticleType(
     let curX = profileCurX;
     let curY = profileCurY;
     if (useField) {
-      const v = currentAt!(vec2(px0, py0), time);
-      curX = v.x;
-      curY = v.y;
+      tempPos.x = px0;
+      tempPos.y = py0;
+      currentAt!(tempPos, time, tempVel);
+      curX = tempVel.x;
+      curY = tempVel.y;
     }
     const vx = curX + Math.sin(phase) * sinkAmp * 0.25;
     const vy =
