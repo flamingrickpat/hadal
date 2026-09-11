@@ -29,6 +29,8 @@
  *   looped track (request §58).
  */
 import { AUDIO_STOPS, audioProfileAtDepth, distanceGain, worldPan, type AudioProfile } from '../util/audio';
+import { BAND_STOPS } from '../render/band';
+import { CREATURE_AUDIO_PROFILES, CUE_LEAD_TIME_BANDS, type CreatureAudioProfile } from '../util/creatureAudio';
 import { createRng } from '../util/rng';
 import { clamp } from '../util/math';
 import type { Player } from '../player/Player';
@@ -598,6 +600,103 @@ export class AudioSystem {
     env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     groan.stop(now + duration + 0.1);
     thump.stop(now + duration + 0.1);
+  }
+
+  /**
+   * A major creature's procedural early cue, played when it enters its band's
+   * cue range (visibility + lead time). Uses the creature's profile vocabulary
+   * tag to determine synthesis (request §19, §27, §58).
+   */
+  playCreatureCue(profile: CreatureAudioProfile, worldX: number, playerX: number, distance: number, depthBand: number): void {
+    const ctx = this.ctx!;
+    if (ctx === null) return;
+    const now = ctx.currentTime;
+    const band = Math.min(depthBand, CUE_LEAD_TIME_BANDS.length - 1);
+    const lead = profile.cueLeadTimePerBand[band]!;
+    const leadBand = CUE_LEAD_TIME_BANDS[band]!;
+    const cueDist = Math.floor(leadBand.multiplier * BAND_STOPS[band]!.visibility) - leadBand.multiplier * 0;
+    const pan = worldPan(worldX, playerX);
+    const level = distanceGain(distance) * (0.15 + 0.05 * depthBand);
+    this.playCreatureSynthesis(now, profile.vocabulary, pan, level);
+  }
+
+  private playCreatureSynthesis(now: number, vocabulary: string, pan: number, level: number): void {
+    const ctx = this.ctx!;
+    const panner = ctx.createStereoPanner();
+    panner.pan.value = pan;
+    const env = ctx.createGain();
+    env.gain.value = 0;
+    panner.connect(env);
+    env.connect(this.worldBus!);
+    switch (vocabulary) {
+      case 'sub-bass':
+      case 'groaning':
+      case 'resonant harmonics': {
+        const osc = this.sineSource(ctx, 30 + this.rng() * 15);
+        osc.connect(panner);
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.exponentialRampToValueAtTime(level, now + 0.3);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
+        osc.stop(now + 2.6);
+        break;
+      }
+      case 'clicks':
+      case 'snapping':
+      case 'popping': {
+        for (let i = 0; i < 4; i += 1) {
+          this.playNoiseBurst({ when: now + i * 0.15, duration: 0.04, frequency: 1500 + this.rng() * 1000, filterType: 'bandpass', q: 4, gain: level * 0.6, pan });
+        }
+        break;
+      }
+      case 'scraping':
+      case 'creaking': {
+        const source = ctx.createBufferSource();
+        source.buffer = this.noiseBuffer()!;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 250 + this.rng() * 200;
+        filter.Q.value = 3;
+        source.connect(filter);
+        filter.connect(panner);
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.exponentialRampToValueAtTime(level * 0.7, now + 0.1);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        source.start(now);
+        source.stop(now + 1.9);
+        break;
+      }
+      case 'chittering':
+      case 'trilling':
+      case 'squeaking': {
+        for (let i = 0; i < 8; i += 1) {
+          this.playOscSweep({ when: now + i * 0.08, duration: 0.05, startFreq: 1200 + this.rng() * 800, endFreq: 2200 + this.rng() * 600, gain: level * 0.4, pan });
+        }
+        break;
+      }
+      case 'thumping':
+      case 'ratcheting': {
+        for (let i = 0; i < 3; i += 1) {
+          this.playLowPulse({ when: now + i * 0.5, frequency: 40 + this.rng() * 20, duration: 0.3, gain: level * 0.8, pan });
+        }
+        break;
+      }
+      case 'whooshing':
+      default: {
+        const source = ctx.createBufferSource();
+        source.buffer = this.noiseBuffer()!;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400 + this.rng() * 300;
+        source.connect(filter);
+        filter.connect(panner);
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.exponentialRampToValueAtTime(level, now + 0.2);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+        source.start(now);
+        source.stop(now + 2.1);
+        break;
+      }
+    }
   }
 
   private playDepthMotif(now: number, band: number): void {
