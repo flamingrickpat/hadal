@@ -1,0 +1,51 @@
+{
+  "results": [
+    {
+      "step": "Verify fresh start (no previous save)",
+      "status": "PASS"
+    },
+    {
+      "step": "Swim and gather resources (core loop steps 1-3)",
+      "status": "PASS"
+    },
+    {
+      "step": "Save (save and verify)",
+      "status": "PASS"
+    },
+    {
+      "step": "Verify save persists across reload",
+      "status": "PASS"
+    },
+    {
+      "step": "Die (trigger death)",
+      "status": "PASS"
+    },
+    {
+      "step": "Respawn (respawn at base)",
+      "status": "PASS"
+    },
+    {
+      "step": "Restart (start new game)",
+      "status": "PASS"
+    },
+    {
+      "step": "Verify playability (swim across locations)",
+      "status": "PASS"
+    },
+    {
+      "step": "AC-art-map: Map overlay opens on Tab and pauses game",
+      "status": "PASS"
+    },
+    {
+      "step": "AC-art-a11y: Accessibility controls work and persist through save",
+      "status": "PASS"
+    },
+    {
+      "step": "Reach ending (complete game)",
+      "status": "PASS"
+    }
+  ],
+  "failures": 0,
+  "pageErrors": [],
+  "timestamp": "2026-09-11T23:37:48.613Z"
+}
