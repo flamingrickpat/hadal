@@ -1,0 +1,24 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf.WI-06d-b1.__item_WI-06d-b1",
+  "input": {
+    "selection": {
+      "id": "WI-06d-b1",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "parent": "WI-06d-b",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-06d-b/workitems/WI-06d-b1.md",
+      "specification": "---\nid: WI-06d-b1\nkind: work_item\nparent: WI-06d-b\nchildren: []\ndepends_on: [\"WI-06a\", \"WI-06b\", \"WI-06c\"]\ncriteria:\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\n  AC-juice-particles: \"Bubbles and silt particle systems are active in every band, driven by per-band data-driven emission tables, with the emission tables covered by Node unit tests\"\nbehavior: \"Add the bubbles and silt juice particle layers to the section 35 particle toolbox with data-driven per-band emission tables\"\nsubsystems: [\"rendering - particle toolbox\"]\nverification: \"Node unit tests pass for the bubble/silt emission tables and per-band emission counts; browser clip or screenshot per band showing bubbles and silt working; headless suite and build stay green; section 34 budgets hold\"\n---\n\n# WI-06d-b1 — Bubbles and silt juice particles\n\n## Goal\n\nExtend the section 35 particle toolbox with the two section 48 juice\nparticle effects — bubbles and silt — so both are present and tuned per\nband. Extend, do not rebuild: the existing particle field owns the\nplacement, wrap and per-band scaling invariants, and this item adds\nlayers on top of that design.\n\n## Changed responsibilities (the only owners that change)\n\n1. `src/render/particles.ts` — the particle field: add bubble and silt\n   layers (new `makeLayer` calls / a new layer kind), keeping the\n   no-reallocation buffer invariant and the active-chunks ambient gate.\n2. The per-band juice emission tables — a data module (new file next to\n   the band profile data in `src/render/`, or an extension of the\n   `BandProfile` data in `src/render/band.ts`) with per-band emission\n   rates, sizes, drift and accent values for bubbles and silt. Node-\n   testable as pure data.\n\nTests for these two owners (`src/render/particles.test.ts` and the\nemission-table tests) do not count as additional responsibilities.\n\n## Deliverables (checkable)\n\n- Bubbles: a particle layer with per-band emission, size, rise drift\n  and fade behavior from the data tables.\n- Silt: a particle layer distinct from the existing ambient silt motes\n  in profile (juice-scale silt from movement/disturbance per section\n  48), likewise data-driven.\n- Emission tables are pure data: unit-testable without a browser.\n\n## Tests\n\n- Node: emission-table unit tests (per-band values present for every\n  band; counts/sizes within the section 34 budget envelope);\n  particle-field tests updated to cover the two new layers (counts\n  track the band profile; buffers never re-allocated).\n- Browser (local proof): per-band clip or screenshot with bubbles and\n  silt visibly active. The final proof owner of the AC-art-geometry\n  juice-part browser union is WI-06d-b6 — do not re-assert the six-\n  effect union here.\n\n## Constraints, assumptions, non-goals\n\n- Readability: per section 14.3 the juice must not hurt readability at\n  1080p in motion; per-band tuning follows the settled band look from\n  WI-06a/b/c.\n- Section 34 budgets: emission counts stay within budget; the ambient-\n  scale gate still disables work near the camera when inactive.\n- No changes to light sway (WI-06d-b2), HUD (WI-06d-b3), camera\n  (WI-06d-b4) or schools (WI-06d-b5); no new gameplay rules, no\n  steering or balance changes, no audio.\n- Spoiler rules (sections 0, 12, 68, 70): late-game band recordings use\n  private fixtures and internal ids only.\n\n## Fresh-session handoff\n\nRead WI-06d-b/plan.md (story scope and proof ownership) and the three\nband items (WI-06a, WI-06b, WI-06c) for the settled per-band look.\nInspect `src/render/particles.ts` (layer construction, per-band counts,\nactive-chunks gate) and `src/render/band.ts` (BandProfile shape) for\nthe extension points. Request sections: 14.1, 14.3, 34, 35, 48, 70.\n",
+      "fingerprint": "2412b0986ceb0e3ad7a2add72573f97feafb27ac6fca9103533f1693c80acf2d",
+      "base_rev": "a84bb2db854d9cc480d343044ba2c82a4e5f7203",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06d-b1.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
