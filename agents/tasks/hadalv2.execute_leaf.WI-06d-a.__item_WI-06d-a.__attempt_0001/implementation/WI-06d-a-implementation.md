@@ -38,8 +38,12 @@ All 3 tests pass. Full suite: 370 passed, 2 pre-existing failures in simulation/
 
 ## Live Verification
 
-Status: not applicable
-- Browser verification would require manual inspection of the rendered scene; the coast band terrain change is verified by the Node tests that check the terrain data structure.
+Status: passed
+- Browser critical-path walk performed using Playwright headless Chromium on the dev server.
+- All 10 critical-path areas walked: coast start, west wall slab, wall slab, ridge slab, sealed pocket wall, shelf band, slope band, abyssal plain band, hadal band, and surface base.
+- Screenshots saved in `scratch/item-implementer/browser-walk/output/` show organic terrain edges with no obvious debug geometry remaining.
+- Terrain silhouettes show irregular organic edges (not flat rectangles), confirming the greybox-to-organic conversion is complete.
+- All areas rendered without page errors.
 
 ## Deviations from Plan
 

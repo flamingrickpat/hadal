@@ -1,0 +1,116 @@
+{
+  "visited": [
+    {
+      "id": "band1-coast-start",
+      "name": "coast start area",
+      "band": 1
+    },
+    {
+      "id": "band1-west-wall",
+      "name": "west wall slab",
+      "band": 1
+    },
+    {
+      "id": "band1-wall-slab",
+      "name": "wall slab area",
+      "band": 1
+    },
+    {
+      "id": "band1-ridge-slab",
+      "name": "ridge slab area",
+      "band": 1
+    },
+    {
+      "id": "band1-seal-slab",
+      "name": "sealed pocket wall",
+      "band": 1
+    },
+    {
+      "id": "band2-shelf",
+      "name": "shelf band",
+      "band": 2
+    },
+    {
+      "id": "band3-slope",
+      "name": "slope band",
+      "band": 3
+    },
+    {
+      "id": "band4-abyssal",
+      "name": "abyssal plain band",
+      "band": 4
+    },
+    {
+      "id": "band5-hadal",
+      "name": "hadal band",
+      "band": 5
+    },
+    {
+      "id": "band1-base",
+      "name": "surface base",
+      "band": 1
+    }
+  ],
+  "screenshots": [
+    {
+      "area": "coast start area",
+      "id": "band1-coast-start",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-coast-start.png"
+    },
+    {
+      "area": "west wall slab",
+      "id": "band1-west-wall",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-west-wall.png"
+    },
+    {
+      "area": "wall slab area",
+      "id": "band1-wall-slab",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-wall-slab.png"
+    },
+    {
+      "area": "ridge slab area",
+      "id": "band1-ridge-slab",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-ridge-slab.png"
+    },
+    {
+      "area": "sealed pocket wall",
+      "id": "band1-seal-slab",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-seal-slab.png"
+    },
+    {
+      "area": "shelf band",
+      "id": "band2-shelf",
+      "band": 2,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band2-shelf.png"
+    },
+    {
+      "area": "slope band",
+      "id": "band3-slope",
+      "band": 3,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band3-slope.png"
+    },
+    {
+      "area": "abyssal plain band",
+      "id": "band4-abyssal",
+      "band": 4,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band4-abyssal.png"
+    },
+    {
+      "area": "hadal band",
+      "id": "band5-hadal",
+      "band": 5,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band5-hadal.png"
+    },
+    {
+      "area": "surface base",
+      "id": "band1-base",
+      "band": 1,
+      "path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-a.__item_WI-06d-a.__attempt_0001\\scratch\\item-implementer\\browser-walk\\output\\band1-base.png"
+    }
+  ]
+}
