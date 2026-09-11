@@ -6,14 +6,16 @@
  *   orthographic camera (request §16) sized to the design view; window
  *   resize handling; the smooth camera follow (`follow`, ~0.15 s lag,
  *   clamped to the world bounds) and the screen-to-world projection
- *   used by mouse aim.
+ *   used by mouse aim; the widescreen composition modifier (request
+ *   §16: widen horizontal visibility on ultrawide, not stretch UI).
  * not own: what gets drawn — systems add their objects to `scene`;
  *   who the camera follows — `Game` passes the target each frame; the
  *   encounter zoom / aim lead (request §16) lands with WI-14.
  * fails when: WebGL2 is unavailable in the host browser — the
  *   constructor throws and boot fails visibly.
- * invariant: the view width stays fixed in world units, independent
- *   of window size; before the first `follow` call the camera is
+ * invariant: the view width stays fixed in world units at the baseline
+ *   aspect (16:9); on wider aspects the view widens proportionally up
+ *   to a capped modifier; before the first `follow` call the camera is
  *   centered on the origin.
  */
 import * as THREE from 'three';
@@ -21,6 +23,7 @@ import { CAMERA_LAG_SEC, CAMERA_VIEW_WIDTH } from '../game/constants';
 import { clamp, vec2, type Rect, type Vec2 } from '../util/math';
 import type { PostFX } from './postfx';
 import { applyImpulseDecay, getImpulseOffset } from './impulseFlag';
+import { viewWidthModifier } from './widescreen';
 
 /** Camera modifiers (request §16 scale-reveal, §36 camera trigger actions). */
 export type CameraModifier = 'wide' | 'tight' | 'pullback' | null;
@@ -86,23 +89,38 @@ export class Renderer {
 
   /** Apply a camera modifier (request §16 scale-reveal, §36 camera trigger action). */
   setCameraModifier(mod: CameraModifier): void {
-    this.viewWidth = viewWidthForModifier(mod);
+    const baseWidth = viewWidthForModifier(mod);
+    // Stack the widescreen modifier on top of any camera modifier
+    // (request §16: widen horizontal visibility on ultrawide).
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.halfW = this.viewWidth / 2;
-    this.halfH = this.viewWidth / (w / h) / 2;
+    const aspect = w / h;
+    this.viewWidth = baseWidth * viewWidthModifier(aspect);
+    this.recomputeFraming();
   }
 
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.glRenderer.setSize(w, h);
-    this.halfW = this.viewWidth / 2;
-    this.halfH = this.viewWidth / (w / h) / 2;
+    // Apply the widescreen modifier (request §16): on ultrawide
+    // monitors widen horizontal visibility, don't stretch UI.
+    const aspect = w / h;
+    this.viewWidth = viewWidthForModifier(null) * viewWidthModifier(aspect);
+    this.recomputeFraming();
     if (this.postfx !== null) {
       this.glRenderer.getDrawingBufferSize(this.buffer);
       this.postfx.resize(this.buffer.x, this.buffer.y);
     }
+  }
+
+  /** Compute half-width/height from the current view width and window aspect. */
+  private recomputeFraming(): void {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const aspect = w / h;
+    this.halfW = this.viewWidth / 2;
+    this.halfH = this.viewWidth / aspect / 2;
   }
 
   setWorldBounds(bounds: Rect): void {
