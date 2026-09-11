@@ -21,7 +21,7 @@ describe('oxygen drain (request §7)', () => {
     const p = makePlayer();
     const c = new PlayerController(p);
     step(c, 10);
-    expect(p.o2).toBeCloseTo(170, 6);
+    expect(p.o2).toBeCloseTo(O2_MAX - 10, 6);
   });
 
   it('drains 1.75x while boosting, only when the boost capability is present', () => {
@@ -30,7 +30,7 @@ describe('oxygen drain (request §7)', () => {
     const c = new PlayerController(p);
     c.input.boost = true;
     step(c, 10);
-    expect(p.o2).toBeCloseTo(180 - 17.5, 6);
+    expect(p.o2).toBeCloseTo(O2_MAX - 17.5, 6);
   });
 
   it('drains 1.5x when badly injured (health below the threshold)', () => {
@@ -38,7 +38,7 @@ describe('oxygen drain (request §7)', () => {
     p.health = 20;
     const c = new PlayerController(p);
     step(c, 10);
-    expect(p.o2).toBeCloseTo(180 - 15, 6);
+    expect(p.o2).toBeCloseTo(O2_MAX - 15, 6);
   });
 
   it('boost and injury multiply', () => {
@@ -48,7 +48,7 @@ describe('oxygen drain (request §7)', () => {
     const c = new PlayerController(p);
     c.input.boost = true;
     step(c, 10);
-    expect(p.o2).toBeCloseTo(180 - 26.25, 6);
+    expect(p.o2).toBeCloseTo(O2_MAX - 26.25, 6);
   });
 
   it('refills near the surface, not below it', () => {

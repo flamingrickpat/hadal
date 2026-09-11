@@ -34,7 +34,7 @@ export const FACING_MAX_WEIGHT = 0.65; // "slightly toward velocity/aim" blend c
 export const FACING_ROT_RATE = 6; // body rotation lerp rate, per second
 
 // Player meters (request §7): oxygen is the dive timer, health is 0–100.
-export const O2_MAX = 180; // seconds of baseline dive time
+export const O2_MAX = 200; // seconds of baseline dive time (tuned for 90-120 min blind / 55-75 min expert)
 export const O2_DRAIN_PER_SEC = 1;
 export const O2_BOOST_MULT = 1.75; // drains faster when boosting
 export const O2_INJURY_THRESHOLD = 25; // health below this counts as injured
