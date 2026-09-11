@@ -1,0 +1,24 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf.WI-06d-b2.__item_WI-06d-b2",
+  "input": {
+    "selection": {
+      "id": "WI-06d-b2",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "parent": "WI-06d-b",
+      "path": "agents/tasks/hadalv2/stories/ST-WI-06d-b/workitems/WI-06d-b2.md",
+      "specification": "---\nid: WI-06d-b2\nkind: work_item\nparent: WI-06d-b\nchildren: []\ndepends_on: [\"WI-06a\", \"WI-06b\", \"WI-06c\"]\ncriteria:\n  AC-art-geometry: \"Obvious debug geometry is replaced in all critical-path areas and the section 48 juice list (bubbles, silt, light sway, depth-record tick, distant-motion impulse, parting schools) is present\"\n  AC-juice-lightsway: \"Light sway is a low-amplitude, slow-period light animation in the section 35 band-lighting/postfx path, per-band tuned to the settled look, with the sway parameters covered by Node unit tests\"\nbehavior: \"Add light sway to the section 35 band-lighting/postfx path: low-amplitude, slow-period, per-band tuned\"\nsubsystems: [\"rendering - band lighting and postfx\"]\nverification: \"Node unit tests pass for the sway parameters (amplitude, period, per-band values); browser clip or screenshot showing the slow light movement in at least two bands; headless suite and build stay green; section 34 budgets hold\"\n---\n\n# WI-06d-b2 — Light sway\n\n## Goal\n\nAdd the section 48 light-sway juice effect to the section 35 lighting/\npostfx path: a low-amplitude, slow-period animation of the band light\nthat reads as living water, per-band tuned to the settled look.\nExtend, do not rebuild: the existing band lighting and post pass keep\ntheir invariants (one extra full-screen pass per frame, no heavy\nbloom).\n\n## Changed responsibilities (the only owners that change)\n\n1. `src/render/lighting.ts` — the band lighting path: drive the light\n   (intensity / direction / subtle color drift) with a slow animated\n   clock inside the existing update flow.\n2. The per-band sway parameters — sway amplitude, period and phase in\n   the `BandProfile` data (`src/render/band.ts`) or a data module next\n   to it, per band, Node-testable as pure data. If the post pass\n   (`src/render/postfx.ts`) needs a uniform hook for the sway, that\n   small pass-through is part of owner 1's extension, not a third\n   responsibility.\n\nTests do not count as additional responsibilities.\n\n## Deliverables (checkable)\n\n- Light sway active in every band: slow period (seconds-scale, not\n  frame-scale), low amplitude — the settled band palette must remain\n  recognizable in motion (section 14.3).\n- Per-band parameter values in the data tables; unit-testable without\n  a browser.\n\n## Tests\n\n- Node: sway-parameter unit tests (every band has finite amplitude and\n  period within the restraint envelope; deeper bands sway less, per\n  the settled look).\n- Browser (local proof): clip or screenshot pair (time offset) in at\n  least two bands showing the slow movement. The final proof owner of\n  the AC-art-geometry juice-part browser union is WI-06d-b6 — do not\n  re-assert the six-effect union here.\n\n## Constraints, assumptions, non-goals\n\n- Restraint: low amplitude, slow period; must not read as flicker or\n  hurt readability at 1080p in motion (section 14.3).\n- Section 34 budgets: no new render passes beyond the existing post\n  path.\n- No particle (WI-06d-b1), HUD (WI-06d-b3), camera (WI-06d-b4) or\n  school (WI-06d-b5) changes; no new gameplay rules, no audio.\n\n## Fresh-session handoff\n\nRead WI-06d-b/plan.md (story scope and proof ownership) and the three\nband items (WI-06a, WI-06b, WI-06c) for the settled per-band light\nattenuation and palette. Inspect `src/render/lighting.ts`,\n`src/render/band.ts` and `src/render/postfx.ts` for the extension\npoints. Request sections: 14.1, 14.3, 34, 35, 48.\n",
+      "fingerprint": "8c9f2d720f4da30ab0347536957352732251f32d0502b1bb9b008cc3cddc5105",
+      "base_rev": "725a05dc91a8c3b1bc9e51b857afcb8f6e2467af",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06d-b2.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
