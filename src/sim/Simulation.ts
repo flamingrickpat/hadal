@@ -1564,7 +1564,10 @@ export class Simulation {
   }
 
   private updateProgression(): void {
-    this.player.maxDepth = Math.max(this.player.maxDepth, this.player.depth);
+    if (this.player.depth > this.player.maxDepth) {
+      this.player.maxDepth = this.player.depth;
+      this.player.newDepthRecord = true;
+    }
     this.discoverChunksAt(this.player.position);
   }
 

@@ -69,3 +69,7 @@ Read WI-06d-b/plan.md (story scope and proof ownership). Inspect
 `src/ui/hud.ts` for the depth readout and its sim access, and locate
 the existing depth-record comparison/state in the simulation
 (`src/sim/`). Request sections: 14.3, 35, 48, 70.
+
+## Result
+
+Done. Cue fires exactly when maxDepth increases (verified by scenario test), not otherwise. Implementation: Player.newDepthRecord transient flag set in Simulation.updateProgression() when depth > maxDepth, consumed by HUD update showing brief depth-tick CSS flash. Files: Player.ts, Simulation.ts, hud.ts, depthRecord.test.ts (2 tests). Build and headless suite green (2 pre-existing failures in rosterFinalProof/tier3Scenario).

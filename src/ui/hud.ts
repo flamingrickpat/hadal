@@ -8,7 +8,9 @@
  *   request §34 keeps the UI in a small number of DOM elements,
  *   updated in place, no per-frame node creation), plus the pause
  *   overlay. Oxygen and health rows fade to low opacity while their
- *   meter is full (request §26).
+ *   meter is full (request §26). The depth-record tick cue (request
+ *   section 48) fires exactly when `player.newDepthRecord` is true
+ *   (set by the simulation) and the flag is consumed.
  * not own: the meter math (`Player`), the input (`PlayerController`),
  *   the map overlay (`MapOverlay`) or menus (`CraftingMenu`).
  * fails when: the container is not an HTMLElement — the constructor
@@ -80,7 +82,22 @@ export class Hud {
     this.hpText.textContent = `${Math.ceil(player.health)}`;
     this.hpRow.style.opacity = hpFrac >= 1 ? '0.25' : '1';
     this.depthText.textContent = `${Math.round(player.depth)}m`;
+    // Depth-record tick cue (request section 48): one-shot blip when the
+    // player sets a new depth record. Consumes the flag so it fires exactly
+    // once per record.
+    if (player.newDepthRecord) {
+      player.newDepthRecord = false;
+      this.fireDepthTick();
+    }
     this.toolText.textContent = player.selectedTool ?? '—';
+  }
+
+  /** Brief HUD-adjacent tick cue: one flash on the depth readout. */
+  private fireDepthTick(): void {
+    this.depthText.classList.add('depth-tick');
+    setTimeout(() => {
+      this.depthText.classList.remove('depth-tick');
+    }, 1200);
   }
 
   setPaused(paused: boolean): void {
@@ -138,6 +155,11 @@ export class Hud {
       }
       #hud-hp .hud-bar-fill { background: #e0908a; }
       .hud-value { margin-left: 8px; }
+      .depth-tick {
+        color: #e8f0f8;
+        text-shadow: 0 0 8px #8fd3f0;
+        transition: color 0.2s, text-shadow 0.2s;
+      }
       #pause-overlay {
         position: fixed;
         inset: 0;

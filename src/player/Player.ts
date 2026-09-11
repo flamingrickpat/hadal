@@ -42,6 +42,7 @@ export class Player {
   banked: Record<string, number> = {};
   equipmentIds: string[] = [];
   maxDepth = 0;
+  newDepthRecord = false;
 
   constructor(start: Vec2) {
     this.position = vec2(start.x, start.y);
