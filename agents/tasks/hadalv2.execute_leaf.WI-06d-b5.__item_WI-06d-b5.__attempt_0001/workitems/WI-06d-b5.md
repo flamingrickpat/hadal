@@ -67,3 +67,7 @@ school render path in the ST-02/ST-03 creature renderer (the school
 member draw call and where per-member render offsets can be applied),
 and the shared scenario harness for the steering-outcome comparison.
 Request sections: 14.3, 34, 35, 48, 70.
+
+## Result (2026-09-07)
+
+Implemented parting schools: schooling creatures render offset away from the player within 300u proximity, re-forming after departure. Pure render offset — sim positions/velocities unchanged. 19 Node tests pass (split logic + scenario).
