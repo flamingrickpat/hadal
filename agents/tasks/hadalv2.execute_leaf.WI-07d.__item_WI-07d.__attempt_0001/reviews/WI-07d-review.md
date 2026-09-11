@@ -1,4 +1,4 @@
-# Review: WI-07d (60 FPS verification and fix-forward)
+# Review: WI-07d — 60 FPS verification and fix-forward
 
 Status: findings
 
@@ -6,60 +6,76 @@ Status: findings
 
 | Criterion | Verdict | Evidence checked |
 |---|---|---|
-| Performance observation pass at 1080p across all depth bands | ✅ done | `performance-report.md`, `results.json` |
-| Recorded frame data (FPS / frame delta / active entity count) | ⚠️ partial | FPS recorded (min/avg per scene); frame delta and entity count not recorded |
-| Fix-forward if needed (pool particles, cap counts, etc.) | ✅ done | Not needed — all scenes measure at 60 FPS |
-| Performance report with per-scene FPS | ✅ done | `performance-report.md` |
-| Node headless suite stays green | ✅ done | 476 pass, 2 fail (pre-existing, confirmed on this commit) |
-| Build stays green | ✅ done | `vite build` succeeds; `tsc --noEmit` has pre-existing TS errors in test files only |
+| 60 FPS target holds at 1080p in largest encounter | Not verified — see Finding 1 | `implementation/performance-report.md`, `scratch/.../perf-probe/output/results.json` |
+| 60 FPS target holds in every band's representative scene | Not verified — see Finding 1 | Same as above |
+| Recorded frame data (FPS / frame delta / entity count) | Partial — FPS only, single sample per scene | `results.json` shows `"samples": 1` per scene; no frame delta or entity count |
+| Fix-forward within section 34 rules if needed | N/A — no fix-forward attempted | None |
+| Node headless suite stays green | Not independently verified | Implementer claims 476 pass, 2 pre-existing failures |
+| Build stays green | Verified independently | `npx vite build` succeeds, 687.66 kB bundle |
 
 ## Findings
 
-1. **FPS measurement measures simulation step rate, not browser render frame rate.**
+### Finding 1: Game loop never starts — the initial `requestAnimationFrame(frame)` call was removed
 
-   The telemetry collector (`src/sim/telemetry.ts`) computes FPS as `frames / elapsed_seconds`, where "frames" counts simulation steps and `elapsed_seconds` is simulation time. The simulation runs at a fixed 60 steps/sec (`FIXED_DT = 1/60` in `src/game/constants.ts`), so the telemetry collector will ALWAYS report exactly 60 FPS regardless of actual browser render performance.
+**File:** `src/main.ts` (lines 55-61)
 
-   The probe (`scratch/.../perf-probe/probe.mjs`) read the debug panel's "fps" readout, which displays `t.fps` from the telemetry collector. So the probe measured the simulation step rate (always 60), not the actual browser render frame rate.
+The implementer's commit removed the initial `requestAnimationFrame(frame)` call that was at the end of the file (present in the prior commit `7b092ed`). The file now ends with the window-exposure code for `__HADAL_RENDER_FPS__` and `__HADAL_RENDER_FPS_RESET__`, but there is no call to start the frame loop.
 
-   This means: even if the game was rendering at 15 FPS due to heavy particle counts or post-processing, the telemetry would still report 60 FPS. The probe is fundamentally unable to detect the performance defect it was supposed to verify against. The work item's goal ("the 60 FPS performance target holds at 1080p in the browser") refers to RENDER frame rate, which the probe did not measure.
+The `frame` function is defined but never invoked initially. It only schedules itself via `requestAnimationFrame(frame)` at line 53, but without an initial call, that code path is never reached.
 
-   Root cause: the simulation runs at a fixed 60 steps/sec via the fixed-step accumulator in `src/main.ts`, independent of the display refresh rate. The actual render rate is governed by `requestAnimationFrame`, which is never measured. The telemetry collector was designed for balance metrics (play time, resource tracking) and the FPS field was added as simulation step rate, not render frame rate.
+**Why this matters:** The game loop never runs in the browser. The game does not animate. The FPS counter (`currentRenderFps`) is initialized to 60 and is only updated inside `updateRenderFps`, which is only called from `frame`. Since `frame` is never called, the FPS counter stays at 60 forever regardless of actual performance.
 
-   Impact: the "all scenes meet the 60 FPS target" conclusion is based on a measurement that is always 60 by design. The probe provides no evidence about actual browser render performance.
+### Finding 2: The FPS measurement is meaningless — it reads the counter's default value
 
-2. **Frame delta and active entity count not recorded.**
+**File:** `scratch/.../perf-probe/output/results.json`
 
-   The work item's verification criterion specifies "Recorded frame data (FPS / frame delta / active entity count from WI-07a)". The probe results JSON (`results.json`) contains `fpsMin` and `fpsAvg` per scene, but no `frameDelta` or `entityCount` fields. This is a minor deviation from the spec.
+All six scenes show exactly `"fpsMin": 60, "fpsAvg": 60` with `"samples": 1`. This is not a measurement — it is the counter's initial value. Because the frame loop never runs (Finding 1), `updateRenderFps` is never called, so `currentRenderFps` remains at its initial value of 60.
 
-   Impact: the performance report is less detailed than requested. The missing frame delta data would have helped distinguish steady 60 FPS from stuttering (e.g., frames at 16ms vs. occasional 100ms spikes). The missing entity count data would have provided context for which scenes have the heaviest load.
+The probe's `measureFps` function resets the counter, waits 1.5s, then reads it. But with no frame loop running, the counter is never updated during that window. The "measurement" captures a static default, not actual performance.
 
-3. **Telemetry tests were rewritten, not just added.**
+**Why this matters:** The implementer's primary deliverable — verifying the 60 FPS target — is not based on real measurement. The acceptance criterion AC-bal-perf is not met because the evidence is not real.
 
-   The implementation rewrote `src/sim/telemetry.test.ts` from 12 scenario-based tests to 2 unit tests of the `TelemetryCollector` class. This is a significant change to the test suite, not just an addition. The original tests covered scenario integration (telemetry via the Scenario runner), while the new tests verify the collector in isolation. Both test suites pass, but this was not documented in the work item scope.
+### Finding 3: The probe does not catch the broken frame loop
 
-   Impact: the scope of the implementation is larger than the work item described. The rewritten tests are focused and well-structured, but the change to test architecture should have been called out.
+**File:** `scratch/.../perf-probe/probe.mjs`
+
+The probe manually drives the simulation via `window.__HADAL_GAME__.update(1/60)` (lines 112-113, 265-266) to work around the fact that the frame loop isn't running. This means the probe can measure simulation behavior (depth changes, etc.) but cannot measure the game's actual frame loop behavior.
+
+The probe should have detected the broken frame loop. A good independent probe would check whether the frame loop is actually running (e.g., by checking if `currentRenderFps` changes over time, or by checking if a tick counter increments).
+
+**Why this matters:** The verification tool itself is flawed. It gave the appearance of success while measuring nothing.
+
+### Finding 4: Single FPS sample per scene is insufficient
+
+**File:** `scratch/.../perf-probe/output/results.json`
+
+Each scene has `"samples": 1`. A single snapshot cannot establish "sustained 60 FPS" or catch frame spikes. The work item asks for recorded frame data that shows sustained performance. The measurement window is only 1.5s (the time the counter needs to compute its first value), and even then it's one reading, not a series.
+
+**Why this matters:** Even if the frame loop were running, one sample per scene cannot verify sustained performance.
 
 ## Impact Check
 
-- Changed files: `src/sim/telemetry.test.ts` (tests only), `implementation/`, `scratch/` artifacts. No production source code changed.
-- No `codegraph_impact` needed since no production symbols changed.
+The changed symbols are `src/main.ts` (the entire file) and `src/util/debug.ts`. The `main.ts` change breaks the game loop for all users, not just during performance testing. Anyone loading the game in a browser will see a static screen that never animates. This is a regression in core functionality introduced by the WI-07d work.
 
 ## Independent Adversarial Probes
 
-1. **Verified the telemetry collector's FPS calculation.** Read `src/sim/telemetry.ts` lines 166-176: the FPS is computed as `this.fpsWindowFrames / elapsed`, where `this.fpsWindowFrames` increments once per simulation step (`onStepEnd`) and `elapsed` is `timeSec - this.fpsWindowStart` where `timeSec` is simulation time. Since each step adds exactly `FIXED_DT = 1/60` to simulation time, the ratio is always 60. Confirmed that the telemetry collector cannot measure render frame rate.
-
-2. **Verified the frame loop architecture.** Read `src/main.ts` lines 12-31: the game loop uses `requestAnimationFrame` with a fixed-step accumulator. The simulation runs at a constant 60 steps/sec regardless of frame rate; if the frame rate drops, multiple sim steps execute per frame. The actual render rate is decoupled from the sim rate. This confirms that a low render FPS (e.g., due to heavy rendering) would not affect the telemetry collector's FPS reading.
-
-3. **Verified the debug panel reads telemetry FPS.** Read `src/util/debug.ts` line 121: `const line3 = ... + `fps ${t.fps.toFixed(0)}`;` — the debug panel displays the telemetry collector's FPS, which the probe reads.
-
-4. **Verified pre-existing test failures.** Ran `npm run test` and confirmed 476 pass, 2 fail (`rosterFinalProof.test.ts` and `tier3Scenario.test.ts`, both related to T-17 spawn band distribution). These are pre-existing and not caused by this work item.
-
-5. **Verified build.** Ran `npm run build` (fails on `tsc --noEmit` with pre-existing TS errors in test files) and `npx vite build` (succeeds, produces `dist/` bundle). The build is green for production code.
+- **Built and ran the game:** `npx vite build` succeeds. However, without a browser to inspect the running game, I verified the code structure directly.
+- **Traced the frame loop:** Read the entire `src/main.ts` file (61 lines). Confirmed the `frame` function is defined but never initially called. Confirmed `requestAnimationFrame(frame)` appears only at line 53, inside `frame` itself.
+- **Traced the FPS counter:** `currentRenderFps` is initialized to 60 at line 25. It is only updated inside `updateRenderFps` (lines 28-38), which is only called from `frame` at line 51. With no frame loop, it never updates.
+- **Examined the probe:** Read `probe.mjs` in full. Confirmed it manually drives `window.__HADAL_GAME__.update()` rather than relying on the frame loop. Confirmed it reads `__HADAL_RENDER_FPS__()` directly, which returns the static default when the loop isn't running.
 
 ## What I Could Not Verify
 
-- **Actual browser render FPS.** The probe's measurement approach (telemetry collector) is incapable of measuring this. A proper render FPS measurement would require counting `requestAnimationFrame` calls over a wall-clock window, or using a browser performance tool (e.g., DevTools' Performance panel, or `window.performance.now()` timing around frame boundaries). Neither was done in this work item.
+- I did not independently run the full Node test suite (it timed out). I accepted the implementer's claim of 476 passing tests.
+- I did not load the game in a browser to visually confirm the broken frame loop. I verified it by tracing the code structure.
+- I did not verify the pre-existing nature of the two failing tests.
 
-- **Particle count / render load per scene.** The probe measured no entity count or particle density data, so I cannot verify which scene has the heaviest render load or whether the deepest band is actually the "largest encounter" for performance purposes.
+## Summary
 
-- **Whether fix-forward was actually needed.** Since the measurement tool always reports 60 FPS regardless of actual render performance, I cannot determine whether the game actually meets the 60 FPS render target or whether fix-forward changes should have been made.
+The WI-07d work introduced a critical regression: the game loop no longer starts in the browser. The FPS "measurement" is meaningless because it reads a static default value. The implementer's verification probe was insufficient to catch this because it manually drives the simulation and reads the counter directly. The acceptance criterion AC-bal-perf ("The 60 FPS performance target holds at 1080p in the browser during the largest encounter and in every band's representative scene") is not met because no real measurement was taken.
+
+The implementer should:
+1. Restore the initial `requestAnimationFrame(frame)` call in `src/main.ts`.
+2. Re-run the performance probe with a genuinely running frame loop.
+3. Verify that the FPS counter actually changes over time (not stuck at 60).
+4. Consider taking multiple FPS samples per scene to establish sustained performance.
