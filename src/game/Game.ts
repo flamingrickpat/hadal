@@ -104,6 +104,16 @@ export class Game implements DebugPanelHost {
   update(dt: number): void {
     if (this.paused) return;
     this.sim.step(this.sim.controller.input, dt);
+    // Apply camera modifier from trigger actions (request §16 scale-reveal, §36 camera action).
+    const mod = this.sim.triggerState.cameraModifier;
+    if (mod !== null) {
+      // Validate the modifier value against the known set.
+      if (mod === 'wide' || mod === 'tight' || mod === 'pullback') {
+        this.renderer.setCameraModifier(mod);
+      }
+      // Reset after applying — the modifier is a one-shot trigger action.
+      this.sim.triggerState.cameraModifier = null;
+    }
     this.syncPlayerMesh();
     this.hud.update(this.sim.player);
     this.menu.update();

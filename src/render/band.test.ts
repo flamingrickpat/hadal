@@ -160,4 +160,19 @@ describe('bandProfileAtDepth (request §14.3 per-band palette + particle profile
     expect(d12).toBeGreaterThan(0.1);
     expect(d23).toBeGreaterThan(0.1);
   });
+
+  // WI-06c: the two deepest bands and the final zone each differ from their
+  // adjacent bands in at least two identity factors (request §14.3).
+
+  it('the deepest band at 10000 differs from the band above (7000) in ≥2 identity factors', () => {
+    const mid2 = bandProfileAtDepth(7000);
+    const mid3 = bandProfileAtDepth(10000);
+    expect(distinctFactorCount(mid2, mid3)).toBeGreaterThanOrEqual(2);
+  });
+
+  it('the final zone at 12000 differs from the band above (10000) in ≥2 identity factors', () => {
+    const mid3 = bandProfileAtDepth(10000);
+    const deep = bandProfileAtDepth(12000);
+    expect(distinctFactorCount(mid3, deep)).toBeGreaterThanOrEqual(2);
+  });
 });

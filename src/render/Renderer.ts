@@ -21,6 +21,23 @@ import { CAMERA_LAG_SEC, CAMERA_VIEW_WIDTH } from '../game/constants';
 import { clamp, vec2, type Rect, type Vec2 } from '../util/math';
 import type { PostFX } from './postfx';
 
+/** Camera modifiers (request §16 scale-reveal, §36 camera trigger actions). */
+export type CameraModifier = 'wide' | 'tight' | 'pullback' | null;
+
+/** View width for each camera modifier (request §16). */
+export function viewWidthForModifier(mod: CameraModifier): number {
+  switch (mod) {
+    case 'wide':
+      return CAMERA_VIEW_WIDTH * 1.5; // scale-reveal: show more of the environment
+    case 'tight':
+      return CAMERA_VIEW_WIDTH * 0.5; // close-up: show less
+    case 'pullback':
+      return CAMERA_VIEW_WIDTH * 1.75; // pull back after encounter
+    default:
+      return CAMERA_VIEW_WIDTH; // normal view
+  }
+}
+
 export class Renderer {
   readonly scene = new THREE.Scene();
   private readonly glRenderer: THREE.WebGLRenderer;
@@ -33,6 +50,7 @@ export class Renderer {
   private lastFollowMs: number | null = null;
   private postfx: PostFX | null = null;
   private readonly buffer = new THREE.Vector2();
+  private viewWidth = CAMERA_VIEW_WIDTH;
 
   get gl(): THREE.WebGLRenderer {
     return this.glRenderer;
@@ -64,12 +82,21 @@ export class Renderer {
     return vec2(this.halfW, this.halfH);
   }
 
+  /** Apply a camera modifier (request §16 scale-reveal, §36 camera trigger action). */
+  setCameraModifier(mod: CameraModifier): void {
+    this.viewWidth = viewWidthForModifier(mod);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.halfW = this.viewWidth / 2;
+    this.halfH = this.viewWidth / (w / h) / 2;
+  }
+
   resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.glRenderer.setSize(w, h);
-    this.halfW = CAMERA_VIEW_WIDTH / 2;
-    this.halfH = CAMERA_VIEW_WIDTH / (w / h) / 2;
+    this.halfW = this.viewWidth / 2;
+    this.halfH = this.viewWidth / (w / h) / 2;
     if (this.postfx !== null) {
       this.glRenderer.getDrawingBufferSize(this.buffer);
       this.postfx.resize(this.buffer.x, this.buffer.y);
