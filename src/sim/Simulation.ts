@@ -473,6 +473,13 @@ export class Simulation {
     // One-shot semantics: endingTriggered is set exactly once (request §70).
     if (!this.endingTriggered && this.storyFlags.includes('ending-triggered')) {
       this.endingTriggered = true;
+      // WI-05ca: Record which ending variant was triggered. The variant is
+      // determined by which variant story flag was set by the ending trigger.
+      if (this.storyFlags.includes('ending-variant-A')) {
+        this.endingVariant = 'A';
+      } else if (this.storyFlags.includes('ending-variant-B')) {
+        this.endingVariant = 'B';
+      }
       // WI-05cb: Post-trigger autosave milestone.
       if (!this.autosaveMilestones.includes('post-trigger')) {
         this.autosaveMilestones.push('post-trigger');

@@ -30,4 +30,5 @@ export const TRIGGER_RADIO_LINES: Readonly<Record<string, string>> = {
   'radio-hadal-1': 'You are below the last logged depth. No one has come back from here.',
   'radio-hadal-2': 'Final note: if you find the crew... report as standard. Do not attempt contact.',
   'ending': 'Signal acquired from the surface. You made it.',
+  'ending-B': 'A different signal. Older, stranger. Not from the surface.',
 };

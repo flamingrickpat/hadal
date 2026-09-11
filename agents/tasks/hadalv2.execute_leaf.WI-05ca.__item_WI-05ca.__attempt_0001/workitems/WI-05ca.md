@@ -94,3 +94,44 @@ and post-retrieval state), WI-05b (the final sequence and win condition),
 and WI-05cb (the save milestones this scenario consumes). The decision
 point is inside WI-05b's final sequence; all branching logic lives in the
 simulation.
+
+## Acceptance Evidence Table
+
+| Criterion | Artifact | Status |
+|---|---|---|
+| At least 2 ending variants reachable from a single decision | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Each variant produces a different final state | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Each variant produces a different final text | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Each variant produces a different final shot | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Credits flag is set after either ending | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Restart produces a fresh state | `src/sim/endingVariantsScenario.test.ts` | passed |
+| One-shot trigger fires exactly once | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Save-reload at pre-descent milestone | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Save-reload at post-trigger milestone | `src/sim/endingVariantsScenario.test.ts` | passed |
+| Determinism: same seed, same decision, same ending | `src/sim/endingVariantsScenario.test.ts` | passed |
+
+Live verification: not applicable (headless tests cover all acceptance criteria).
+
+## Deviations from plan
+
+None.
+
+## Files touched
+
+- `src/world/worldData.ts` — added ending variant B trigger, modified variant A trigger
+- `src/sim/Simulation.ts` — added ending variant detection logic
+- `src/content/dialogue.ts` — added ending-B radio line
+- `src/sim/endingVariantsScenario.test.ts` — new comprehensive ending scenario tests
+
+## Notes for reviewer
+
+- The decision point is a physical choice at the exit location (swim to exit A or exit B).
+- No art or audio assets were added (text ids only, per WI-01c).
+- One variant (B) is the section 72 cut candidate.
+- Save schema extension (WI-05cb) already provided the `endingVariant` field.
+- No new abstractions were introduced; the implementation extends the existing trigger system.
+- Shrink/Flatten: no unused extension points, pass-through wrappers, or one-use abstractions found.
+
+## Result
+
+Implemented 2 ending variants (A and B) with one-shot trigger, credits flag, restart, and comprehensive headless verification. All 9 ending variant tests pass. The work item is complete.

@@ -719,8 +719,24 @@ const hadal: WorldChunkDef = {
       condition: { type: 'reachPoint', x: 22300, y: -9600, radius: 50 },
       actions: [
         { type: 'setStoryFlag', flag: 'ending-triggered' },
+        { type: 'setStoryFlag', flag: 'ending-variant-A' },
         { type: 'playAudio', cueId: 'ending' },
         { type: 'showRadio', textId: 'ending' },
+      ],
+    },
+    // WI-05ca: Ending variant B (request §24/§70/§72). The player faces a
+    // decision point at the exit: variant A is the canonical ending (swim to
+    // 22300,-9600), variant B is the alternative ending (swim to 22300,-9650).
+    // Both produce different final state/text/shot.
+    {
+      id: 'ending-variant-B',
+      once: true,
+      condition: { type: 'reachPoint', x: 22300, y: -9650, radius: 50 },
+      actions: [
+        { type: 'setStoryFlag', flag: 'ending-triggered' },
+        { type: 'setStoryFlag', flag: 'ending-variant-B' },
+        { type: 'playAudio', cueId: 'ending-B' },
+        { type: 'showRadio', textId: 'ending-B' },
       ],
     },
   ],
