@@ -8,74 +8,60 @@ Status: findings
 |---|---|---|
 | 60 FPS target holds at 1080p in largest encounter | Not verified — see Finding 1 | `implementation/performance-report.md`, `scratch/.../perf-probe/output/results.json` |
 | 60 FPS target holds in every band's representative scene | Not verified — see Finding 1 | Same as above |
-| Recorded frame data (FPS / frame delta / entity count) | Partial — FPS only, single sample per scene | `results.json` shows `"samples": 1` per scene; no frame delta or entity count |
-| Fix-forward within section 34 rules if needed | N/A — no fix-forward attempted | None |
-| Node headless suite stays green | Not independently verified | Implementer claims 476 pass, 2 pre-existing failures |
-| Build stays green | Verified independently | `npx vite build` succeeds, 687.66 kB bundle |
+| Recorded frame data (FPS / frame delta / entity count) | Partial — FPS only, no frame delta or entity count | `results.json` shows 5 FPS samples per scene; no frame delta or entity count fields |
+| Fix-forward within section 34 rules if needed | Passed | Eliminated per-frame Vec2 allocations in particle stepping and current system velocity calculation |
+| Node headless suite stays green | Passed | Verified independently: 476 passed, 2 failed (pre-existing T-17 spawn band failures) |
+| Build stays green | Passed | Verified independently: `npx vite build` succeeds (688.33 kB bundle) |
 
 ## Findings
 
-### Finding 1: Game loop never starts — the initial `requestAnimationFrame(frame)` call was removed
+### Finding 1: The 60 FPS criterion is not verified — the environment limitation is assumed, not proven
 
-**File:** `src/main.ts` (lines 55-61)
+**Files:** `implementation/performance-report.md`, `scratch/.../perf-probe/probe.mjs`
 
-The implementer's commit removed the initial `requestAnimationFrame(frame)` call that was at the end of the file (present in the prior commit `7b092ed`). The file now ends with the window-exposure code for `__HADAL_RENDER_FPS__` and `__HADAL_RENDER_FPS_RESET__`, but there is no call to start the frame loop.
+The implementer measured ~20-24 FPS across all six depth bands in headless Chromium with SwiftShader software GL. They correctly observe that all scenes run at similar FPS regardless of depth or encounter complexity, suggesting the bottleneck is the rendering environment rather than the game's rendering workload. They conclude the 60 FPS criterion is "blocked by environment."
 
-The `frame` function is defined but never invoked initially. It only schedules itself via `requestAnimationFrame(frame)` at line 53, but without an initial call, that code path is never reached.
+However, this conclusion is an assumption, not a proven fact. The implementer did not verify that SwiftShader in this environment cannot achieve 60 FPS for any WebGL workload. A simple WebGL benchmark (e.g., rendering a rotating quad at 60 FPS) would establish whether the environment itself is the bottleneck. Without this, the criterion remains unverified rather than blocked.
 
-**Why this matters:** The game loop never runs in the browser. The game does not animate. The FPS counter (`currentRenderFps`) is initialized to 60 and is only updated inside `updateRenderFps`, which is only called from `frame`. Since `frame` is never called, the FPS counter stays at 60 forever regardless of actual performance.
+**Why this matters:** The acceptance criterion AC-bal-perf is not met. The implementer should either:
+1. Prove the environment limitation with a baseline WebGL benchmark, or
+2. Accept that the criterion fails in the available environment and report it as a defect (possibly requiring further optimization or a different verification approach).
 
-### Finding 2: The FPS measurement is meaningless — it reads the counter's default value
+**Note:** The frame loop regression from the previous review has been fixed — the initial `requestAnimationFrame(frame)` call has been restored, and the FPS values vary across samples, confirming the loop is running.
 
-**File:** `scratch/.../perf-probe/output/results.json`
-
-All six scenes show exactly `"fpsMin": 60, "fpsAvg": 60` with `"samples": 1`. This is not a measurement — it is the counter's initial value. Because the frame loop never runs (Finding 1), `updateRenderFps` is never called, so `currentRenderFps` remains at its initial value of 60.
-
-The probe's `measureFps` function resets the counter, waits 1.5s, then reads it. But with no frame loop running, the counter is never updated during that window. The "measurement" captures a static default, not actual performance.
-
-**Why this matters:** The implementer's primary deliverable — verifying the 60 FPS target — is not based on real measurement. The acceptance criterion AC-bal-perf is not met because the evidence is not real.
-
-### Finding 3: The probe does not catch the broken frame loop
-
-**File:** `scratch/.../perf-probe/probe.mjs`
-
-The probe manually drives the simulation via `window.__HADAL_GAME__.update(1/60)` (lines 112-113, 265-266) to work around the fact that the frame loop isn't running. This means the probe can measure simulation behavior (depth changes, etc.) but cannot measure the game's actual frame loop behavior.
-
-The probe should have detected the broken frame loop. A good independent probe would check whether the frame loop is actually running (e.g., by checking if `currentRenderFps` changes over time, or by checking if a tick counter increments).
-
-**Why this matters:** The verification tool itself is flawed. It gave the appearance of success while measuring nothing.
-
-### Finding 4: Single FPS sample per scene is insufficient
+### Finding 2: Frame data is incomplete — no frame delta or entity count
 
 **File:** `scratch/.../perf-probe/output/results.json`
 
-Each scene has `"samples": 1`. A single snapshot cannot establish "sustained 60 FPS" or catch frame spikes. The work item asks for recorded frame data that shows sustained performance. The measurement window is only 1.5s (the time the counter needs to compute its first value), and even then it's one reading, not a series.
+The work item requires "recorded frame data (FPS / frame delta / active entity count from WI-07a)." The probe records FPS (5 samples per scene), but does not capture frame delta (time between frames) or active entity count. The performance report also lacks these fields.
 
-**Why this matters:** Even if the frame loop were running, one sample per scene cannot verify sustained performance.
+**Why this matters:** Frame delta would reveal stutter or frame spikes that average FPS hides. Entity count would establish the workload context for the FPS measurements. The criterion asks for all three.
 
 ## Impact Check
 
-The changed symbols are `src/main.ts` (the entire file) and `src/util/debug.ts`. The `main.ts` change breaks the game loop for all users, not just during performance testing. Anyone loading the game in a browser will see a static screen that never animates. This is a regression in core functionality introduced by the WI-07d work.
+The changed symbols are:
+- `requestAnimationFrame(frame)` call in `src/main.ts` — restores the game loop for all users
+- `stepParticleType` in `src/render/particles.ts` — now takes an optional current field callback with output parameter
+- `CurrentSystem.velocityAt` and field constructors in `src/systems/CurrentSystem.ts` — now write into output objects
+- `Game.ts` particle callback and `Simulation.ts` velocityAt callers — updated to new signature
+
+All changes are performance optimizations that do not alter gameplay behavior. The Node test suite confirms the changes are behaviorally correct (476 tests pass).
 
 ## Independent Adversarial Probes
 
-- **Built and ran the game:** `npx vite build` succeeds. However, without a browser to inspect the running game, I verified the code structure directly.
-- **Traced the frame loop:** Read the entire `src/main.ts` file (61 lines). Confirmed the `frame` function is defined but never initially called. Confirmed `requestAnimationFrame(frame)` appears only at line 53, inside `frame` itself.
-- **Traced the FPS counter:** `currentRenderFps` is initialized to 60 at line 25. It is only updated inside `updateRenderFps` (lines 28-38), which is only called from `frame` at line 51. With no frame loop, it never updates.
-- **Examined the probe:** Read `probe.mjs` in full. Confirmed it manually drives `window.__HADAL_GAME__.update()` rather than relying on the frame loop. Confirmed it reads `__HADAL_RENDER_FPS__()` directly, which returns the static default when the loop isn't running.
+- **Built the project:** `npx vite build` succeeds, producing a 688.33 kB bundle.
+- **Ran the full Node test suite:** `npm test` completes with 476 passed, 2 failed (the same T-17 spawn band failures the implementer reported as pre-existing).
+- **Examined the frame loop fix:** Read `src/main.ts` in full. Confirmed the initial `requestAnimationFrame(frame)` call is present at line 64. Confirmed `updateRenderFps` is called every frame at line 51.
+- **Traced the allocation fix:** Examined `src/render/particles.ts` and `src/systems/CurrentSystem.ts`. Confirmed that per-frame Vec2 allocations have been eliminated by using shared temp objects (`tempPos`, `tempVel`, `tempSum`) written to in place.
+- **Reviewed the probe results:** All six scenes show varying FPS values (not stuck at default), confirming the frame loop is running. The consistent ~20-24 FPS across scenes suggests an environment bottleneck.
 
 ## What I Could Not Verify
 
-- I did not independently run the full Node test suite (it timed out). I accepted the implementer's claim of 476 passing tests.
-- I did not load the game in a browser to visually confirm the broken frame loop. I verified it by tracing the code structure.
-- I did not verify the pre-existing nature of the two failing tests.
+- I did not run a WebGL benchmark to verify the SwiftShader environment's 60 FPS capability. This is the missing verification that would resolve Finding 1.
+- I did not inspect the actual rendering workload (draw calls, GPU utilization) to confirm whether the game's rendering is CPU-bound or GPU-bound in this environment.
 
 ## Summary
 
-The WI-07d work introduced a critical regression: the game loop no longer starts in the browser. The FPS "measurement" is meaningless because it reads a static default value. The implementer's verification probe was insufficient to catch this because it manually drives the simulation and reads the counter directly. The acceptance criterion AC-bal-perf ("The 60 FPS performance target holds at 1080p in the browser during the largest encounter and in every band's representative scene") is not met because no real measurement was taken.
+The implementer made solid progress: the game loop regression was fixed, a valid section 34 optimization was applied (eliminating per-frame allocations), and real FPS measurements were taken across all depth bands. The Node tests and build are green.
 
-The implementer should:
-1. Restore the initial `requestAnimationFrame(frame)` call in `src/main.ts`.
-2. Re-run the performance probe with a genuinely running frame loop.
-3. Verify that the FPS counter actually changes over time (not stuck at 60).
-4. Consider taking multiple FPS samples per scene to establish sustained performance.
+However, the 60 FPS criterion is not verified. The implementer assumes the environment is the bottleneck without proving it. The probe also does not capture frame delta or entity count as the work item requires. These are findings that prevent a "pass" verdict, but they do not indicate broken work — the implementer is close and the core optimization is correct.
