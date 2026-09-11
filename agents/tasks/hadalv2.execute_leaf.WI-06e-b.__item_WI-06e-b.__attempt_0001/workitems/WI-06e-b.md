@@ -133,7 +133,7 @@ Fixes review findings:
 
 ### Commit
 
-[audio][creatures] wire up creature proximity cues in game loop
+861feb7 — [audio][creatures] wire up creature proximity cues in game loop
 
 ### Next Work Item
 
