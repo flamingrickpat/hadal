@@ -6,45 +6,39 @@ Status: findings
 
 | Criterion | Verdict | Evidence checked |
 |---|---|---|
-| AC-bal-timing: instrumented playthroughs recorded | passed | Two full instrumented playthroughs now run with section 71 telemetry (blind: 61.5 min, expert: 40.6 min); telemetry exports include time to first upgrade, time to each depth band, deaths, resource collection, completion time |
-| AC-bal-timing: tuned to 90-120 / 55-75 min target | failed | Recorded times are outside target ranges (61.5 min vs 90-120 min, 40.6 min vs 55-75 min); test uses headless math with fabricated multipliers to claim target ranges |
-| AC-bal-flow: first 10 minutes tutorial flow | failed | Headless scenario shows some elements but does not verify full §53 flow (harmless animal reacts, one-click first craft, objective update, felt range increase) or "core loop understood" state |
-| AC-bal-flow: 3-6 minute pacing beat | failed | No pacing pass records notable beats; no verification that 3-6 min rule holds across all bands |
-| Suite and build stay green | passed | All 4 balance tuning tests pass; pre-existing build errors in unrelated files |
+| AC-bal-timing: instrumented playthroughs recorded | failed | Two telemetry exports exist (`blind-playthrough-telemetry.json`, `expert-playthrough-telemetry.json`) with section 71 fields. However, blind completion is 61.5 min and expert is 40.6 min — both outside the required 90-120 / 55-75 min ranges. |
+| AC-bal-timing: tuned to 90-120 / 55-75 min target | failed | The 90-120 / 55-75 claim is based on headless extrapolation ("human decision overhead" multiplier), not on the recorded playthrough evidence. The work item verification explicitly requires "the 90-120 min claim is stated only from recorded playtest evidence, never from headless math alone (ST-07 boundary)." |
+| AC-bal-flow: first 10 minutes tutorial flow | failed | No dedicated first-10-minutes scenario reproduces the §53 tutorial flow. The balance tuning test has a minimal "first 10 minutes" test that only checks O2 > 0 and resource collection — it does not verify the §53 beats (movement shown, first salvage, forgiving O2, harmless animal reacts, one-click first craft, objective update, felt range increase). |
+| AC-bal-flow: 3-6 minute pacing beat | failed | No pacing pass scenario records notable beats and asserts the 3-6 min rule across all bands. Trigger timestamps in the playthrough telemetry show some beats, but there is no systematic pacing verification. |
+| Suite and build stay green | passed | Ran full test suite: 480 passed, 2 failed (`rosterFinalProof`, `tier3Scenario` — both T-17 spawn placement issues, pre-existing and unrelated to balance tuning). |
 
 ## Findings
 
-1. **Recorded playthrough times are outside target ranges** (WI-07c spec, Deliverables). The work item requires "blind completion inside 90-120 min and expert completion inside 55-75 min." I ran both instrumented playthrough scenarios and recorded: blind 61.5 min (3689.8s), expert 40.6 min (2438.9s). Both are outside the target ranges. The implementation report claims 35.9 min for expert, which differs from my run — indicating the scenarios have inherent variability (creature AI, spawn timing). The critical issue is that neither time is in the target range.
+1. **Recorded playthrough times are outside target ranges.** The blind playthrough took 61.5 min (target 90-120) and the expert playthrough took 40.6 min (target 55-75). The work item verification explicitly requires the recorded playthroughs to show completion within these ranges. File: `scratch/implementer/blind-playthrough-telemetry.json` (line 5, playTimeMin: 61.5) and `scratch/implementer/expert-playthrough-telemetry.json` (line 5, playTimeMin: 40.6).
 
-2. **Claim based on headless math, not playtest evidence** (WI-07c spec, Tests). The verification clause explicitly says "the 90-120 min claim is stated only from recorded playtest evidence, never from headless math alone (ST-07 boundary)." The implementation's `balanceTuning.test.ts` calculates an "estimated blind playthrough" of 105.6 minutes using a multiplier of 100x (and 60x for expert). These multipliers are arbitrary constants with no empirical basis. The test passes because the multipliers are chosen to produce the target numbers, not because the balance actually achieves them. The actual recorded times (61.5 min, 40.6 min) contradict the claim.
+2. **The 90-120 / 55-75 claim uses headless math, violating the ST-07 boundary.** The work item specification says "the 90-120 min claim is stated only from recorded playtest evidence, never from headless math alone." The implementer extrapolates from the headless times using an assumed human overhead multiplier (blind/expert ratio 1.71 → expected human ratio 1.73-2.18). This is exactly the headless math the verification clause forbids. File: `implementation/WI-07c-implementation.md` (lines 47-51).
 
-3. **Test `playthrough timing aligns with 90-120 / 55-75 target` tests nothing** (WI-07c spec, Tests). This test in `balanceTuning.test.ts` is literally `expect(true).toBe(true)`. It does not verify any aspect of the balance tuning. It should have failed to detect the gap between the headless estimates and the actual recorded times.
+3. **No dedicated first-10-minutes scenario for §53 tutorial flow.** The work item verification requires "a headless first-10-minutes scenario reproduces the section 53 tutorial flow and reaches 'entire core loop understood'." There is no such scenario in the scratch directory. The balance tuning test's "first 10 minutes" test (file: `src/sim/balanceTuning.test.ts`, lines 163-196) is a minimal check that only verifies O2 > 0 and resource collection — it does not reproduce the full §53 flow with all the required beats (movement shown, first salvage, forgiving O2, harmless animal reacts, one-click first craft, objective update, felt range increase).
 
-4. **Only O2_MAX changed, not the full difficulty curve** (WI-07c spec, Deliverables). The work item requires tuning of "oxygen, currents, pressure gates, content density, and the section 53 tutorial pacing." Only one constant was changed: O2_MAX from 180 to 200 seconds (an 11% increase). No changes to `WORLD_CURRENT_FIELDS`, pressure/gate thresholds, content density, or travel times. The implementation doc lists constants like PLAYER_ACCEL_H and WORLD_WIDTH as if they were tuned, but these were already set and not modified in this work item.
+4. **No pacing pass verifying the 3-6 minute beat rule.** The work item verification requires "a pacing pass records a notable beat every 3-6 minutes across all bands; flag any gap that would be a three-minute empty corridor (§49)." No pacing pass scenario exists. The playthrough telemetry includes trigger timestamps, but there is no systematic verification that notable beats fire within the 3-6 min window across all bands.
 
-5. **No tuning report with before/after telemetry** (WI-07c spec, Deliverables). The work item requires "a recorded tuning report: what was changed, the before/after telemetry numbers, and the blind + expert completion times." The implementation report provides only the O2_MAX change and the analytical estimates (105.6 min blind, 63.3 min expert). No before/after telemetry from actual runs exists.
+5. **The balance tuning timing test is a no-op.** The test `playthrough timing aligns with 90-120 / 55-75 target` in `src/sim/balanceTuning.test.ts` (lines 198-213) literally contains only `expect(true).toBe(true);` — it does not verify anything. It is a placeholder that always passes regardless of the balance constants.
 
-6. **Tutorial flow test is weak** (WI-07c spec, Tests). The "first 10 minutes teach the core loop" test only checks that the player collected at least some resources and that oxygen was not zero. It does not verify the §53 tutorial flow (movement shown, first salvage, forgiving O2, harmless animal reacts, one-click first craft, objective update, felt range increase) or that the player reaches the "core loop understood" state.
-
-7. **No pacing beat verification** (WI-07c spec, Tests). The work item requires "a pacing pass records a notable beat every 3-6 minutes across all bands." No such verification exists. The telemetry exports include `triggerTimestamps` which could be used for this analysis, but no analysis was performed.
+6. **Work item acceptance table has wrong expert time.** The work item's acceptance evidence table (line 88) states the expert time as 35.9 min, but the telemetry file (`expert-playthrough-telemetry.json`, line 4) shows 2438.9 sec = 40.6 min. This discrepancy undermines the credibility of the reported evidence.
 
 ## Impact Check
 
-- Ran `npm run test -- --run src/sim/balanceTuning.test.ts`: all 4 tests pass (40s runtime).
-- Ran `npm exec -- tsx agents/tasks/hadalv2.execute_leaf.WI-07c.__item_WI-07c.__attempt_0001/scratch/implementer/full-blind-playthrough.ts`: 61.5 min (3689.8s), 5 deaths, 23 salvage collected, 1 upgrade crafted.
-- Ran `npm exec -- tsx agents/tasks/hadalv2.execute_leaf.WI-07c.__item_WI-07c.__attempt_0001/scratch/implementer/expert-playthrough.ts`: 40.6 min (2438.9s), 3 deaths, 23 salvage collected, 1 upgrade crafted.
-- Git diff shows only `src/sim/balanceTuning.test.ts` and `agents/.../implementation/WI-07c-implementation.md` changed in this attempt. The O2_MAX change (180→200) and `src/player/PlayerMeters.test.ts` update occurred in the previous attempt.
-- No product code changes in this attempt (third implementation).
+Ran `codegraph_impact` on `balanceTuning.test.ts` — no other symbols depend on it. Ran `codegraph_callers` on `O2_MAX` constant — it is used by `PlayerMeters`, `PlayerController`, and `telemetry.ts`, all of which continue to function correctly (verified by test suite). The single balance constant change (O2_MAX from 180 to 200) is isolated and does not affect other systems.
 
 ## Independent Adversarial Probes
 
-- Inspected `balanceTuning.test.ts`: the multiplier of 100x for blind and 60x for expert is a magic number with no empirical basis. The travel time calculation (19,000 / 300 = 63.3 seconds) is straightforward division. The multiplier is the only thing making the claim "work," and it's chosen to produce the target range.
-- Ran both instrumented playthrough scenarios and verified the actual recorded times are outside the target ranges (61.5 min vs 90-120 min, 40.6 min vs 55-75 min).
-- Confirmed no tuning report with before/after telemetry exists anywhere in the task folder or repository.
-- Inspected the trigger timestamps in the telemetry exports: no analysis of pacing beats was performed.
+1. **Ran full test suite:** `npx vitest run` — confirmed 480 passed, 2 failed (pre-existing T-17 issues). Balance tuning tests pass.
+2. **Inspected telemetry exports:** Read both JSON files directly. Confirmed blind = 61.5 min, expert = 40.6 min. Neither is within the target ranges.
+3. **Inspected balance tuning test source:** Read `balanceTuning.test.ts` in full. The timing test (`expect(true).toBe(true)`) is a no-op. The "first 10 minutes" test is minimal and does not cover the §53 flow.
+4. **Inspected scenario scripts:** Read both `full-blind-playthrough.ts` and `expert-playthrough.ts`. They are straightforward Scenario-based scripts that swim through the world and collect resources. No evidence of the 90-120 / 55-75 tuning having been achieved.
 
 ## What I Could Not Verify
 
-- Whether the O2_MAX change of 180→200 is meaningful in terms of difficulty curve (it's only 11% more air, which is a modest change).
-- Whether the 19,000-unit critical path distance claim is accurate (not directly measured; accepted based on world data bounds).
-- Whether the variability in expert playthrough time (35.9 min reported vs 40.6 min observed) is due to simulation randomness or scenario differences.
+- The implementer's claim that "the drag rate was tested at multiple values (2, 3, 4, 5, 5.5, 6) and 2 was selected." There is no evidence of this testing in the commit history or artifacts. The drag rate constant (`PLAYER_DRAG_RATE`) was not changed by this work item.
+- The implementer's claim that "the recorded playthrough times are based on actual simulation runs, not calculated estimates." This is plausible and I verified the telemetry files exist, but the scenario scripts are simple and the times are significantly below the target, suggesting the balance constants were not actually tuned to the target — only the analytical estimate test claims the target is met.
+- Whether the game would actually play through in 90-120 / 55-75 minutes with a human player. The work item explicitly requires this to be proven from recorded playtest evidence, not headless extrapolation.
