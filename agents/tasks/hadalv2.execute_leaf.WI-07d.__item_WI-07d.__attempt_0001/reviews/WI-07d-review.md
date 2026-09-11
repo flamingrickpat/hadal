@@ -6,62 +6,48 @@ Status: findings
 
 | Criterion | Verdict | Evidence checked |
 |---|---|---|
-| 60 FPS target holds at 1080p in largest encounter | Not verified — see Finding 1 | `implementation/performance-report.md`, `scratch/.../perf-probe/output/results.json` |
-| 60 FPS target holds in every band's representative scene | Not verified — see Finding 1 | Same as above |
-| Recorded frame data (FPS / frame delta / entity count) | Partial — FPS only, no frame delta or entity count | `results.json` shows 5 FPS samples per scene; no frame delta or entity count fields |
-| Fix-forward within section 34 rules if needed | Passed | Eliminated per-frame Vec2 allocations in particle stepping and current system velocity calculation |
-| Node headless suite stays green | Passed | Verified independently: 476 passed, 2 failed (pre-existing T-17 spawn band failures) |
-| Build stays green | Passed | Verified independently: `npx vite build` succeeds (688.33 kB bundle) |
+| 60 FPS target holds at 1080p in largest encounter | Passed | Headless Chromium with hardware-accelerated WebGL achieves 133 FPS in the largest encounter (deep band 5). Probe output log at `scratch/item-implementer/perf-probe/output/probe-output-nogpu.log`. |
+| 60 FPS target holds in every band's representative scene | Passed | All 6 depth band scenes achieve ~133 FPS, well above the 60 FPS target. Same probe output. |
+| Recorded frame data (FPS / frame delta / entity count) | Partial | FPS recorded for all 6 scenes with 5 samples each. Frame delta and active entity count not recorded. Frame loop verified running via `isLoopRunning: true`. |
+| Fix-forward within section 34 rules | Passed | Eliminated per-frame Vec2 allocations in particle stepping and current system velocity calculations (section 34: "avoid per-frame vector allocation in hot loops"). |
+| Before/after frame data for fixes | Failed | No before/after frame data provided for the allocation fix. Only after-fix measurements exist. |
+| Node headless suite stays green | Passed | 476 tests pass; 2 pre-existing failures in `rosterFinalProof.test.ts` and `tier3Scenario.test.ts` (T-17 spawn band distribution), unrelated to this work item. |
+| Build stays green | Passed | `npx vite build` succeeds (223ms). Note: `npm run build` (which includes `tsc --noEmit`) fails due to pre-existing TypeScript errors in test files unrelated to this work item. |
 
 ## Findings
 
-### Finding 1: The 60 FPS criterion is not verified — the environment limitation is assumed, not proven
+1. **Telemetry source deviates from spec.** The work item specification requires using "WI-07a's frame/FPS telemetry." The implementer built a new FPS measurement in `src/main.ts` (`__HADAL_RENDER_FPS__`) instead. The reason given (WI-07a's telemetry measures simulation step rate, not actual render FPS) is technically valid, but the spec explicitly names WI-07a's telemetry as the source. The implementer should have either used the WI-07a telemetry endpoint or documented why it was insufficient and what alternative was used.
 
-**Files:** `implementation/performance-report.md`, `scratch/.../perf-probe/probe.mjs`
+2. **Stale `results.json`.** The probe output file `scratch/item-implementer/perf-probe/output/results.json` shows ~23 FPS across all scenes (from a previous run with `--disable-gpu`). The final successful run produced `probe-output-nogpu.log` with ~133 FPS values, but `results.json` was not updated. The implementer should update `results.json` to reflect the final results for artifact consistency.
 
-The implementer measured ~20-24 FPS across all six depth bands in headless Chromium with SwiftShader software GL. They correctly observe that all scenes run at similar FPS regardless of depth or encounter complexity, suggesting the bottleneck is the rendering environment rather than the game's rendering workload. They conclude the 60 FPS criterion is "blocked by environment."
+3. **Missing before/after frame data for fix-forward.** The specification requires that fix-forward changes be "evidenced with before/after frame data." The implementer applied a fix (eliminating per-frame allocations in `particles.ts` and `CurrentSystem.ts`) but only measured after-fix FPS. No before-fix baseline was captured.
 
-However, this conclusion is an assumption, not a proven fact. The implementer did not verify that SwiftShader in this environment cannot achieve 60 FPS for any WebGL workload. A simple WebGL benchmark (e.g., rendering a rotating quad at 60 FPS) would establish whether the environment itself is the bottleneck. Without this, the criterion remains unverified rather than blocked.
-
-**Why this matters:** The acceptance criterion AC-bal-perf is not met. The implementer should either:
-1. Prove the environment limitation with a baseline WebGL benchmark, or
-2. Accept that the criterion fails in the available environment and report it as a defect (possibly requiring further optimization or a different verification approach).
-
-**Note:** The frame loop regression from the previous review has been fixed — the initial `requestAnimationFrame(frame)` call has been restored, and the FPS values vary across samples, confirming the loop is running.
-
-### Finding 2: Frame data is incomplete — no frame delta or entity count
-
-**File:** `scratch/.../perf-probe/output/results.json`
-
-The work item requires "recorded frame data (FPS / frame delta / active entity count from WI-07a)." The probe records FPS (5 samples per scene), but does not capture frame delta (time between frames) or active entity count. The performance report also lacks these fields.
-
-**Why this matters:** Frame delta would reveal stutter or frame spikes that average FPS hides. Entity count would establish the workload context for the FPS measurements. The criterion asks for all three.
+4. **Missing frame delta and active entity count.** The specification requires "recorded frame data (FPS / frame delta / active entity count from WI-07a)." The probe only records FPS values. Frame delta and active entity count are not captured in the reported data.
 
 ## Impact Check
 
-The changed symbols are:
-- `requestAnimationFrame(frame)` call in `src/main.ts` — restores the game loop for all users
-- `stepParticleType` in `src/render/particles.ts` — now takes an optional current field callback with output parameter
-- `CurrentSystem.velocityAt` and field constructors in `src/systems/CurrentSystem.ts` — now write into output objects
-- `Game.ts` particle callback and `Simulation.ts` velocityAt callers — updated to new signature
+- **`CurrentSystem.velocityAt` signature change**: This is the most significant change. The method now writes into an output parameter (`out`) instead of returning a value. I verified via codegraph and grep that all 6 callers in production code (`Game.ts`, `Simulation.ts`) and all callers in tests have been updated to the new signature. The shared temp object pattern is safe because `velocityAt` is synchronous and does not retain the position object.
 
-All changes are performance optimizations that do not alter gameplay behavior. The Node test suite confirms the changes are behaviorally correct (476 tests pass).
+- **`particles.ts` allocation fix**: The change uses shared temp objects (`tempPos`, `tempVel`) for the particle step loop. This is safe because `stepParticleType` is called synchronously per frame and the current field calculation (`currentAt`) is also synchronous and does not retain the position object.
+
+- **No impact on other subsystems**: The changes are localized to the render loop and the current system. No other subsystems depend on the `velocityAt` return value or the particle stepping internals.
 
 ## Independent Adversarial Probes
 
-- **Built the project:** `npx vite build` succeeds, producing a 688.33 kB bundle.
-- **Ran the full Node test suite:** `npm test` completes with 476 passed, 2 failed (the same T-17 spawn band failures the implementer reported as pre-existing).
-- **Examined the frame loop fix:** Read `src/main.ts` in full. Confirmed the initial `requestAnimationFrame(frame)` call is present at line 64. Confirmed `updateRenderFps` is called every frame at line 51.
-- **Traced the allocation fix:** Examined `src/render/particles.ts` and `src/systems/CurrentSystem.ts`. Confirmed that per-frame Vec2 allocations have been eliminated by using shared temp objects (`tempPos`, `tempVel`, `tempSum`) written to in place.
-- **Reviewed the probe results:** All six scenes show varying FPS values (not stuck at default), confirming the frame loop is running. The consistent ~20-24 FPS across scenes suggests an environment bottleneck.
+I ran the following verification commands:
+
+1. **Build verification**: `npx vite build` — succeeded in 223ms, producing the dist bundle. Confirms the production bundle builds correctly.
+
+2. **Test verification**: `npx vitest run` — 476 passed, 2 failed. Both failing tests are pre-existing issues about T-17 spawn band distribution, unrelated to this work item. The `CurrentSystem.test.ts` tests (8 tests) all pass, confirming the allocation fix is correct.
+
+3. **Probe output verification**: Read `scratch/item-implementer/perf-probe/output/probe-output-nogpu.log` — confirmed ~133 FPS across all 6 scenes with hardware acceleration. Frame loop verified running (`isLoopRunning: true`).
+
+4. **Code impact verification**: Used codegraph to explore `CurrentSystem.velocityAt` callers and grep to verify all callers use the new output-parameter signature. No callers were missed.
 
 ## What I Could Not Verify
 
-- I did not run a WebGL benchmark to verify the SwiftShader environment's 60 FPS capability. This is the missing verification that would resolve Finding 1.
-- I did not inspect the actual rendering workload (draw calls, GPU utilization) to confirm whether the game's rendering is CPU-bound or GPU-bound in this environment.
+- **Before/after performance comparison**: I could not verify the performance impact of the allocation fix because no before-fix baseline was captured. The fix is claimed to eliminate ~14,400 allocations per second, but I cannot independently verify this claim.
 
-## Summary
+- **Frame delta and entity count**: These metrics were not captured by the probe, so I could not verify them.
 
-The implementer made solid progress: the game loop regression was fixed, a valid section 34 optimization was applied (eliminating per-frame allocations), and real FPS measurements were taken across all depth bands. The Node tests and build are green.
-
-However, the 60 FPS criterion is not verified. The implementer assumes the environment is the bottleneck without proving it. The probe also does not capture frame delta or entity count as the work item requires. These are findings that prevent a "pass" verdict, but they do not indicate broken work — the implementer is close and the core optimization is correct.
+- **The `results.json` discrepancy**: I could not determine why the implementer left `results.json` stale. It may have been an oversight or the implementer may have run the probe multiple times and only committed the final log file.
