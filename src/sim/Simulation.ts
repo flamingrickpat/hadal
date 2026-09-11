@@ -240,6 +240,8 @@ export class Simulation {
   lastRadioText: string | null = null;
   autosaveRequested = false;
   noclip = false;
+  /** The MacGuffin position in the hadal zone (found from world data). */
+  macguffinPosition: import('../util/math').Vec2 | null = null;
   private wasAtBase: boolean;
   private wasSonar = false;
   private wasTool = false;
@@ -341,6 +343,16 @@ export class Simulation {
     this.triggerState.storyFlags = this.storyFlags;
     this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
     this.currents = new CurrentSystem(world.currentFields ?? []);
+    // Locate the MacGuffin prop in the world data (internal id only, request §0/§12/§68).
+    for (const chunk of world.chunks) {
+      for (const prop of chunk.props ?? []) {
+        if (prop.id === 'macguffin') {
+          this.macguffinPosition = vec2(prop.position.x, prop.position.y);
+          break;
+        }
+      }
+      if (this.macguffinPosition !== null) break;
+    }
     this.wasAtBase = this.isAtBase(this.player.position);
     this.discoverChunksAt(this.player.position);
     this.activeChunks = computeActiveChunkIds(this.chunks, this.player.position);
@@ -419,6 +431,7 @@ export class Simulation {
     this.applyTier4Interactions(dt);
     if (!this.noclip) this.terrain.resolveCircle(this.player.position, PLAYER_RADIUS, this.player.velocity);
     this.handleHarvest(input);
+    this.handleMacguffinRetrieval(input);
     this.handleCraft(input);
     this.handleBaseReturn();
     this.handleDeath();
@@ -1379,6 +1392,28 @@ export class Simulation {
     if (node.amount <= 0) node.harvested = true;
     this.collectedUniqueIds.add(node.id);
     this.updateCargo();
+  }
+
+  /**
+   * The MacGuffin retrieval interaction rule (WI-05a): the player must swim to
+   * the MacGuffin's location and press interact within the interaction radius.
+   * The MacGuffin's true nature is private (internal id only, request §0/§12/§68).
+   * Retrieval adds the MacGuffin item to the player's equipment, which triggers
+   * the collectItem trigger for the post-retrieval environmental change (request §23/§45).
+   */
+  private handleMacguffinRetrieval(input: PlayerInput): void {
+    if (this.macguffinPosition === null) return;
+    if (!input.interact) return;
+    // Check if already retrieved (the 'macguffin' equipment id is already in the list).
+    if (this.player.equipmentIds.includes('macguffin')) return;
+    // Distance check: must be within interact radius.
+    const d = Math.hypot(
+      this.macguffinPosition.x - this.player.position.x,
+      this.macguffinPosition.y - this.player.position.y,
+    );
+    if (d > INTERACT_RADIUS) return;
+    // Retrieved: add the MacGuffin item to the player's equipment.
+    this.player.equipmentIds.push('macguffin');
   }
 
   handleCraft(input: PlayerInput): CraftResult {

@@ -598,6 +598,11 @@ const hadal: WorldChunkDef = {
     { id: 'trace-items-R2', kind: 'debris', position: vec2(20500, -9550) },
     // R4 trace: two physical exits at the heart; the second opens only with the core.
     { id: 'trace-exit-R4', kind: 'debris', position: vec2(22200, -9550) },
+    // The MacGuffin (internal id only, request §0/§12/§68): placed inside the
+    // lost installation's heart chamber, reachable through the west wall gap.
+    // The true nature and appearance are private (WI-01c); this is the
+    // simulation anchor for the retrieval interaction rule (distance + action).
+    { id: 'macguffin', kind: 'facility', position: vec2(21400, -9600) },
   ],
   triggers: [
     {
@@ -671,6 +676,21 @@ const hadal: WorldChunkDef = {
         { type: 'spawnEntity', entityId: 'puzzle-signal-entity' },
         { type: 'playAudio', cueId: 'puzzle-signal-hum' },
         { type: 'setStoryFlag', flag: 'puzzle-signal-1' },
+      ],
+    },
+    // WI-05a: The MacGuffin retrieval trigger (request §23/§45). Fires when the
+    // player collects the MacGuffin item (handleMacguffinRetrieval in the sim).
+    // The post-retrieval environmental change (encounter_beats B20) begins: driving currents calm,
+    // bioluminescence dims, the low sound fades. This is the post-retrieval
+    // environmental change observable in sim state (story flag + ambient params).
+    {
+      id: 'macguffin-retrieved',
+      once: true,
+      condition: { type: 'collectItem', itemId: 'macguffin' },
+      actions: [
+        { type: 'setStoryFlag', flag: 'macguffin-retrieved' },
+        { type: 'alterAmbient', params: { dim: 0.3, sound: 0.2, current: 0.1 } },
+        { type: 'playAudio', cueId: 'macguffin-retrieved' },
       ],
     },
   ],
