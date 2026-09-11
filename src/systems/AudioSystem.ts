@@ -796,15 +796,14 @@ export class AudioSystem {
       const osc = ctx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = note.f;
-      osc.connect(env);
-      osc.start(note.t);
-      osc.stop(note.t + note.dur + 0.1);
       const noteEnv = ctx.createGain();
       noteEnv.gain.setValueAtTime(0.0001, note.t);
       noteEnv.gain.exponentialRampToValueAtTime(scale * 0.15, note.t + 0.3);
       noteEnv.gain.exponentialRampToValueAtTime(0.0001, note.t + note.dur);
       osc.connect(noteEnv);
       noteEnv.connect(env);
+      osc.start(note.t);
+      osc.stop(note.t + note.dur + 0.1);
     }
     env.gain.setValueAtTime(0.0001, now);
     env.gain.exponentialRampToValueAtTime(1, now + 0.5);
