@@ -1,0 +1,57 @@
+{
+  "walked": 6,
+  "bands": [
+    {
+      "band": "Surface (band 0)",
+      "depth": 0,
+      "actualDepth": 0,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-surface.png",
+      "fps": 25.312111201617025,
+      "avgFrameMs": 39.506779661117974
+    },
+    {
+      "band": "Coast (band 1)",
+      "depth": 1600,
+      "actualDepth": 1600,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-coast.png",
+      "fps": 23.788404160926177,
+      "avgFrameMs": 42.037288135643735
+    },
+    {
+      "band": "Bioluminescent Shelf (band 2)",
+      "depth": 4000,
+      "actualDepth": 4000,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-shelf.png",
+      "fps": 27.351536785574623,
+      "avgFrameMs": 36.56101694905152
+    },
+    {
+      "band": "Abyssal Transition (band 3)",
+      "depth": 7000,
+      "actualDepth": 7000,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-abyss-transition.png",
+      "fps": 30.77244041104246,
+      "avgFrameMs": 32.49661016944101
+    },
+    {
+      "band": "True Deep (band 4)",
+      "depth": 10000,
+      "actualDepth": 10000,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-true-deep.png",
+      "fps": 29.439648720211302,
+      "avgFrameMs": 33.96779661006847
+    },
+    {
+      "band": "Benthic Floor (band 5)",
+      "depth": 12000,
+      "actualDepth": 12000,
+      "screenshot": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2.execute_leaf.WI-06d-b6.__item_WI-06d-b6.__attempt_0001\\evidence\\band-benthic.png",
+      "fps": 32.80511537392272,
+      "avgFrameMs": 30.483050847457626
+    }
+  ],
+  "fpsBudget": 60,
+  "fpsFailures": 6,
+  "juiceEffects": 6,
+  "timestamp": "2026-09-11T08:56:15.042Z"
+}
