@@ -235,6 +235,8 @@ export class Simulation {
    */
   readonly ambientWork = new Map<string, number>();
   storyFlags: string[] = [];
+  /** The win condition state: set exactly once when the final descent sequence completes (request §45). */
+  endingTriggered = false;
   collectedUniqueIds = new Set<string>();
   lastStoryLine: string | null = null;
   lastRadioText: string | null = null;
@@ -412,6 +414,14 @@ export class Simulation {
     this.state.tick(dt);
     c.update(dt);
     this.applyCurrent(dt);
+    // WI-05b: The final descent altered rules (request §23/§39). When the
+    // final descent sequence is active (macguffin-retrieved flag set), apply
+    // a stronger driving current toward the exit, making navigation
+    // mechanically different from the approach. This is an altered
+    // rule/context, not an HP boss fight.
+    if (this.storyFlags.includes('final-descent-active')) {
+      this.applyFinalDescentCurrent(dt);
+    }
     // The harpoon's rising edge must be captured before `emitPlayerSignals`
     // updates `wasTool` (the tool noise and the lance share the edge).
     const toolFired = input.useTool && !this.wasTool;
@@ -453,6 +463,22 @@ export class Simulation {
       }
     }
     this.triggerState.movedCreatures.length = 0;
+    // WI-05b: Set the win condition state when the ending trigger fires.
+    // One-shot semantics: endingTriggered is set exactly once (request §70).
+    if (!this.endingTriggered && this.storyFlags.includes('ending-triggered')) {
+      this.endingTriggered = true;
+    }
+    // WI-05b: Activate the final descent sequence when the macguffin is
+    // retrieved. This is done in the simulation step rather than as a
+    // separate trigger because the 'macguffin-retrieved' flag is set by the
+    // macguffin-retrieved trigger in the same step, and the trigger system
+    // doesn't cascade (all conditions are checked against the context at the
+    // start of the step).
+    if (!this.storyFlags.includes('final-descent-active') && this.storyFlags.includes('macguffin-retrieved')) {
+      this.storyFlags.push('final-descent-active');
+      this.triggerState.ambient['final-descent-current'] = 2.0;
+      this.triggerState.ambient['final-descent-dim'] = 0.1;
+    }
     // Consume one-shot actions so a reused input object does not re-apply them.
     input.craftRequest = null;
     input.toolSelect = null;
@@ -471,6 +497,30 @@ export class Simulation {
     const control = this.player.capabilities.has('boost') ? CURRENT_CONTROL_WITH_PROPULSION : CURRENT_CONTROL_BASE;
     this.player.position.x += cur.x * (1 - control) * dt;
     this.player.position.y += cur.y * (1 - control) * dt;
+  }
+
+  /**
+   * WI-05b: The final descent altered rules (request §23/§39). A stronger
+   * driving current pulls the player toward the exit point, making
+   * navigation mechanically different from the approach. The player can
+   * swim against it, but it's much harder — this is an altered rule/context,
+   * not an HP boss fight.
+   */
+  private applyFinalDescentCurrent(dt: number): void {
+    // The exit point of the final descent sequence.
+    const exitX = 22300;
+    const exitY = -9600;
+    const p = this.player.position;
+    const dx = exitX - p.x;
+    const dy = exitY - p.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 100) return; // Close enough to the exit, no more current
+    // Strong driving current toward the exit (2x the normal drift).
+    const currentStrength = 50; // units/s
+    const nx = dx / dist;
+    const ny = dy / dist;
+    this.player.position.x += nx * currentStrength * dt;
+    this.player.position.y += ny * currentStrength * dt;
   }
 
   /**
@@ -1560,6 +1610,15 @@ export class Simulation {
     this.player.velocity = vec2(0, 0);
   }
 
+  serialize(): string {
+    return JSON.stringify(this.toSave());
+  }
+
+  deserialize(json: string): void {
+    const save = JSON.parse(json) as SaveGameV1;
+    this.loadFromSave(save);
+  }
+
   toSave(): SaveGameV1 {
     const p = this.player;
     return {
@@ -1578,6 +1637,7 @@ export class Simulation {
         collectedUniqueIds: [...this.collectedUniqueIds],
         storyFlags: [...this.storyFlags],
         maxDepth: p.maxDepth,
+        endingTriggered: this.endingTriggered,
       },
       settings: { masterVolume: 1 },
     };
@@ -1608,6 +1668,7 @@ export class Simulation {
     // live load path (Game.ts constructs, then loads).
     this.storyFlags.length = 0;
     this.storyFlags.push(...save.world.storyFlags);
+    this.endingTriggered = save.world.endingTriggered ?? false;
     this.updateCargo();
     this.wasAtBase = true;
   }

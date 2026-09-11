@@ -693,6 +693,36 @@ const hadal: WorldChunkDef = {
         { type: 'playAudio', cueId: 'macguffin-retrieved' },
       ],
     },
+    // WI-05b: The final descent sequence trigger (request §23/§39/§45). Fires
+    // when the 'macguffin-retrieved' flag is set, activating the altered rules
+    // for the final 5-10 minute sequence: stronger driving current, darker
+    // environment, making navigation mechanically different from the approach.
+    // The challenge comes from altered rules/context (request §39), not maxed
+    // numerical damage.
+    {
+      id: 'final-descent-active',
+      once: true,
+      condition: { type: 'storyFlag', flag: 'macguffin-retrieved' },
+      actions: [
+        { type: 'setStoryFlag', flag: 'final-descent-active' },
+        { type: 'alterAmbient', params: { 'final-descent-current': 2.0, 'final-descent-dim': 0.1 } },
+        { type: 'playAudio', cueId: 'final-descent-begins' },
+      ],
+    },
+    // WI-05b: The ending trigger (request §24/§45/§70). Fires when the player
+    // reaches the exit point of the final descent sequence, setting the win
+    // condition state. One-shot semantics: fires exactly once, the ending
+    // trigger state persists.
+    {
+      id: 'ending-triggered',
+      once: true,
+      condition: { type: 'reachPoint', x: 22300, y: -9600, radius: 50 },
+      actions: [
+        { type: 'setStoryFlag', flag: 'ending-triggered' },
+        { type: 'playAudio', cueId: 'ending' },
+        { type: 'showRadio', textId: 'ending' },
+      ],
+    },
   ],
   // Tier-1 ambient fauna (internal ids only, request §33): a sparse drifter
   // ribbon in the deepest band, west of the installation.

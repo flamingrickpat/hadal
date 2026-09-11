@@ -35,6 +35,7 @@ export interface SaveGameV1 {
     collectedUniqueIds: string[];
     storyFlags: string[];
     maxDepth: number;
+    endingTriggered?: boolean;
   };
   settings: {
     masterVolume: number;

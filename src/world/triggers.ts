@@ -36,7 +36,9 @@ export type TriggerCondition =
   | { type: 'creatureState'; creatureId: string; state: string }
   | { type: 'timeInRegion'; region: string; seconds: number }
   | { type: 'returnThrough'; region: string }
-  | { type: 'approachCreature'; creatureId: string; radius: number };
+  | { type: 'approachCreature'; creatureId: string; radius: number }
+  | { type: 'storyFlag'; flag: string }
+  | { type: 'reachPoint'; x: number; y: number; radius: number };
 
 /** A trigger action applied to the world state (request §36). */
 export type TriggerAction =
@@ -129,6 +131,12 @@ function conditionMet(c: TriggerCondition, ctx: TriggerContext): boolean {
       // "the player reached this organism" is not expressible with the §36 set.
       const d = ctx.creatureDistance(c.creatureId);
       return d !== null && d <= c.radius;
+    }
+    case 'storyFlag':
+      return ctx.storyFlags.has(c.flag);
+    case 'reachPoint': {
+      const d = Math.hypot(c.x - ctx.position.x, c.y - ctx.position.y);
+      return d <= c.radius;
     }
   }
 }
