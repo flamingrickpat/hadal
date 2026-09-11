@@ -1,0 +1,6 @@
+PASS: surface: player at depth 0 — depth=0
+PASS: coast: player at depth 800 — depth=800
+PASS: deep: player at depth 5000 — depth=5000
+PASS: return: player at depth 0 — depth=0
+PASS: no page exceptions
+PASS: no console errors

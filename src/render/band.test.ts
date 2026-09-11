@@ -11,6 +11,41 @@ describe('bandProfileAtDepth (request §14.3 per-band palette + particle profile
     expect(shallow.visibility).toBeGreaterThan(deep.visibility);
   });
 
+  it('surface band is distinctly brighter and warmer than the coast band (request §59 cozy baseline)', () => {
+    const surface = bandProfileAtDepth(0);
+    const coast = bandProfileAtDepth(1600);
+    // Surface must be noticeably brighter in ambient floor
+    expect(surface.ambient).toBeGreaterThan(coast.ambient + 0.1);
+    // Surface waterTop must be visibly brighter
+    expect(lum(surface.waterTop)).toBeGreaterThan(lum(coast.waterTop) + 0.05);
+    // Surface has clearer visibility
+    expect(surface.visibility).toBeGreaterThan(coast.visibility + 500);
+  });
+
+  it('coast band is distinct from the shelf band in at least two identity factors (request §14.3)', () => {
+    const coast = bandProfileAtDepth(1600);
+    const shelf = bandProfileAtDepth(4000);
+    // Coast must have higher ambient than shelf
+    expect(coast.ambient).toBeGreaterThan(shelf.ambient + 0.05);
+    // Coast must have higher visibility than shelf
+    expect(coast.visibility).toBeGreaterThan(shelf.visibility + 300);
+  });
+
+  it('surface and coast bands are distinct from each other in at least two identity factors', () => {
+    const surface = bandProfileAtDepth(0);
+    const coast = bandProfileAtDepth(1600);
+    let distinct = 0;
+    // Check palette
+    if (lum(surface.waterTop) > lum(coast.waterTop) + 0.05) distinct++;
+    // Check ambient
+    if (surface.ambient > coast.ambient + 0.1) distinct++;
+    // Check visibility
+    if (surface.visibility > coast.visibility + 500) distinct++;
+    // Check particle profile
+    if (Math.abs(surface.snowCount - coast.snowCount) > 20) distinct++;
+    expect(distinct).toBeGreaterThanOrEqual(2);
+  });
+
   it('shortens effective visibility monotonically with depth (request §15)', () => {
     let prev = Infinity;
     for (const d of [0, 400, 1600, 3000, 5000, 7000, 9000, 12000]) {

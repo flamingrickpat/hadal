@@ -1,0 +1,3 @@
+page.$eval: Failed to find element matching selector "#debug-readout"
+    at readout (C:\Temp\hadal-v2\agents\tasks\hadalv2.execute_leaf.WI-06a.__item_WI-06a.__attempt_0001\scratch\item-implementer\band-art-probe\probe.mjs:77:55)
+    at C:\Temp\hadal-v2\agents\tasks\hadalv2.execute_leaf.WI-06a.__item_WI-06a.__attempt_0001\scratch\item-implementer\band-art-probe\probe.mjs:88:32
