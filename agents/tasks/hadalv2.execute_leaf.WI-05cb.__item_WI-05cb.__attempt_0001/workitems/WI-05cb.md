@@ -87,7 +87,3 @@ Read WI-05c/plan.md (this story), ST-05/plan.md, request sections 24, 25,
 milestones), and `src/game/save.ts` (existing versioned save structure and
 migration pattern). The autosave points are gated by WI-05b's final
 sequence entry (pre-descent) and the ending trigger (post-trigger).
-
-## Result
-
-Implemented save schema extension (v1→v2) with endgame milestone fields and pre-descent/post-trigger autosave points. All 8 WI-05cb tests pass. Save tests updated to expect version 2. Commit message follows the WI-05cb spoiler rules: "implemented save milestones".
