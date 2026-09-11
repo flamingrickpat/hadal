@@ -93,3 +93,15 @@ Implemented parting schools: schooling creatures render offset away from the pla
 The split logic is now integrated into the creature renderer. For each schooling creature, the renderer tracks split state (whole/parting/reforming) and reform timer, computes the split offset using the split data module, and applies the offset to the rendered position only — the simulated position and steering outcomes are never modified.
 
 The key scenario test "sim positions/velocities are identical with and without split logic active" proves the split logic is render-only by running the same simulation input twice and comparing sim state, demonstrating bit-identical positions/velocities even when split offsets are computed.
+
+## Result (2026-09-07, attempt 2)
+
+Fixed reviewer finding: removed unused incorrect import `WORLD_SIGNAL_LIFETIME` from `src/render/schoolSplit.test.ts` (the export is `SIGNAL_LIFETIME` in `../creatures/senses`). This import was causing a TypeScript build error. All 21 split tests still pass. No build errors related to this work item remain.
+
+## Files Changed (attempt 2)
+
+- src/render/schoolSplit.test.ts — removed unused import `WORLD_SIGNAL_LIFETIME`
+
+## Notes for Reviewer (attempt 2)
+
+The only change in this attempt was removing the unused incorrect import that was causing a build failure. The split logic, tests, and integration are unchanged from attempt 1.

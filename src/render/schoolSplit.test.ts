@@ -10,7 +10,6 @@ import {
 import { vec2, type Vec2 } from '../util/math';
 import type { Creature } from '../creatures/Creature';
 import type { CreatureDef } from '../creatures/CreatureDef';
-import { WORLD_SIGNAL_LIFETIME } from '../creatures/senses';
 
 describe('school split parameters', () => {
   it('exports proximity radius', () => {
