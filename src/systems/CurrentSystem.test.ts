@@ -20,7 +20,7 @@ function makeType(count: number, sink: number, seed: number, start: { x: number;
     positions[i * 3 + 2] = 0;
     seeds[i] = seed;
   }
-  return { name: 'silt', positions, seeds, count, sink, z: 0 };
+  return { name: 'silt', positions, seeds, count, sink, rise: 0, z: 0 };
 }
 
 /**
