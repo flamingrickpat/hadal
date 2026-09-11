@@ -41,6 +41,8 @@ import {
   eddyField,
   type CurrentField,
 } from '../systems/CurrentSystem';
+import { generateOrganicSlab } from './proceduralTerrain';
+import { createRng } from '../util/rng';
 
 // Re-export the §17 data shapes for existing imports (Simulation, World, tests).
 export type { WorldChunkDef, ResourceNodeDef, ExitDef, PropDef, TriggerDef };
@@ -55,13 +57,16 @@ export interface BaseDef {
   stations: readonly StationId[];
 }
 
-/** A closed rectangular slab (a world chunk's wall / floor / structure). */
-function slab(id: string, x: number, y: number, w: number, h: number): TerrainShapeDef {
-  return {
-    id,
-    closed: true,
-    points: [vec2(x, y), vec2(x + w, y), vec2(x + w, y + h), vec2(x, y + h)],
-  };
+/** A closed organic slab with irregular edges (request §14.3). */
+function slab(id: string, x: number, y: number, w: number, h: number, band?: number): TerrainShapeDef {
+  // Derive a deterministic seed from the shape id so the same slab always
+  // produces the same organic shape across runs.
+  let seed = 0;
+  for (let i = 0; i < id.length; i++) {
+    seed = ((seed << 5) - seed + id.charCodeAt(i)) | 0;
+  }
+  const rng = createRng(seed >>> 0);
+  return generateOrganicSlab(id, x, y, w, h, band ?? 1, rng);
 }
 
 /** The starting coast band (request §5/§8) — the WI-02/03 greybox, refactored
@@ -240,23 +245,23 @@ const shelf: WorldChunkDef = {
   band: 2,
   bounds: { x: 4600, y: -5200, w: 10300, h: 3200 },
   terrain: [
-    slab('shelf-west-wall', 4600, -5200, 400, 3200),
-    slab('shelf-east-wall', 14500, -5200, 400, 3200),
+    slab('shelf-west-wall', 4600, -5200, 400, 3200, 2),
+    slab('shelf-east-wall', 14500, -5200, 400, 3200, 2),
     // The shelf floor has a gap at x 9000..10000 (the descent corridor into the
     // twilight band, request §4.2). The player swims through the gap to descend.
-    slab('shelf-floor-west', 5000, -5200, 4000, 300),
-    slab('shelf-floor-east', 10000, -5200, 4000, 300),
-    slab('shelf-landmark', 11500, -4000, 2000, 1000),
-    slab('shelf-pocket-wall', 5000, -4500, 700, 300),
+    slab('shelf-floor-west', 5000, -5200, 4000, 300, 2),
+    slab('shelf-floor-east', 10000, -5200, 4000, 300, 2),
+    slab('shelf-landmark', 11500, -4000, 2000, 1000, 2),
+    slab('shelf-pocket-wall', 5000, -4500, 700, 300, 2),
     // Cutaway interior (a wreck room) at x 10500..13000, y -4400..-3400, with
     // a gap in the west wall (the entrance, request §65 — swim through, no
     // door). Placed east of the main descent corridor (x ~9500) so the
     // descending route stays clear (request §4.2).
-    slab('shelf-int-west-top', 10500, -4200, 200, 200),
-    slab('shelf-int-west-bottom', 10500, -3800, 200, 200),
-    slab('shelf-int-east', 12800, -4200, 200, 600),
-    slab('shelf-int-ceiling', 10500, -4400, 2500, 200),
-    slab('shelf-int-floor', 10500, -3600, 2500, 200),
+    slab('shelf-int-west-top', 10500, -4200, 200, 200, 2),
+    slab('shelf-int-west-bottom', 10500, -3800, 200, 200, 2),
+    slab('shelf-int-east', 12800, -4200, 200, 600, 2),
+    slab('shelf-int-ceiling', 10500, -4400, 2500, 200, 2),
+    slab('shelf-int-floor', 10500, -3600, 2500, 200, 2),
   ],
   exits: [
     { id: 'shelf-seabed', to: 'seabed', position: vec2(5600, -2200) },
@@ -351,27 +356,27 @@ const twilight: WorldChunkDef = {
   band: 3,
   bounds: { x: 8600, y: -8000, w: 10400, h: 3200 },
   terrain: [
-    slab('twilight-west-wall', 8600, -8000, 400, 3200),
+    slab('twilight-west-wall', 8600, -8000, 400, 3200, 3),
     // The twilight east wall has a gap at y -7800..-7600 (the descent corridor
     // to the abyss, request §4.2). The player swims east through the gap to
     // the abyss band, then descends to the abyss floor.
-    slab('twilight-east-wall-top', 18600, -7600, 400, 2800),
-    slab('twilight-east-wall-bottom', 18600, -8000, 400, 200),
+    slab('twilight-east-wall-top', 18600, -7600, 400, 2800, 3),
+    slab('twilight-east-wall-bottom', 18600, -8000, 400, 200, 3),
     // The twilight floor has a gap at x 14000..19000 (the descent corridor
     // into the abyss, request §4.2). The player swims through the gap to
     // descend to the abyss floor.
-    slab('twilight-floor-west', 9000, -8000, 5000, 300),
-    slab('twilight-landmark', 15500, -6800, 2200, 1200),
-    slab('twilight-pocket-wall', 9000, -7200, 800, 300),
+    slab('twilight-floor-west', 9000, -8000, 5000, 300, 3),
+    slab('twilight-landmark', 15500, -6800, 2200, 1200, 3),
+    slab('twilight-pocket-wall', 9000, -7200, 800, 300, 3),
     // Cutaway interior (a facility room) at x 10500..13000, y -7000..-6000,
     // with a gap in the west wall (the entrance, request §65 — swim through,
     // no door). Placed west of the main descent corridor (x ~14500..19000)
     // so the descending route stays clear (request §4.2).
-    slab('twilight-int-west-top', 10500, -6800, 200, 200),
-    slab('twilight-int-west-bottom', 10500, -6400, 200, 200),
-    slab('twilight-int-east', 12800, -6800, 200, 600),
-    slab('twilight-int-ceiling', 10500, -7000, 2500, 200),
-    slab('twilight-int-floor', 10500, -6200, 2500, 200),
+    slab('twilight-int-west-top', 10500, -6800, 200, 200, 3),
+    slab('twilight-int-west-bottom', 10500, -6400, 200, 200, 3),
+    slab('twilight-int-east', 12800, -6800, 200, 600, 3),
+    slab('twilight-int-ceiling', 10500, -7000, 2500, 200, 3),
+    slab('twilight-int-floor', 10500, -6200, 2500, 200, 3),
   ],
   exits: [
     { id: 'twilight-shelf', to: 'shelf', position: vec2(9500, -5000) },
@@ -459,21 +464,21 @@ const abyss: WorldChunkDef = {
   band: 4,
   bounds: { x: 13600, y: -10000, w: 10400, h: 2400 },
   terrain: [
-    slab('abyss-west-wall', 13600, -10000, 400, 2400),
-    slab('abyss-east-wall', 23600, -10000, 400, 2400),
+    slab('abyss-west-wall', 13600, -10000, 400, 2400, 4),
+    slab('abyss-east-wall', 23600, -10000, 400, 2400, 4),
     // The abyss floor has a gap at x 14500..20000 (the descent corridor into
     // the hadal band, request §4.2). The player swims through the gap to
     // descend to the hadal floor.
-    slab('abyss-floor-west', 14000, -10000, 500, 300),
-    slab('abyss-floor-east', 20000, -10000, 2000, 300),
-    slab('abyss-landmark', 19500, -9000, 2400, 1400),
-    slab('abyss-pocket-wall', 14000, -9400, 900, 300),
+    slab('abyss-floor-west', 14000, -10000, 500, 300, 4),
+    slab('abyss-floor-east', 20000, -10000, 2000, 300, 4),
+    slab('abyss-landmark', 19500, -9000, 2400, 1400, 4),
+    slab('abyss-pocket-wall', 14000, -9400, 900, 300, 4),
     // Cutaway interior (a deep facility) at x 16900..19500, y -9200..-8400.
-    slab('abyss-int-west-top', 16900, -9000, 200, 200),
-    slab('abyss-int-west-bottom', 16900, -8600, 200, 200),
-    slab('abyss-int-east', 19500, -9000, 200, 600),
-    slab('abyss-int-ceiling', 16900, -9200, 2600, 200),
-    slab('abyss-int-floor', 16900, -8400, 2600, 200),
+    slab('abyss-int-west-top', 16900, -9000, 200, 200, 4),
+    slab('abyss-int-west-bottom', 16900, -8600, 200, 200, 4),
+    slab('abyss-int-east', 19500, -9000, 200, 600, 4),
+    slab('abyss-int-ceiling', 16900, -9200, 2600, 200, 4),
+    slab('abyss-int-floor', 16900, -8400, 2600, 200, 4),
   ],
   exits: [
     { id: 'abyss-twilight', to: 'twilight', position: vec2(14500, -7800) },
@@ -569,20 +574,20 @@ const hadal: WorldChunkDef = {
   band: 5,
   bounds: { x: 18100, y: -10000, w: 5400, h: 400 },
   terrain: [
-    slab('hadal-west-wall', 18100, -10000, 400, 400),
-    slab('hadal-east-wall', 23100, -10000, 400, 400),
-    slab('hadal-floor', 18500, -10000, 4600, 300),
+    slab('hadal-west-wall', 18100, -10000, 400, 400, 5),
+    slab('hadal-east-wall', 23100, -10000, 400, 400, 5),
+    slab('hadal-floor', 18500, -10000, 4600, 300, 5),
     // The optional pocket (request §4.2): a small overhang in the west section
     // forming a nook with a salvage cache; the player swims under the ledge
     // (y -9700..-9590) to reach it — off the main return line.
-    slab('hadal-pocket-ledge', 18550, -9590, 450, 30),
+    slab('hadal-pocket-ledge', 18550, -9590, 450, 30, 5),
     // The lost-installation interior (a cutaway facility, request §65): a room
     // at x 20300..22700, y -9800..-9400, with a gap in the west wall.
-    slab('hadal-int-west-top', 20100, -9800, 200, 100),
-    slab('hadal-int-west-bottom', 20100, -9600, 200, 200),
-    slab('hadal-int-east', 22500, -9800, 200, 400),
-    slab('hadal-int-ceiling', 20100, -9900, 2600, 100),
-    slab('hadal-int-floor', 20100, -9400, 2600, 200),
+    slab('hadal-int-west-top', 20100, -9800, 200, 100, 5),
+    slab('hadal-int-west-bottom', 20100, -9600, 200, 200, 5),
+    slab('hadal-int-east', 22500, -9800, 200, 400, 5),
+    slab('hadal-int-ceiling', 20100, -9900, 2600, 100, 5),
+    slab('hadal-int-floor', 20100, -9400, 2600, 200, 5),
   ],
   exits: [{ id: 'hadal-abyss', to: 'abyss', position: vec2(19000, -9700) }],
   props: [
