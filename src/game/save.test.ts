@@ -9,6 +9,8 @@ import {
   SAVE_BACKUP_KEY,
   SAVE_VERSION,
   serializeSave,
+  type SaveGame,
+  type SaveGameV1,
   type SaveGameV2,
 } from './save';
 
@@ -122,7 +124,7 @@ describe('SaveGameV2 (request §42, §70, WI-05cb)', () => {
   });
 
   it('migrates a v1 save without accessibility fields to defaults', () => {
-    const oldSave = {
+    const oldSave: SaveGameV1 = {
       version: 1,
       playTimeSec: 100,
       player: {
@@ -171,7 +173,7 @@ describe('SaveGameV2 (request §42, §70, WI-05cb)', () => {
       },
       settings: { masterVolume: 0.5 },
     };
-    const restored = parseSave(serializeSave(oldSave)) as SaveGameV2;
+    const restored = parseSave(serializeSave(oldSave as SaveGame)) as SaveGameV2;
     expect(restored.settings.screenShake).toBe(true);
     expect(restored.settings.reducedFlashing).toBe(false);
     expect(restored.settings.showSubtitles).toBe(true);

@@ -1641,7 +1641,7 @@ export class Simulation {
   }
 
   deserialize(json: string): void {
-    const save = JSON.parse(json) as SaveGameV1;
+    const save = JSON.parse(json) as import('../game/save').SaveGame;
     this.loadFromSave(save);
   }
 
@@ -1668,7 +1668,13 @@ export class Simulation {
         finalSequenceStep: this.finalSequenceStep,
         autosaveMilestones: [...this.autosaveMilestones],
       },
-      settings: { masterVolume: 1 },
+      settings: {
+        masterVolume: 1,
+        screenShake: true,
+        reducedFlashing: false,
+        showSubtitles: true,
+        hiContrastSonar: false,
+      },
     };
   }
 
@@ -1698,9 +1704,11 @@ export class Simulation {
     this.storyFlags.length = 0;
     this.storyFlags.push(...save.world.storyFlags);
     this.endingTriggered = save.world.endingTriggered ?? false;
-    this.endingVariant = save.world.endingVariant ?? undefined;
-    this.finalSequenceStep = save.world.finalSequenceStep ?? undefined;
-    this.autosaveMilestones = [...save.world.autosaveMilestones];
+    // V2 fields: only present when the save is version 2 (migrated or original).
+    const saveV2 = save as import('../game/save').SaveGameV2;
+    this.endingVariant = saveV2.world.endingVariant ?? undefined;
+    this.finalSequenceStep = saveV2.world.finalSequenceStep ?? undefined;
+    this.autosaveMilestones = [...(saveV2.world.autosaveMilestones ?? [])];
     this.updateCargo();
     this.wasAtBase = true;
   }
@@ -1711,7 +1719,7 @@ export function createSimulation(world: SimWorld, seed: number = DEFAULT_SEED): 
 }
 
 /** A fresh simulation from the production world and a save (request §70 step 8). */
-export function createSimulationFromSave(save: SaveGameV1, seed: number = DEFAULT_SEED): Simulation {
+export function createSimulationFromSave(save: import('../game/save').SaveGame, seed: number = DEFAULT_SEED): Simulation {
   const sim = createSimulation(makeSimWorld(), seed);
   sim.loadFromSave(save);
   return sim;

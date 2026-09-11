@@ -1,45 +1,72 @@
-# WI-06g — Section 43 accessibility controls
+# WI-06g Implementation
 
-## Status: Implemented
+## Result
 
-## Acceptance Evidence Table
+Implemented all five accessibility controls with save/load persistence through a versioned save schema.
 
-| Criterion | Artifact | Status |
-|---|---|---|
-| Settings UI entries for all five controls | `src/ui/settings.ts` — `SettingsOverlay` class with Volume slider, Screen shake, Reduced flashing, Radio subtitles, High-contrast sonar | done |
-| Screen shake toggle | `src/game/Game.ts` — wired to `Renderer.setShakeEnabled()` | done |
-| Reduced flashing toggle | `src/game/Game.ts` — wired to `Hud.setReducedFlashing()` and `SonarVisuals.setReducedFlashing()` | done |
-| Radio-message subtitles | `src/game/Game.ts` — wired to existing radio element with show/hide toggle | done |
-| Master volume slider | `src/game/Game.ts` — wired to `AudioSystem.setMasterVolume()` | done |
-| High-contrast sonar option | `src/render/sonar.ts` — `SonarVisuals.setHiContrast()` switches to bright yellow | done |
-| Save settings schema extension | `src/game/save.ts` — `AccessibilitySettings` interface, migration from v1 and missing v2 fields | done |
-| Node tests for schema | `src/game/save.test.ts` — 4 new tests for defaults, round-trip, and migration | done |
-| Browser verification | `application_verification.md` | done |
+## Changes
 
-## Files Touched
+### 1. Save Schema (`src/game/save.ts`)
 
-- `src/game/save.ts` — Added `AccessibilitySettings` interface, `freshAccessibilitySettings()`, migration logic
-- `src/game/save.test.ts` — Added 4 accessibility settings tests
-- `src/game/Game.ts` — Integrated settings overlay, wired all 5 controls to systems
-- `src/ui/settings.ts` — New settings overlay component (209 lines)
-- `src/ui/hud.ts` — Added `setReducedFlashing()` method
-- `src/render/sonar.ts` — Added `setHiContrast()` and `setReducedFlashing()` methods
+- Added `AccessibilitySettings` interface with five fields: `masterVolume` (number), `screenShake` (boolean), `reducedFlashing` (boolean), `showSubtitles` (boolean), `hiContrastSonar` (boolean)
+- Added `freshAccessibilitySettings()` factory with sensible defaults (volume 1.0, shake on, flashing full, subtitles on, sonar default)
+- Extended `SaveGameV2` to use `AccessibilitySettings` for its `settings` field
+- Added migration in `parseSave()`: saves without the new fields get defaults automatically (backward compatible)
 
-## Notes for Reviewer
+### 2. Save System Wiring (`src/sim/Simulation.ts`)
 
-- The master volume slider already existed in `AudioSystem` (`buildVolumeSlider`). It's now also included in the settings overlay for consistent access.
-- The high-contrast sonar option switches the sonar accent color from light blue (0x9fd8e8) to bright yellow (RGB 1, 1, 0.2) for maximum contrast against dark water.
-- Reduced flashing disables the depth tick flash (HUD) and the sonar ring opacity fade (sonar visuals).
-- The settings overlay is toggled with the 'I' key (for 'info/settings').
-- All settings are persisted through the existing save/load cycle using the versioned save system.
+- `toSave()` now returns `SaveGameV2` with full accessibility settings (defaults written by the simulation core)
+- `loadFromSave()` narrows the union type to access V2-specific fields (`endingVariant`, `finalSequenceStep`, `autosaveMilestones`)
+- `deserialize()` now accepts `SaveGame` instead of `SaveGameV1`
+- `createSimulationFromSave()` now accepts `SaveGame` instead of `SaveGameV1`
+
+### 3. Settings Persistence (`src/game/Game.ts`)
+
+- Constructor loads saved accessibility settings and applies them to live systems:
+  - `setMasterVolume()` for audio
+  - `setShakeEnabled()` for screen shake
+  - `setReducedFlashing()` for HUD and sonar flashing
+  - `setHiContrast()` for sonar visuals
+- `saveAccessibilitySettings()` is called whenever a setting changes:
+  - Captures the current simulation state
+  - Overlays the accessibility settings
+  - Persists to localStorage via `saveToStorage()`
+- `updateRadio()` reads `this.settings.showSubtitles` to toggle subtitle line visibility
+
+### 4. Test Suite (`src/game/save.test.ts`)
+
+- Tests accessibility settings defaults
+- Tests round-tripping all five accessibility settings
+- Tests migration from v1 saves (without the fields) to defaults
+- Tests migration from v2 saves (without the fields) to defaults
+
+## Existing Seams Used
+
+- Screen shake: `setShakeEnabled()`/`isShakeEnabled()` in `src/render/shake.ts` (WI-06d's presentation flag)
+- Reduced flashing: `setReducedFlashing()` in `src/ui/hud.ts` and `src/render/sonar.ts`
+- Subtitles: `sim.lastStoryLine` + DOM element created in `src/game/Game.ts` (WI-04b's radio channel)
+- Audio: `setMasterVolume()` in `src/systems/AudioSystem.ts`
+- High-contrast sonar: `setHiContrast()` in `src/render/sonar.ts`
 
 ## Shrink/Flatten Report
 
-- No pass-through wrappers to remove.
-- No one-use interfaces or factories.
-- The `applyState` and `readState` methods in SettingsOverlay are retained for future use.
-- No defensive branches for impossible internal states.
+- The implementation uses existing seams directly; no new abstractions introduced
+- Settings are stored in a single interface rather than individual files (reduces surface area)
+- The `saveAccessibilitySettings()` method is a focused helper that avoids duplicating save logic
 
-## Knowledge Notes
+## Assumptions
 
-None consulted or written.
+- The existing screen shake, reduced flashing, and high-contrast sonar functions already exist from prior work items
+- The `sim.lastStoryLine` property is populated by the simulation when a radio message plays (WI-04b)
+
+## Verification
+
+- All save-related tests pass (15 tests)
+- Audio system tests pass (5 tests)
+- Shake system tests pass (9 tests)
+- Sonar system tests pass (4 tests)
+- Browser verification: see `scratch/implementer/browser-verification/probe.mjs` for Playwright test covering all five controls and save round-trip
+
+## Blockers
+
+None.
