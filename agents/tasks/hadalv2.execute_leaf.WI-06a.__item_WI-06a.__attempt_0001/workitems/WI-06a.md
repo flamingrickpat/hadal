@@ -73,3 +73,15 @@ Read ST-06/plan.md, request sections 1.1, 14, 15, 59, the band data seam
 described in `understanding.md`, and `src/render/` plus the world data
 files it reads. The visual language baseline from the WI-07 work
 (`understanding.md`) is the starting point - dress, do not redesign.
+
+## Result
+
+Surface band (depth 0) now reads as the bright, clear cozy baseline
+(ambient 0.45, visibility 2500, warm light teal water) per request §59.
+Coast band (depth 1600) is distinctly darker and transitional
+(ambient 0.3, visibility 1200) per request §14.3. Browser verification
+confirmed the surface is bright and safe, the progression to depth
+creates increasing darkness, and returning to surface after a deep dive
+creates relief. All band tests pass (10/10). Playwright probe ran clean
+(0 page errors, 0 console errors) with screenshots captured at surface,
+coast, deep, and return-to-surface.
