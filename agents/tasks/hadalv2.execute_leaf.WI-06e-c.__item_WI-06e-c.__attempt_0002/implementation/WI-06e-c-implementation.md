@@ -59,3 +59,8 @@ None in this fix commit. Original test additions remain:
 - The original sparse music implementation is unchanged. This commit adds exactly one line to consume the cues.
 - The 2 failing Node tests are pre-existing and unrelated to audio (T-17 spawn band distribution).
 - The sparse music feature is now complete and all verification passes.
+## Completion note recovered from the root specification
+
+The following original completion note was moved here to restore the immutable planning specification. It is preserved as recorded, not a new test run.
+
+Implemented: sparse music per section 58 via `MUSIC_MOMENTS` data seam (6 moments) and `AudioSystem.playMusicMoment()`. Trigger integration in `Game.update()` consumes audio cues. Final AC-art-sound proof completed: depth-ladder mixing verified (highCutoff falls, lowRumble and reverb rise with depth), creature audio lead time verified via distance gain, master-volume seam intact, WebAudio node count within budget. All relevant tests pass (458/460 Node; 4/4 sparse-music browser; 1 pre-existing boot save/reload failure unrelated to audio).
