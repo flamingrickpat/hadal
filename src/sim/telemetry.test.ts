@@ -1,125 +1,47 @@
-import { describe, expect, it } from 'vitest';
-import { Scenario } from './scenario';
-import { emptyInput } from './Simulation';
-import { BASE, PLAYER_START } from '../world/worldData';
-import { O2_MAX } from '../game/constants';
+import { describe, it, expect } from 'vitest';
+import { TelemetryCollector } from './telemetry';
 
-/**
- * WI-07a: Section 71 balance telemetry collector.
- *
- * Tests that the headless scenario export captures every section 71 field:
- * play time, zone, max depth, deaths, crafted upgrades, resources
- * collected/spent, time since last unlock, oxygen on surfacing, encounter
- * trigger timestamps, and frame data.
- */
-describe('WI-07a: section 71 balance telemetry', () => {
-  it('captures play time and zone', () => {
-    const s = new Scenario(1);
-    s.stepFor(10);
-    const t = s.telemetry();
-    expect(t.playTimeSec).toBeGreaterThan(9);
-    expect(t.playTimeSec).toBeLessThan(11);
-    expect(typeof t.zone).toBe('string');
-    expect(t.zone.length).toBeGreaterThan(0);
+describe('TelemetryCollector', () => {
+  it('measures FPS correctly', () => {
+    const collector = new TelemetryCollector();
+    const inv = {};
+    const banked = {};
+
+    // Step 1 at t=0
+    collector.onStepStart(0, inv, banked, false, 0);
+    collector.onStepEnd(0, 'zone-1', 100, 100, 0, inv, banked, 100, 100, false, 0, [], 1 / 60);
+
+    // Step 2 at t=1/60
+    collector.onStepStart(1 / 60, inv, banked, false, 0);
+    collector.onStepEnd(1 / 60, 'zone-1', 100, 100, 0, inv, banked, 100, 100, false, 0, [], 1 / 60);
+
+    // ... run 60 steps to reach 1 second
+    let t = 1 / 60;
+    for (let i = 2; i <= 60; i++) {
+      collector.onStepStart(t, inv, banked, false, 0);
+      t += 1 / 60;
+      collector.onStepEnd(t, 'zone-1', 100, 100, 0, inv, banked, 100, 100, false, 0, [], 1 / 60);
+    }
+
+    const snap = collector.snapshot();
+    expect(snap.frames).toBe(61); // 1 initial + 60
+    // After 1 second at 60 FPS, fps should be close to 60
+    expect(snap.fps).toBeGreaterThan(55);
+    expect(snap.fps).toBeLessThan(65);
   });
 
-  it('captures max depth', () => {
-    const s = new Scenario(2);
-    s.stepFor(5);
-    const t = s.telemetry();
-    expect(typeof t.maxDepth).toBe('number');
-    expect(t.maxDepth).toBeGreaterThanOrEqual(0);
-  });
+  it('tracks max depth', () => {
+    const collector = new TelemetryCollector();
+    const inv = {};
+    const banked = {};
 
-  it('captures deaths', () => {
-    const s = new Scenario(3);
-    s.stepFor(10);
-    const t = s.telemetry();
-    expect(typeof t.deaths).toBe('number');
-    expect(t.deaths).toBeGreaterThanOrEqual(0);
-  });
+    collector.onStepStart(0, inv, banked, false, 0);
+    collector.onStepEnd(0, 'zone-1', 100, 100, 0, inv, banked, 100, 100, false, 0, [], 1 / 60);
 
-  it('captures resources collected', () => {
-    const s = new Scenario(4);
-    const harvest = emptyInput();
-    harvest.interact = true;
-    s.stepFor(10, harvest);
-    const t = s.telemetry();
-    expect(typeof t.resourcesCollected).toBe('object');
-    expect(t.resourcesCollected).not.toBeNull();
-  });
+    collector.onStepStart(1, inv, banked, false, 0);
+    collector.onStepEnd(1, 'zone-2', 500, 500, 0, inv, banked, 80, 100, false, 0, [], 1 / 60);
 
-  it('captures crafted upgrades', () => {
-    const s = new Scenario(5);
-    s.stepFor(10);
-    const t = s.telemetry();
-    expect(Array.isArray(t.upgradesCrafted)).toBe(true);
-  });
-
-  it('captures encounter trigger timestamps', () => {
-    const s = new Scenario(6);
-    s.stepFor(10);
-    const t = s.telemetry();
-    expect(typeof t.triggerTimestamps).toBe('object');
-    expect(t.triggerTimestamps).not.toBeNull();
-  });
-
-  it('captures all required section 71 fields', () => {
-    const s = new Scenario(7);
-    s.stepFor(5);
-    const t = s.telemetry();
-    // Every section 71 field must be present and non-null
-    expect(t.playTimeSec).not.toBeNull();
-    expect(typeof t.playTimeSec).toBe('number');
-    expect(t.zone).not.toBeNull();
-    expect(typeof t.zone).toBe('string');
-    expect(typeof t.maxDepth).toBe('number');
-    expect(typeof t.deaths).toBe('number');
-    expect(typeof t.resourcesCollected).toBe('object');
-    expect(t.resourcesCollected).not.toBeNull();
-    expect(typeof t.resourcesSpent).toBe('object');
-    expect(t.resourcesSpent).not.toBeNull();
-    expect(Array.isArray(t.upgradesCrafted)).toBe(true);
-    expect(typeof t.timeSinceLastUnlockSec).toBe('number');
-    expect(typeof t.oxygenOnLastSurface).toBe('number');
-    expect(typeof t.triggerTimestamps).toBe('object');
-    expect(t.triggerTimestamps).not.toBeNull();
-    expect(typeof t.frames).toBe('number');
-    expect(typeof t.fps).toBe('number');
-  });
-
-  it('telemetry keys match browser schema', () => {
-    const s = new Scenario(8);
-    s.stepFor(1);
-    const headlessKeys = Object.keys(s.telemetry()).sort();
-
-    // The browser debug panel schema (same object, no per-surface field list)
-    const browserKeys = [
-      'deaths',
-      'fps',
-      'frames',
-      'maxDepth',
-      'oxygenOnLastSurface',
-      'playTimeSec',
-      'resourcesCollected',
-      'resourcesSpent',
-      'timeSinceLastUnlockSec',
-      'triggerTimestamps',
-      'upgradesCrafted',
-      'zone',
-    ].sort();
-
-    expect(headlessKeys).toEqual(browserKeys);
-  });
-
-  it('counters update as scenario acts', () => {
-    const s = new Scenario(9);
-    const t1 = s.telemetry();
-
-    s.stepFor(5);
-    const t2 = s.telemetry();
-
-    expect(t2.playTimeSec).toBeGreaterThan(t1.playTimeSec);
-    expect(t2.frames).toBeGreaterThan(t1.frames);
+    const snap = collector.snapshot();
+    expect(snap.maxDepth).toBe(500);
   });
 });

@@ -1,0 +1,66 @@
+{
+  "target": 60,
+  "scenes": [
+    {
+      "scene": "surface",
+      "name": "Surface (band 0)",
+      "depth": 0,
+      "actualDepth": 0,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    },
+    {
+      "scene": "coast",
+      "name": "Coast (band 1)",
+      "depth": 1600,
+      "actualDepth": 1600,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    },
+    {
+      "scene": "mid1",
+      "name": "Mid band 1 (band 2)",
+      "depth": 4000,
+      "actualDepth": 4000.2,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    },
+    {
+      "scene": "mid2",
+      "name": "Mid band 2 (band 3)",
+      "depth": 7000,
+      "actualDepth": 7000.7,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    },
+    {
+      "scene": "mid3",
+      "name": "Mid band 3 (band 4)",
+      "depth": 10000,
+      "actualDepth": 10000.1,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    },
+    {
+      "scene": "deep",
+      "name": "Deep (band 5)",
+      "depth": 12000,
+      "actualDepth": 12000,
+      "fpsMin": 60,
+      "fpsAvg": 60,
+      "samples": 17,
+      "passes": true
+    }
+  ],
+  "allPass": true
+}
