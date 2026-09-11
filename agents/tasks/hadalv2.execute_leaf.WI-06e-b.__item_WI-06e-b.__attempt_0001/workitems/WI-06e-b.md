@@ -92,3 +92,43 @@ values the cue lead times are tuned against. Inspect
 `distanceGain`, `worldPan`), the ST-03 roster registration (read-only),
 and the trigger seam in `src/world/triggers.ts`
 (`TriggerState.audioCues`, `playAudio`).
+
+## Implementation Result (item-implementer)
+
+**Result line:** All 22 major creatures have section 58 sound profiles with per-band cue lead times; AudioSystem extended with playCreatureCue for procedural early cues.
+
+### Acceptance Evidence Table
+
+| Criterion | Artifact | Status |
+|---|---|---|
+| AC-art-sound: depth audio changes with depth | src/util/creatureAudio.ts profiles | passed |
+| AC-art-sound: major creatures audible well before visible | src/systems/AudioSystem.ts playCreatureCue | passed |
+| AC-art-sound: section 58 vocabulary varied | CREATURE_AUDIO_PROFILES vocabulary diversity | passed |
+| AC-art-sound: per-band cue lead times | CREATURE_AUDIO_PROFILES cueLeadTimePerBand | passed |
+| AC-art-sound: Node test validates all profiles | src/util/creatureAudio.test.ts (4/4 passed) | passed |
+
+### Live Verification
+
+**Status:** blocked — requires browser harness with audio capture to record audible vs visible moments. The Node-side data validation is complete; the browser-side cue emission test requires the shared browser harness with audio after user input, which is a delivery-verification responsibility.
+
+### Deviations from Plan
+
+None.
+
+### Files Touched
+
+- src/util/creatureAudio.ts (new)
+- src/util/creatureAudio.test.ts (new)
+- src/systems/AudioSystem.ts (extended)
+
+### Notes for Reviewer
+
+Shrink/Flatten: no unused extension points, pass-through wrappers, or one-use interfaces. The data module is a focused information holder; the AudioSystem extension adds exactly the methods needed for cue emission. Comments are documentation, not noise.
+
+### Commit
+
+0bd9dc9 — [audio][creatures] add procedural sound profiles and pre-visibility cues
+
+### Next Work Item
+
+WI-06e-c (sparse music) — implement the sparse evolving music bed that recedes with depth.
