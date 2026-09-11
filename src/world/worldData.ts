@@ -213,6 +213,14 @@ const shelf: WorldChunkDef = {
     { id: 'shelf-twilight', to: 'twilight', position: vec2(9500, -5000) },
     { id: 'shelf-abyss-shortcut', to: 'abyss', position: vec2(7000, -5000) },
   ],
+  // The shelf is the first relevant area for the tank-1 upgrade (oxygen becomes
+  // critical at depth): it provides 9 salvage across 3 nodes — 150% of the
+  // tank-1 cost (6), satisfying the section 40 scarcity rule (130-170%).
+  resourceNodes: [
+    { id: 'salvage-shelf-1', material: 'salvage', position: vec2(6500, -3500), amount: 3 },
+    { id: 'salvage-shelf-2', material: 'salvage', position: vec2(7500, -3800), amount: 3 },
+    { id: 'salvage-shelf-3', material: 'salvage', position: vec2(8500, -4000), amount: 3 },
+  ],
   props: [
     { id: 'shelf-landmark', kind: 'landmark', position: vec2(12500, -3500) },
     { id: 'shelf-pocket', kind: 'pocket', position: vec2(5600, -4600) },
@@ -328,6 +336,15 @@ const twilight: WorldChunkDef = {
     { id: 'twilight-abyss', to: 'abyss', position: vec2(17500, -7800) },
     { id: 'twilight-hadal-shortcut', to: 'hadal', position: vec2(10500, -7800) },
   ],
+  // The twilight is the first relevant area for the fins-1 upgrade (boost helps
+  // at deeper depths): it provides 12 salvage across 4 nodes — 150% of the
+  // fins-1 cost (8), satisfying the section 40 scarcity rule (130-170%).
+  resourceNodes: [
+    { id: 'salvage-twilight-1', material: 'salvage', position: vec2(10500, -6500), amount: 3 },
+    { id: 'salvage-twilight-2', material: 'salvage', position: vec2(12000, -6800), amount: 3 },
+    { id: 'salvage-twilight-3', material: 'salvage', position: vec2(13500, -7000), amount: 3 },
+    { id: 'salvage-twilight-4', material: 'salvage', position: vec2(15000, -7200), amount: 3 },
+  ],
   props: [
     { id: 'twilight-landmark', kind: 'landmark', position: vec2(16600, -6200) },
     { id: 'twilight-pocket', kind: 'pocket', position: vec2(9800, -7300) },
@@ -428,6 +445,14 @@ const abyss: WorldChunkDef = {
   exits: [
     { id: 'abyss-twilight', to: 'twilight', position: vec2(14500, -7800) },
     { id: 'abyss-hadal', to: 'hadal', position: vec2(20500, -9800) },
+  ],
+  // The abyss is the first relevant area for the sonar-1 upgrade (sonar helps
+  // in deep dark water): it provides 7 salvage across 3 nodes — 140% of the
+  // sonar-1 cost (5), satisfying the section 40 scarcity rule (130-170%).
+  resourceNodes: [
+    { id: 'salvage-abyss-1', material: 'salvage', position: vec2(15500, -9000), amount: 2 },
+    { id: 'salvage-abyss-2', material: 'salvage', position: vec2(17000, -9200), amount: 3 },
+    { id: 'salvage-abyss-3', material: 'salvage', position: vec2(18500, -9400), amount: 2 },
   ],
   props: [
     { id: 'abyss-landmark', kind: 'landmark', position: vec2(20700, -8300) },
