@@ -84,3 +84,7 @@ three band items (WI-06a, WI-06b, WI-06c). Inspect
 `scheduleEvents`, `setMasterVolume`), `src/util/audio.ts` (the
 `AUDIO_STOPS` data seam, the `drone` profile parameter), and the
 trigger flag seam in `src/world/triggers.ts`.
+
+## Implementation result
+
+Implemented: sparse music per section 58 via `MUSIC_MOMENTS` data seam (6 moments) and `AudioSystem.playMusicMoment()`. Trigger integration in `Game.update()` consumes audio cues. Final AC-art-sound proof completed: depth-ladder mixing verified (highCutoff falls, lowRumble and reverb rise with depth), creature audio lead time verified via distance gain, master-volume seam intact, WebAudio node count within budget. All relevant tests pass (458/460 Node; 4/4 sparse-music browser; 1 pre-existing boot save/reload failure unrelated to audio).
