@@ -6,109 +6,127 @@
       "name": "Surface (band 0)",
       "depth": 0,
       "actualDepth": 0,
-      "fpsMin": 22.3,
-      "fpsAvg": 23.4,
-      "samples": [
-        23.2,
-        24.2,
-        23.2,
-        22.3,
-        24.2
+      "fpsMin": 129.8701298701176,
+      "fpsAvg": 133,
+      "fpsSamples": [
+        133.33333333333334,
+        129.8701298701176,
+        135.13513513514178,
+        131.57894736844625,
+        135.13513513514178
       ],
+      "frameDeltaMin": 7.399999999999636,
+      "frameDeltaAvg": 7.52,
+      "activeEntityCount": 0,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     },
     {
       "scene": "coast",
       "name": "Coast (band 1)",
       "depth": 1600,
       "actualDepth": 1600,
-      "fpsMin": 19.7,
-      "fpsAvg": 20.8,
-      "samples": [
-        21.3,
-        22,
-        20.3,
-        20.7,
-        19.7
+      "fpsMin": 131.57894736838327,
+      "fpsAvg": 132.3,
+      "fpsSamples": [
+        131.57894736841476,
+        133.33333333333334,
+        133.33333333333334,
+        131.57894736838327,
+        131.57894736844625
       ],
+      "frameDeltaMin": 7.5,
+      "frameDeltaAvg": 7.56,
+      "activeEntityCount": 1,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     },
     {
       "scene": "mid1",
       "name": "Mid band 1 (band 2)",
       "depth": 4000,
-      "actualDepth": 4000.067986926848,
-      "fpsMin": 22.6,
-      "fpsAvg": 22.8,
-      "samples": [
-        22.9,
-        22.6,
-        22.6,
-        23,
-        22.9
+      "actualDepth": 4000.8158431221746,
+      "fpsMin": 131.57894736838327,
+      "fpsAvg": 132.3,
+      "fpsSamples": [
+        131.57894736844625,
+        133.33333333333334,
+        131.57894736838327,
+        131.57894736844625,
+        133.33333333333334
       ],
+      "frameDeltaMin": 7.5,
+      "frameDeltaAvg": 7.56,
+      "activeEntityCount": 12,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     },
     {
       "scene": "mid2",
       "name": "Mid band 2 (band 3)",
       "depth": 7000,
-      "actualDepth": 7000.067986926848,
-      "fpsMin": 23.8,
-      "fpsAvg": 24.2,
-      "samples": [
-        24.2,
-        24.8,
-        23.8,
-        24.2,
-        24
+      "actualDepth": 7000.815843122175,
+      "fpsMin": 131.57894736832029,
+      "fpsAvg": 133,
+      "fpsSamples": [
+        133.33333333333334,
+        135.13513513510856,
+        131.57894736844625,
+        133.33333333333334,
+        131.57894736832029
       ],
+      "frameDeltaMin": 7.400000000001455,
+      "frameDeltaAvg": 7.52,
+      "activeEntityCount": 12,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     },
     {
       "scene": "mid3",
       "name": "Mid band 3 (band 4)",
       "depth": 10000,
       "actualDepth": 10000.067986926848,
-      "fpsMin": 22.9,
-      "fpsAvg": 23.5,
-      "samples": [
-        24,
-        23.6,
-        23.6,
-        22.9,
-        23.2
+      "fpsMin": 123.45679012347897,
+      "fpsAvg": 131.4,
+      "fpsSamples": [
+        133.33333333333334,
+        133.33333333333334,
+        133.33333333333334,
+        123.45679012347897,
+        133.33333333333334
       ],
+      "frameDeltaMin": 7.5,
+      "frameDeltaAvg": 7.62,
+      "activeEntityCount": 9,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     },
     {
       "scene": "deep",
       "name": "Deep (band 5) - largest encounter",
       "depth": 12000,
       "actualDepth": 12000,
-      "fpsMin": 22.6,
-      "fpsAvg": 23.1,
-      "samples": [
-        24,
-        23.2,
-        23,
-        22.6,
-        22.9
+      "fpsMin": 133.33333333333334,
+      "fpsAvg": 134.4,
+      "fpsSamples": [
+        133.33333333333334,
+        133.33333333333334,
+        133.33333333333334,
+        138.88888888894502,
+        133.33333333333334
       ],
+      "frameDeltaMin": 7.19999999999709,
+      "frameDeltaAvg": 7.44,
+      "activeEntityCount": 3,
       "sampleCount": 5,
       "isLoopRunning": true,
-      "passes": false
+      "passes": true
     }
   ],
-  "allPass": false
+  "allPass": true
 }

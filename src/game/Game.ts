@@ -360,4 +360,8 @@ export class Game implements DebugPanelHost {
   telemetry(): import('../sim/telemetry').TelemetrySnapshot {
     return this.sim.telemetry.snapshot();
   }
+  // WI-07d: access to raw simulation for frame metrics (probe needs creature count).
+  get simulation() {
+    return this.sim;
+  }
 }

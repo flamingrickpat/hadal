@@ -45,6 +45,11 @@ const frame = (now: number): void => {
     accumulator = next;
   }
   last = now;
+  // WI-07d: record actual render frame delta for performance profiling.
+  if (rawDt > 0) {
+    const sim = game.simulation;
+    sim.telemetry.onFrame(rawDt, sim.creatures.filter((c) => c.active).length);
+  }
   renderer.follow(game.player.position);
   game.renderVisuals(Math.min(rawDt, 0.1));
   renderer.render();

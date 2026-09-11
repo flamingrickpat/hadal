@@ -44,6 +44,10 @@ export interface TelemetrySnapshot {
   frames: number;
   /** Current measured FPS. */
   fps: number;
+  /** Frame delta in seconds (time between last two render frames). */
+  frameDelta: number;
+  /** Number of active creatures currently being updated. */
+  activeEntityCount: number;
 }
 
 /**
@@ -90,6 +94,8 @@ export class TelemetryCollector {
       triggerTimestamps: {},
       frames: 0,
       fps: 0,
+      frameDelta: 0,
+      activeEntityCount: 0,
     };
   }
 
@@ -110,6 +116,15 @@ export class TelemetryCollector {
     this.prevAtBase = atBase;
     this.prevFlagCount = storyFlagCount;
     if (this.fpsWindowStart === 0) this.fpsWindowStart = timeSec;
+  }
+
+  /**
+   * Record a render frame (called per display frame, not per simulation step).
+   * Tracks frame delta and active entity count for performance profiling.
+   */
+  onFrame(frameDeltaSec: number, activeEntityCount: number): void {
+    this.state.frameDelta = frameDeltaSec;
+    this.state.activeEntityCount = activeEntityCount;
   }
 
   /**
@@ -226,6 +241,8 @@ export class TelemetryCollector {
       triggerTimestamps: { ...this.state.triggerTimestamps },
       frames: this.state.frames,
       fps: this.state.fps,
+      frameDelta: this.state.frameDelta,
+      activeEntityCount: this.state.activeEntityCount,
     };
   }
 }

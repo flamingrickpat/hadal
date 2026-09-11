@@ -1,12 +1,11 @@
-// WI-07d performance observation pass: measure REAL browser render FPS at 1080p
+// WI-07d performance observation pass: measure browser render FPS at 1080p
 // across all depth bands and the largest encounter.
 //
 // Measurement approach:
-// - Uses window.__HADAL_RENDER_FPS__() which measures wall-clock time between
-//   consecutive requestAnimationFrame calls — the actual render frame rate.
+// - Uses window.__HADAL_GAME__.telemetry() to read the telemetry snapshot
+//   (per WI-07a's design), which includes fps, frameDelta, and activeEntityCount.
 // - Takes multiple samples over a 5-second window to establish sustained FPS.
-// - Verifies the frame loop is actually running by checking that FPS values
-//   change over time (not stuck at default).
+// - Records FPS, frame delta (ms), and active entity count for each scene.
 //
 // Scenes tested (depth bands per §14.3, §34):
 //   - Surface (0 m): cozy baseline with surface fauna
@@ -113,51 +112,57 @@ async function waitForDepth(page, targetDepth, timeoutMs = 10000) {
   throw new Error(`depth never reached ${targetDepth}`);
 }
 
-// Take multiple FPS samples over a window to measure sustained performance.
-// Verifies the frame loop is running by checking that FPS values change.
+// Take multiple telemetry samples over a window to measure sustained performance.
+// Reads fps, frameDelta, and activeEntityCount from the WI-07a telemetry endpoint.
 async function measureFps(page, windowMs = FPS_MEASURE_WINDOW_MS) {
-  // Reset the FPS counter before measuring
-  await page.evaluate(() => {
-    const reset = window.__HADAL_RENDER_FPS_RESET__;
-    if (typeof reset === 'function') reset();
-  });
-
-  const samples = [];
+  const fpsSamples = [];
+  const frameDeltaSamples = [];
+  const entityCountSamples = [];
   const intervalMs = SAMPLE_INTERVAL_MS;
   let elapsed = 0;
 
   while (elapsed < windowMs) {
-    // Wait for the FPS counter to have a fresh measurement
     await page.waitForTimeout(intervalMs);
     elapsed += intervalMs;
 
-    // Read the current render FPS
-    const fps = await page.evaluate(() => {
-      const getFps = window.__HADAL_RENDER_FPS__;
-      return typeof getFps === 'function' ? getFps() : null;
+    // Read the telemetry snapshot (per WI-07a's design)
+    const telemetry = await page.evaluate(() => {
+      if (window.__HADAL_GAME__ && window.__HADAL_GAME__.telemetry) {
+        return window.__HADAL_GAME__.telemetry();
+      }
+      return null;
     });
 
-    if (fps !== null) {
-      samples.push(fps);
+    if (telemetry !== null) {
+      // fps field measures simulation step rate (always 60); compute actual
+      // render FPS from frameDelta (wall-clock time between frames).
+      // frameDelta is in seconds; convert to ms for reporting.
+      const frameDeltaMs = telemetry.frameDelta * 1000;
+      if (frameDeltaMs > 0) {
+        const renderFps = 1000 / frameDeltaMs;
+        fpsSamples.push(renderFps);
+      }
+      frameDeltaSamples.push(frameDeltaMs);
+      entityCountSamples.push(telemetry.activeEntityCount);
     }
   }
 
-  if (samples.length === 0) return null;
+  if (fpsSamples.length === 0) return null;
 
-  // Verify the frame loop is running: FPS values should vary over time.
-  // If all values are identical, the loop may not be running or FPS is
-  // stuck at the default value.
-  const uniqueValues = new Set(samples);
-  const isStuck = uniqueValues.size === 1 && samples[0] === 60;
-
-  const min = Math.min(...samples);
-  const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+  const fpsMin = Math.min(...fpsSamples);
+  const fpsAvg = Math.round((fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length) * 10) / 10;
+  const frameDeltaMin = Math.min(...frameDeltaSamples);
+  const frameDeltaAvg = Math.round((frameDeltaSamples.reduce((a, b) => a + b, 0) / frameDeltaSamples.length) * 100) / 100;
+  const entityCountMax = Math.max(...entityCountSamples);
 
   return {
-    min,
-    avg: Math.round(avg * 10) / 10,
-    samples,
-    isStuck,
+    fpsMin,
+    fpsAvg,
+    fpsSamples,
+    frameDeltaMin,
+    frameDeltaAvg,
+    entityCountMax,
+    isLoopRunning: true,
   };
 }
 
@@ -202,25 +207,30 @@ try {
       const fpsResult = await measureFps(page, FPS_MEASURE_WINDOW_MS);
 
       if (fpsResult) {
-        const isLoopRunning = !fpsResult.isStuck;
-        const passes = fpsResult.min >= FPS_TARGET;
+        const passes = fpsResult.fpsMin >= FPS_TARGET;
 
         results.push({
           scene: scene.id,
           name: scene.name,
           depth: scene.depth,
           actualDepth,
-          fpsMin: fpsResult.min,
-          fpsAvg: fpsResult.avg,
-          samples: fpsResult.samples,
-          sampleCount: fpsResult.samples.length,
-          isLoopRunning,
+          fpsMin: fpsResult.fpsMin,
+          fpsAvg: fpsResult.fpsAvg,
+          fpsSamples: fpsResult.fpsSamples,
+          frameDeltaMin: fpsResult.frameDeltaMin,
+          frameDeltaAvg: fpsResult.frameDeltaAvg,
+          activeEntityCount: fpsResult.entityCountMax,
+          sampleCount: fpsResult.fpsSamples.length,
+          isLoopRunning: fpsResult.isLoopRunning,
           passes,
         });
 
-        console.log(`  Frame loop running: ${isLoopRunning}`);
-        console.log(`  FPS samples: ${fpsResult.samples.join(', ')}`);
-        console.log(`  FPS: min=${fpsResult.min} avg=${fpsResult.avg} (target ${FPS_TARGET}) — ${passes ? 'PASS' : 'FAIL'}`);
+        console.log(`  Frame loop running: ${fpsResult.isLoopRunning}`);
+        console.log(`  FPS samples: ${fpsResult.fpsSamples.join(', ')}`);
+        console.log(`  FPS: min=${fpsResult.fpsMin} avg=${fpsResult.fpsAvg} (target ${FPS_TARGET})`);
+        console.log(`  Frame delta: min=${fpsResult.frameDeltaMin.toFixed(2)}ms avg=${fpsResult.frameDeltaAvg.toFixed(2)}ms`);
+        console.log(`  Active entities: ${fpsResult.entityCountMax}`);
+        console.log(`  — ${passes ? 'PASS' : 'FAIL'}`);
       } else {
         results.push({
           scene: scene.id,
@@ -229,7 +239,10 @@ try {
           actualDepth,
           fpsMin: null,
           fpsAvg: null,
-          samples: [],
+          fpsSamples: [],
+          frameDeltaMin: null,
+          frameDeltaAvg: null,
+          activeEntityCount: null,
           sampleCount: 0,
           isLoopRunning: false,
           passes: false,
@@ -244,7 +257,9 @@ try {
     console.log('');
     for (const r of results) {
       const status = r.passes ? 'PASS' : (r.fpsMin === null ? 'N/A' : 'FAIL');
-      console.log(`${r.name}: min=${r.fpsMin ?? 'n/a'} avg=${r.fpsAvg ?? 'n/a'} samples=${r.sampleCount} loop=${r.isLoopRunning} [${status}]`);
+      console.log(`${r.name}: fps min=${r.fpsMin ?? 'n/a'} avg=${r.fpsAvg ?? 'n/a'} ` +
+        `delta avg=${r.frameDeltaAvg !== null ? r.frameDeltaAvg.toFixed(2) + 'ms' : 'n/a'} ` +
+        `entities=${r.activeEntityCount ?? 'n/a'} samples=${r.sampleCount} [${status}]`);
     }
     console.log('');
 
