@@ -10,7 +10,7 @@
  *   overlay. Oxygen and health rows fade to low opacity while their
  *   meter is full (request §26).
  * not own: the meter math (`Player`), the input (`PlayerController`),
- *   the map or menus (WI-15).
+ *   the map overlay (`MapOverlay`) or menus (`CraftingMenu`).
  * fails when: the container is not an HTMLElement — the constructor
  *   throws.
  */

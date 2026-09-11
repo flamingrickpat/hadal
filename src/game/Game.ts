@@ -23,6 +23,8 @@ import { Renderer } from '../render/Renderer';
 import { World } from '../world/World';
 import { Hud } from '../ui/hud';
 import { CraftingMenu } from '../ui/menu';
+import { MapOverlay } from '../ui/mapOverlay';
+import { buildMapViewModel } from '../ui/mapView';
 import { createSimulation, makeSimWorld, type Simulation } from '../sim/Simulation';
 import { loadFromStorage, resetSave, saveToStorage } from './save';
 import { PLAYER_PLANE_Z } from './constants';
@@ -44,6 +46,7 @@ export class Game implements DebugPanelHost {
   private readonly sim: Simulation;
   private readonly hud: Hud;
   private readonly menu: CraftingMenu;
+  private readonly map: MapOverlay;
   private readonly world: World;
   private readonly lighting: Lighting;
   private readonly creatureRenderer: CreatureRenderer;
@@ -79,6 +82,7 @@ export class Game implements DebugPanelHost {
     renderer.scene.add(this.playerMesh);
     this.hud = new Hud(document.body);
     this.menu = new CraftingMenu(document.body, this.sim);
+    this.map = new MapOverlay(document.body, this.sim.chunks);
     this.audio = new AudioSystem();
     // Audio unlocks on the first user gesture so the browser autoplay rules are
     // respected (request §27, §70); the AudioContext is created only here.
@@ -98,25 +102,39 @@ export class Game implements DebugPanelHost {
     this.sim.controller.bindToWindow(renderer);
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') this.togglePause();
+      if (e.code === 'Tab') {
+        e.preventDefault();
+        this.toggleMap();
+      }
     });
   }
 
   update(dt: number): void {
-    if (this.paused) return;
-    this.sim.step(this.sim.controller.input, dt);
-    // Apply camera modifier from trigger actions (request §16 scale-reveal, §36 camera action).
-    const mod = this.sim.triggerState.cameraModifier;
-    if (mod !== null) {
-      // Validate the modifier value against the known set.
-      if (mod === 'wide' || mod === 'tight' || mod === 'pullback') {
-        this.renderer.setCameraModifier(mod);
+    // Pause simulation while the map is open, but still update the map display.
+    const mapOpen = this.map.isOpen;
+    if (!mapOpen && this.paused) return;
+
+    if (!mapOpen) {
+      this.sim.step(this.sim.controller.input, dt);
+      // Apply camera modifier from trigger actions (request §16 scale-reveal, §36 camera action).
+      const mod = this.sim.triggerState.cameraModifier;
+      if (mod !== null) {
+        // Validate the modifier value against the known set.
+        if (mod === 'wide' || mod === 'tight' || mod === 'pullback') {
+          this.renderer.setCameraModifier(mod);
+        }
+        // Reset after applying — the modifier is a one-shot trigger action.
+        this.sim.triggerState.cameraModifier = null;
       }
-      // Reset after applying — the modifier is a one-shot trigger action.
-      this.sim.triggerState.cameraModifier = null;
     }
     this.syncPlayerMesh();
     this.hud.update(this.sim.player);
     this.menu.update();
+    // Update the map overlay with current state when open.
+    if (mapOpen) {
+      const mapViewModel = buildMapViewModel(this.sim);
+      this.map.update(mapViewModel);
+    }
     // Fire the sonar ping once per Q press (request §6, §27), matching the
     // sonar fire in the simulation (which also requires the sonar capability).
     const sonar = this.sim.controller.input.sonar;
@@ -189,6 +207,12 @@ export class Game implements DebugPanelHost {
 
   togglePause(): void {
     this.paused = !this.paused;
+  }
+
+  private toggleMap(): void {
+    const wasOpen = this.map.toggle();
+    // Pause the game while the map is open
+    this.hud.setPaused(wasOpen || this.paused);
   }
 
   // Debug host (request §33): drive the simulation and storage from the panel.
