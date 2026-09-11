@@ -158,6 +158,8 @@ export class Game implements DebugPanelHost {
           this.audio.playMusicMoment(moment);
         }
       }
+      // Consume the cues so they don't replay on the next frame.
+      this.sim.triggerState.audioCues = [];
       // Check for distant large motion to trigger the camera impulse nudge
       // (request §48: a big creature passing far away or an environmental event
       // causes a low-amplitude camera nudge). Evaluate each active creature's
