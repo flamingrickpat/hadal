@@ -22,7 +22,8 @@ import * as THREE from 'three';
 import { CAMERA_LAG_SEC, CAMERA_VIEW_WIDTH } from '../game/constants';
 import { clamp, vec2, type Rect, type Vec2 } from '../util/math';
 import type { PostFX } from './postfx';
-import { applyImpulseDecay, getImpulseOffset } from './impulseFlag';
+import { applyImpulseDecay, isImpulseActive } from './impulseFlag';
+import { setShakeEnabled, emitShake, updateShake, getShakeOffset } from './shake';
 import { viewWidthModifier } from './widescreen';
 
 /** Camera modifiers (request §16 scale-reveal, §36 camera trigger actions). */
@@ -159,27 +160,43 @@ export class Renderer {
   }
 
   render(): void {
-    // Decay the distant-motion impulse each frame (request §48).
+    // Update the shake path each frame (request §16).
     const now = performance.now();
     const rawDt = this.lastRenderMs === null ? 0 : (now - this.lastRenderMs) / 1000;
     this.lastRenderMs = now;
-    applyImpulseDecay(Math.min(rawDt, 0.1));
+    const dt = Math.min(rawDt, 0.1);
+    applyImpulseDecay(dt);
+    updateShake(dt);
 
-    // Apply the distant-motion impulse nudge on top of the smooth follow
-    // (request §48). The impulse is a separate, low-amplitude, short-decay
-    // offset that does not touch the follow lag or bounds-clamping invariants.
-    const impulse = getImpulseOffset();
-    const ix = impulse ? impulse.x : 0;
-    const iy = impulse ? impulse.y : 0;
-    this.camera.left = -this.halfW + this.camOffset.x + ix;
-    this.camera.right = this.halfW + this.camOffset.x + ix;
-    this.camera.top = this.halfH + this.camOffset.y + iy;
-    this.camera.bottom = -this.halfH + this.camOffset.y + iy;
+    // If the distant-motion impulse is active (request §48), emit it through
+    // the single shake path. The impulse becomes a shake source with a
+    // low-frequency, low-amplitude profile that fits the section 16 budget.
+    if (isImpulseActive()) {
+      emitShake(10, 2);
+    }
+
+    // Apply the shake offset on top of the smooth follow. The shake path
+    // enforces the low-frequency gate and the section 16 amplitude budget.
+    const shake = getShakeOffset();
+    this.camera.left = -this.halfW + this.camOffset.x + shake.x;
+    this.camera.right = this.halfW + this.camOffset.x + shake.x;
+    this.camera.top = this.halfH + this.camOffset.y + shake.y;
+    this.camera.bottom = -this.halfH + this.camOffset.y + shake.y;
     this.camera.updateProjectionMatrix();
     if (this.postfx !== null) {
       this.postfx.render(this.scene, this.camera);
     } else {
       this.glRenderer.render(this.scene, this.camera);
     }
+  }
+
+  /**
+   * Set the shake presentation flag (request §16, §43).
+   *
+   * WI-06g's accessibility screen-shake toggle calls this. When disabled,
+   * no shake of any amplitude is applied regardless of active shake sources.
+   */
+  setShakeEnabled(enabled: boolean): void {
+    setShakeEnabled(enabled);
   }
 }
