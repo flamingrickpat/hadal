@@ -112,4 +112,9 @@ export class Scenario {
       `assertion failed: ${failedAssertion}`
     );
   }
+
+  /** WI-07a: section 71 balance telemetry — the same field set the browser debug panel exposes. */
+  telemetry(): import('./telemetry').TelemetrySnapshot {
+    return this.sim.telemetry.snapshot();
+  }
 }

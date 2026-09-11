@@ -356,4 +356,8 @@ export class Game implements DebugPanelHost {
     resetSave(window.localStorage);
     window.location.reload();
   }
+  // WI-07a: section 71 balance telemetry — shared collector with headless.
+  telemetry(): import('../sim/telemetry').TelemetrySnapshot {
+    return this.sim.telemetry.snapshot();
+  }
 }

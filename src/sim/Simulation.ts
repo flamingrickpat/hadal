@@ -87,6 +87,7 @@ import {
 import { computeActiveChunkIds, chunkContaining } from '../world/chunks';
 import { TriggerSystem, emptyTriggerState, type TriggerContext, type TriggerState } from '../world/triggers';
 import { CurrentSystem } from '../systems/CurrentSystem';
+import { TelemetryCollector } from './telemetry';
 
 export interface SimWorld {
   chunks: readonly WorldChunkDef[];
@@ -223,6 +224,8 @@ export class Simulation {
   readonly triggers: TriggerSystem;
   readonly triggerState: TriggerState;
   readonly currents: CurrentSystem;
+  readonly telemetry: TelemetryCollector;
+  private deaths = 0;
   discoveredChunks = new Set<string>();
   activeChunks = new Set<string>();
   /**
@@ -351,6 +354,7 @@ export class Simulation {
     this.triggerState.storyFlags = this.storyFlags;
     this.triggers = new TriggerSystem(this.collectTriggers(), this.triggerState);
     this.currents = new CurrentSystem(world.currentFields ?? []);
+    this.telemetry = new TelemetryCollector();
     // Locate the MacGuffin prop in the world data (internal id only, request §0/§12/§68).
     for (const chunk of world.chunks) {
       for (const prop of chunk.props ?? []) {
@@ -408,6 +412,16 @@ export class Simulation {
 
   /** Advance the whole tick by `dt`, reading player actions from `input`. */
   step(input: PlayerInput, dt: number): void {
+    // WI-07a: balance telemetry — snapshot before step for delta tracking.
+    const zone = chunkContaining(this.chunks, this.player.position)?.id ?? '';
+    this.telemetry.onStepStart(
+      this.state.timeSec,
+      this.player.inventory,
+      this.player.banked,
+      this.isAtBase(this.player.position),
+      this.storyFlags.length,
+    );
+
     const c = this.controller;
     c.input.thrustX = input.thrustX;
     c.input.thrustY = input.thrustY;
@@ -458,6 +472,23 @@ export class Simulation {
       this.lastRadioText = TRIGGER_RADIO_LINES[this.triggerState.radioText] ?? this.triggerState.radioText;
       this.lastStoryLine = this.lastRadioText;
     }
+    // WI-07a: record encounter trigger fires and end-of-step telemetry.
+    for (const tid of fired) this.telemetry.onTriggerFired(this.state.timeSec, tid);
+    this.telemetry.onStepEnd(
+      this.state.timeSec,
+      chunkContaining(this.chunks, this.player.position)?.id ?? '',
+      this.player.depth,
+      this.player.maxDepth,
+      this.deaths,
+      this.player.inventory,
+      this.player.banked,
+      this.player.o2,
+      this.player.o2Max,
+      this.isAtBase(this.player.position),
+      this.storyFlags.length,
+      this.player.equipmentIds,
+      dt,
+    );
     // Authored background-creature moves (request §36): a fired beat's
     // `moveBackgroundCreature` action repositions the organism for its
     // entrance; the next creature step applies terrain + ecology from there.
@@ -1547,6 +1578,7 @@ export class Simulation {
 
   respawn(): void {
     const p = this.player;
+    this.deaths += 1;
     p.position = vec2(this.base.position.x, this.base.position.y - 50);
     p.velocity = vec2(0, 0);
     p.o2 = p.o2Max;
