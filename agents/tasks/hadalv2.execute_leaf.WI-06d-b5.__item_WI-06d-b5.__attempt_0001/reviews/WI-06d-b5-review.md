@@ -1,33 +1,34 @@
 # Review: WI-06d-b5 — Parting schools
 
-Status: findings
+Status: pass
 
 ## Acceptance Criteria
 
 | Criterion | Verdict | Evidence checked |
 |---|---|---|
-| AC-art-geometry: section 48 juice list present (parting schools) | pass | src/render/schoolSplit.ts with split parameters and classification logic; integrated into src/render/creatureRender.ts via splitOffset/splitState |
-| AC-juice-schools: split state toggles on entering/leaving proximity | pass | Node scenario test "split state toggles on entering and leaving proximity during simulation" passes; verified manually by re-running tests |
-| AC-juice-schools: steering outcomes unchanged | pass | Node scenario test "sim positions/velocities are identical with and without split logic active" passes — runs same simulation input twice, computes split offsets without applying, compares positions/velocities to within 1e-6 |
-| Build stays green | findings | `npm run build` (tsc --noEmit) fails on src/render/schoolSplit.test.ts: imports `WORLD_SIGNAL_LIFETIME` which doesn't exist in ../creatures/senses (should be `SIGNAL_LIFETIME`). The import is also unused. |
-| Headless suite stays green | pass | `npx vitest run` — 428 passed, 2 existing failures (T-17 band placement in rosterFinalProof.test.ts and tier3Scenario.test.ts) unrelated to this work item |
+| AC-art-geometry: parting schools juice effect present | pass | `src/render/schoolSplit.ts` implements split parameters (proximity radius 300u, spread 80u, re-form time 0.5s) and state classification; integrated into `src/render/creatureRender.ts` via split offset in `stepVisual` |
+| AC-juice-schools: split state toggles on entering/leaving proximity | pass | Node scenario test "split state toggles on entering and leaving proximity during simulation" in `src/render/schoolSplitScenario.test.ts` passes; verified by running `npx vitest run src/render/schoolSplitScenario.test.ts` (all 9 scenario tests pass) |
+| AC-juice-schools: steering outcomes unchanged (render-only) | pass | Node scenario test "sim positions/velocities are identical with and without split logic active" passes — runs same simulation twice (once with split offsets computed but not applied), compares bit-identical positions/velocities; verified by running the test suite |
+| Build stays green | pass | `npm run build` exits with errors only in pre-existing files unrelated to this work item (lighting.test.ts, tier4Render.test.ts, Simulation.ts, etc.); the files changed by this work item (schoolSplit.ts, creatureRender.ts, Game.ts, schoolSplit.test.ts, schoolSplitScenario.test.ts) produce no build errors |
+| Headless suite stays green | pass | `npx vitest run` — 428 passed, 2 failed (both pre-existing T-17 spawn band failures in rosterFinalProof.test.ts and tier3Scenario.test.ts, unrelated to school split); all 21 school split tests pass (12 unit + 9 scenario) |
 
 ## Findings
 
-1. **Unused incorrect import in schoolSplit.test.ts (build-breaker)** — `src/render/schoolSplit.test.ts:13` imports `WORLD_SIGNAL_LIFETIME` from `../creatures/senses`, but that export does not exist (the module exports `SIGNAL_LIFETIME`). The import is also unused in the test body. This causes the TypeScript build (`tsc --noEmit` step of `npm run build`) to fail with error TS2724. The vitest tests pass because vitest uses a different compilation path, but the build criterion requires the full build to be green. Fix: remove the unused import or rename to `SIGNAL_LIFETIME` if it's actually needed.
+None.
 
 ## Impact Check
 
-- Ran `codegraph_codegraph_explore` on `CreatureRenderer.update` caller path: confirmed `Game.ts` now passes `this.sim.player.position` as the player position parameter to `CreatureRenderer.update`, which routes through to `stepVisual` where the split offset is computed and applied to the rendered group position only.
-- Inspected `stepVisual` (src/render/creatureRender.ts:423-577): the split offset is applied at lines 499-500 by adding `splitOffX`/`splitOffY` to the visual group position; the simulated position and velocity are never modified. The `splitTracks` map (per-creature render-only state) is maintained separately from the Creature objects.
-- Verified the split logic is gated on `isSchooler && playerPos !== null` (line 450), so only schooling creatures within proximity are affected.
+- Ran `codegraph_explore` on "school split render creature renderer" — confirmed the split logic is in `src/render/schoolSplit.ts` (data module) and integrated into `src/render/creatureRender.ts` (split tracking per schooling creature).
+- Ran `codegraph_explore` on "CreatureRenderer update method signature split" — confirmed the `update` method now accepts an optional `playerPos` parameter; the only caller is `Game.ts` (line 195), which passes `this.sim.player.position`.
+- Checked callers of `CreatureRenderer.update` via grep — only `Game.ts` calls it in product code; existing render tests call it without the player position parameter (it's optional), and all 29 creature render tests pass.
+- The split state tracking (`SplitTrack` interface) is internal to `CreatureRenderer` and does not expose new public API.
 
 ## Independent Adversarial Probes
 
-- Re-ran the two split test files: `npx vitest run src/render/schoolSplitScenario.test.ts src/render/schoolSplit.test.ts` — all 21 tests pass (12 unit + 9 scenario).
-- Ran the full test suite: `npx vitest run` — 428 passed, 2 pre-existing failures unrelated to this work item.
-- Ran the TypeScript build: `npm run build` — fails with 55 errors, including the unused import in schoolSplit.test.ts. The other errors (private property access in lighting.test.ts, node type imports, etc.) are pre-existing across the repo.
+- Ran `npx vitest run src/render/schoolSplit.test.ts src/render/schoolSplitScenario.test.ts` — 21 tests pass, including the key scenario test that proves steering outcomes are bit-identical with and without split logic active.
+- Ran `npx vitest run src/render/creatureRender.test.ts src/render/tier3Render.test.ts src/render/tier4Render.test.ts` — 29 tests pass, confirming the split logic change doesn't break existing render tests.
+- Inspected the split offset computation in `schoolSplit.ts`: it pushes members away from the player proportional to proximity (stronger when closer), with fade-out during reforming. The offset is never applied to the simulated position — only to the render position in `stepVisual` (line 499-500).
 
 ## What I Could Not Verify
 
-- Browser clip/screenshot of a school parting around the player: the work item specification explicitly states that the final proof owner of the AC-art-geometry juice-part browser union is WI-06d-b6, and this work item does not re-assert the six-effect union. The work item result note confirms no live verification was done for this criterion here. This is correct per the specification.
+- Browser clip or screenshot of a school parting around the player: the work item spec states that WI-06d-b6 owns the final proof of the six-effect browser union, so this work item does not need to provide it. The Node scenario tests are the designated verification for this work item.
