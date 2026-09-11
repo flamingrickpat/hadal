@@ -1,0 +1,24 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf.WI-06c.__item_WI-06c",
+  "input": {
+    "selection": {
+      "id": "WI-06c",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "parent": "ST-06",
+      "path": "agents/tasks/hadalv2/stories/ST-06/workitems/WI-06c.md",
+      "specification": "---\nid: WI-06c\nkind: work_item\nparent: ST-06\nchildren: []\ndepends_on: []\ncriteria:\n  AC-art-palettes: \"Every depth band has a distinct palette family, particle profile, light attenuation, and background silhouette in the browser, with the section 14.1 graphic-novel/sonar/cut-paper hybrid reading at 1080p\"\nbehavior: \"Give the deep bands and the final zone their section 14.3 visual identity (darkest palettes, lowest visibility, distinct particles and silhouettes) with the section 16 scale-reveal zoom for select colossal encounters staged there, inspected spoiler-safely per section 70\"\nsubsystems: [\"rendering and materials\", \"world content data\"]\nverification: \"Per-band browser inspection at 1080p (composition, readability, atmosphere) with recorded observations and screenshots for each deep band and the final zone, run with private fixtures and reported without names per section 70; band identity data asserted in a Node test (each band differs from the adjacent band in at least two identity factors); headless suite and build stay green; performance spot-check per section 34\"\n---\n\n# WI-06c — Deep bands + final zone art pass\n\n## Goal\n\nSet the visual identity of the two deepest bands and the final zone per\nsection 14.3: the darkest palette families of the game, the lowest\nvisibility, distinct particle profiles (silt, marine-snow scale) and\nbackground silhouettes. The section 14.1 graphic-novel/sonar/cut-paper\nhybrid must still read at 1920x1080 - the deep bands are where the hybrid\nrelies most on sonar contrast and cut-paper silhouette layering.\nFlashlight behavior per section 15 applies strictly: no pure-black\nscreens, biological light sources reveal geometry from behind.\n\n## Deliverables (checkable)\n\n- Band identity parameter sets for the two deep bands and the final zone\n  in the production world data (the same data seam the WI-07 baseline\n  uses for the five-band macro world).\n- Rendering/materials work in `src/render/` to express those parameters:\n  water color grade, visibility falloff, particle profile, light\n  attenuation, and background silhouette layers. Extend the existing\n  pipeline; do not rebuild it.\n- Scene dressing of the critical-path areas in these bands and the final\n  zone; no obvious debug geometry left in these areas - other areas\n  remain WI-06d's job.\n- Section 16 scale-reveal zoom for each select colossal encounter staged\n  in these bands: the authored camera zoom-in that establishes scale.\n  The encounters themselves are ST-04/ST-05 content; this item only adds\n  the camera behavior.\n- Section 15 flashlight behavior for these bands.\n\n## Tests\n\n- Node: the registered band identity parameters assert the two factors\n  (minimum) that distinguish each deep band from its adjacent band and\n  the final zone from the band above it; suite and build stay green.\n- Browser (section 70 spoiler rule): inspect each band and the final\n  zone at 1080p in motion using private fixtures; record composition,\n  readability and atmosphere with screenshots; report without naming\n  creatures, the lore truth, the MacGuffin, or the endings. Verify the\n  scale-reveal zoom fires for each colossal encounter staged here.\n  Spot-check the section 34 budgets while inspecting.\n\n## Constraints, assumptions, non-goals\n\n- Post-processing restraint (section 14.3); readability at 1080p in\n  motion is the bar even at the darkest depths.\n- No audio (WI-06e), no juice list (WI-06d), no map or a11y work.\n- No new gameplay rules or content; no balance tuning; no encounter\n  re-authoring (ST-04/ST-05 own the encounters).\n- Spoiler rules (sections 0, 12, 68, 70) are load-bearing here: plan\n  artifacts, commit messages and evidence use internal band and\n  encounter ids only, never names.\n\n## Fresh-session handoff\n\nRead ST-06/plan.md, request sections 1.1, 14, 15, 16, 34, 70, the band\ndata seam described in `understanding.md`, and `src/render/` plus the\nworld data files it reads. Encounters staged in these bands come from\nST-04/ST-05 (referenced by id only); do not move or name them. Use the\nprivate fixture route described in ST-04/ST-05 for inspection.\n",
+      "fingerprint": "fa61433084ac60aebbea018678db095bdd07004fc59704d2917d4c12118bfb1b",
+      "base_rev": "065ba38118d6778325591028758579d28df7deed",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06c.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
