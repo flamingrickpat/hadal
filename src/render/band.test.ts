@@ -1,7 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { bandProfileAtDepth } from './band';
+import { bandProfileAtDepth, type BandProfile } from './band';
 
 const lum = (c: [number, number, number]): number => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+
+/**
+ * Count how many identity factors distinguish two band profiles.
+ * Factors: palette family, particle profile, visibility, ambient,
+ * particle size, drift, current strength.
+ */
+function distinctFactorCount(a: BandProfile, b: BandProfile): number {
+  let count = 0;
+  // Palette family differs if the top water colors differ enough
+  const palDiff =
+    Math.abs(a.waterTop[0] - b.waterTop[0]) +
+    Math.abs(a.waterTop[1] - b.waterTop[1]) +
+    Math.abs(a.waterTop[2] - b.waterTop[2]);
+  if (palDiff > 0.08) count++;
+  // Visibility differs meaningfully
+  if (Math.abs(a.visibility - b.visibility) > 150) count++;
+  // Particle size differs meaningfully
+  if (Math.abs(a.particleSize - b.particleSize) > 0.3) count++;
+  // Particle count profile differs (snow vs silt vs motes)
+  if (Math.abs(a.snowCount - b.snowCount) > 30 || Math.abs(a.moteCount - b.moteCount) > 30) count++;
+  // Current strength differs
+  if (Math.abs(a.currentSpeed - b.currentSpeed) > 10) count++;
+  return count;
+}
 
 describe('bandProfileAtDepth (request §14.3 per-band palette + particle profile)', () => {
   it('returns a brighter, clearer palette at the surface than at depth', () => {
@@ -89,7 +113,51 @@ describe('bandProfileAtDepth (request §14.3 per-band palette + particle profile
 
   it('matches the authored stop exactly at a band boundary', () => {
     const p = bandProfileAtDepth(4000);
-    expect(p.visibility).toBeCloseTo(560, 0);
-    expect(p.particleDrift).toBeCloseTo(40, 0);
+    expect(p.visibility).toBeCloseTo(650, 0);
+    expect(p.particleDrift).toBeCloseTo(35, 0);
+  });
+
+  // WI-06b: mid bands must each be distinct from adjacent bands in at least
+  // two identity factors (request §14.3).
+
+  it('mid band at 4000 differs from coast (1600) and mid band at 7000 in ≥2 identity factors', () => {
+    const coast = bandProfileAtDepth(1600);
+    const mid1 = bandProfileAtDepth(4000);
+    const mid2 = bandProfileAtDepth(7000);
+    expect(distinctFactorCount(coast, mid1)).toBeGreaterThanOrEqual(2);
+    expect(distinctFactorCount(mid1, mid2)).toBeGreaterThanOrEqual(2);
+  });
+
+  it('mid band at 7000 differs from mid band at 4000 and mid band at 10000 in ≥2 identity factors', () => {
+    const mid1 = bandProfileAtDepth(4000);
+    const mid2 = bandProfileAtDepth(7000);
+    const mid3 = bandProfileAtDepth(10000);
+    expect(distinctFactorCount(mid1, mid2)).toBeGreaterThanOrEqual(2);
+    expect(distinctFactorCount(mid2, mid3)).toBeGreaterThanOrEqual(2);
+  });
+
+  it('mid band at 10000 differs from mid band at 7000 and deep (12000) in ≥2 identity factors', () => {
+    const mid2 = bandProfileAtDepth(7000);
+    const mid3 = bandProfileAtDepth(10000);
+    const deep = bandProfileAtDepth(12000);
+    expect(distinctFactorCount(mid2, mid3)).toBeGreaterThanOrEqual(2);
+    expect(distinctFactorCount(mid3, deep)).toBeGreaterThanOrEqual(2);
+  });
+
+  it('all three mid bands use distinct palette families (not just darker)', () => {
+    const mid1 = bandProfileAtDepth(4000);
+    const mid2 = bandProfileAtDepth(7000);
+    const mid3 = bandProfileAtDepth(10000);
+    // Each adjacent pair must have a clearly different water color
+    const d12 =
+      Math.abs(mid1.waterTop[0] - mid2.waterTop[0]) +
+      Math.abs(mid1.waterTop[1] - mid2.waterTop[1]) +
+      Math.abs(mid1.waterTop[2] - mid2.waterTop[2]);
+    const d23 =
+      Math.abs(mid2.waterTop[0] - mid3.waterTop[0]) +
+      Math.abs(mid2.waterTop[1] - mid3.waterTop[1]) +
+      Math.abs(mid2.waterTop[2] - mid3.waterTop[2]);
+    expect(d12).toBeGreaterThan(0.1);
+    expect(d23).toBeGreaterThan(0.1);
   });
 });
