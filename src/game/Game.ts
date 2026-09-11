@@ -192,7 +192,7 @@ export class Game implements DebugPanelHost {
     // can be parallaxed onto its background layer and realized only where
     // the screen can show it (request §52 A/B/G — the renderer never moves
     // the simulated creature).
-    this.creatureRenderer.update(this.sim.creatures, this.sim.state.timeSec, profile, { center, half });
+    this.creatureRenderer.update(this.sim.creatures, this.sim.state.timeSec, profile, { center, half }, this.sim.player.position);
     // The foreground occluder pass (request §52 C): a few close structures
     // cross between the camera and the player, so the scene they cross
     // reads as larger than the view.

@@ -40,6 +40,7 @@ import { CAMERA_VIEW_WIDTH, PLAYER_PLANE_Z } from '../game/constants';
 import { buildSpineDef, makeSpineFrame, solveSpine, type SpineDef, type SpineFrame } from './spineRenderer';
 import { createRng } from '../util/rng';
 import type { Vec2 } from '../util/math';
+import { splitOffset, splitState, SPLIT_PROXIMITY_RADIUS, SPLIT_REFORM_TIME } from './schoolSplit';
 
 /**
  * The camera's current view in world units (request §52): the center the
@@ -187,12 +188,21 @@ function tint(mat: THREE.MeshBasicMaterial, base: [number, number, number], k: n
   mat.color.setRGB(base[0] * k, base[1] * k, base[2] * k);
 }
 
+interface SplitTrack {
+  /** Render-only split state for this schooling creature. */
+  state: 'whole' | 'parting' | 'reforming';
+  /** Sim time when the creature entered reforming (for the fade timer). */
+  reformStart: number;
+}
+
 export class CreatureRenderer {
   /** One visual per live creature (readers see the `CreatureVisual` surface). */
   readonly visuals: Map<Creature, VisualRec> = new Map();
   private readonly scene: THREE.Scene;
   private readonly finMat: THREE.MeshBasicMaterial;
   private readonly edgeMat: THREE.LineBasicMaterial;
+  /** Render-only split tracking per schooling creature (whole/parting/reforming). */
+  private readonly splitTracks: Map<Creature, SplitTrack> = new Map();
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -210,10 +220,18 @@ export class CreatureRenderer {
 
   /**
    * Draw the whole creature list for one frame. Reads sim state (and the
-   * camera's current view, when given) only; writes nothing back
-   * (request §30).
+   * camera's current view and player position, when given) only; writes
+   * nothing back (request §30). The optional `playerPos` enables the
+   * parting-schools juice effect (request §48): schooling creatures
+   * visually part around the player within proximity, then re-form.
    */
-  update(creatures: readonly Creature[], time: number, profile: BandProfile, view: RenderView | null = null): void {
+  update(
+    creatures: readonly Creature[],
+    time: number,
+    profile: BandProfile,
+    view: RenderView | null = null,
+    playerPos: Vec2 | null = null,
+  ): void {
     for (const creature of creatures) {
       let visual = this.visuals.get(creature);
       if (visual === undefined) {
@@ -226,7 +244,7 @@ export class CreatureRenderer {
         continue;
       }
       visual.group.visible = true;
-      this.stepVisual(visual, creature, time, profile, view);
+      this.stepVisual(visual, creature, time, profile, view, playerPos);
     }
   }
 
@@ -402,7 +420,14 @@ export class CreatureRenderer {
     return visual;
   }
 
-  private stepVisual(visual: VisualRec, creature: Creature, time: number, profile: BandProfile, view: RenderView | null = null): void {
+  private stepVisual(
+    visual: VisualRec,
+    creature: Creature,
+    time: number,
+    profile: BandProfile,
+    view: RenderView | null = null,
+    playerPos: Vec2 | null = null,
+  ): void {
     const { spine, frame, n } = visual;
     const pos = creature.position;
     // Heading comes from sim motion only (velocity, then steering target);
@@ -415,6 +440,51 @@ export class CreatureRenderer {
     }
     solveSpine(spine, frame, pos, visual.heading);
 
+    // Parting-schools juice effect (request §48): for schooling creatures
+    // near the player, compute a render-only split offset that pushes the
+    // member away from the player. This never writes back to the sim — the
+    // underlying steering outcomes are untouched.
+    let splitOffX = 0;
+    let splitOffY = 0;
+    const isSchooler = creature.def.ecology?.school === true;
+    if (isSchooler && playerPos !== null) {
+      // Compute whether this school member should part based on proximity.
+      const dist = Math.hypot(creature.position.x - playerPos.x, creature.position.y - playerPos.y);
+      const withinProx = dist < SPLIT_PROXIMITY_RADIUS;
+
+      // Track split state and reform timer per creature (render-only state).
+      let track = this.splitTracks.get(creature);
+      if (track === undefined) {
+        track = { state: 'whole', reformStart: 0 };
+        this.splitTracks.set(creature, track);
+      }
+
+      if (withinProx) {
+        track.state = 'parting';
+      } else if (track.state === 'parting') {
+        // Player just left proximity — start re-forming.
+        track.state = 'reforming';
+        track.reformStart = time;
+      } else if (track.state === 'reforming') {
+        // Still reforming — check if re-form time has passed.
+        const reformElapsed = time - track.reformStart;
+        if (reformElapsed > SPLIT_REFORM_TIME) {
+          track.state = 'whole';
+        }
+      }
+
+      // Compute the split offset for this member.
+      if (track.state !== 'whole') {
+        const reformElapsed = track.state === 'reforming' ? time - track.reformStart : 0;
+        const reformProgress = track.state === 'reforming'
+          ? Math.min(1, reformElapsed / SPLIT_REFORM_TIME)
+          : 0;
+        const offset = splitOffset(creature, playerPos, track.state, reformProgress);
+        splitOffX = offset.x;
+        splitOffY = offset.y;
+      }
+    }
+
     // Group placement (request §52 B): the colossal crossing presence is
     // drawn on the background layer at its parallax position — the world
     // position shrunk toward the camera center, so it crosses slower than
@@ -425,8 +495,9 @@ export class CreatureRenderer {
       gx = view.center.x + (pos.x - view.center.x) * CROSSING_PRESENCE_PARALLAX;
       gy = view.center.y + (pos.y - view.center.y) * CROSSING_PRESENCE_PARALLAX;
     }
-    visual.group.position.x = gx;
-    visual.group.position.y = gy;
+    // Apply the render-only split offset to the drawn position.
+    visual.group.position.x = gx + splitOffX;
+    visual.group.position.y = gy + splitOffY;
 
     // Animation (request §13.5): a breathing width cycle, a speed-scaled
     // undulation traveling down the body, held flapping pauses, and an
