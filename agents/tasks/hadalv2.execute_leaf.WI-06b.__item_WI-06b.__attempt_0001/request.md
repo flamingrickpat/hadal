@@ -1,0 +1,24 @@
+{
+  "parent_task_id": "hadalv2",
+  "parent_phase": "execute_leaf",
+  "configured_task_id": "hadalv2.execute_leaf.WI-06b.__item_WI-06b",
+  "input": {
+    "selection": {
+      "id": "WI-06b",
+      "root_task_dir": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2",
+      "parent": "ST-06",
+      "path": "agents/tasks/hadalv2/stories/ST-06/workitems/WI-06b.md",
+      "specification": "---\nid: WI-06b\nkind: work_item\nparent: ST-06\nchildren: []\ndepends_on: []\ncriteria:\n  AC-art-palettes: \"Every depth band has a distinct palette family, particle profile, light attenuation, and background silhouette in the browser, with the section 14.1 graphic-novel/sonar/cut-paper hybrid reading at 1080p\"\nbehavior: \"Give the mid bands their section 14.3 visual identity (palette family, visibility, particle profile, light attenuation, background silhouettes, debris, currents) so they read as a clear transition between the surface baseline and the deep bands\"\nsubsystems: [\"rendering and materials\", \"world content data\"]\nverification: \"Per-band browser inspection at 1080p (composition, readability, atmosphere) with recorded observations and screenshots for each mid band; band identity data asserted in a Node test (each mid band differs from the adjacent bands in at least two identity factors); headless suite and build stay green; performance spot-check per section 34\"\n---\n\n# WI-06b — Mid bands art pass\n\n## Goal\n\nSet the visual identity of the mid bands (the middle depth bands between\nthe surface/coast pair and the deep pair) per section 14.3: water color,\nvisibility, particle profile, light attenuation, background silhouettes,\ndebris density, current direction and ambient motion. The mid bands are\nthe transition: the section 14.1 graphic-novel/sonar/cut-paper hybrid\nkeeps reading at 1920x1080, light falls off steadily, and each mid band\nstays distinct from its neighbors in at least two identity factors.\nFlashlight behavior per section 15 applies: no pure-black screens,\nbiological light sources reveal geometry from behind.\n\n## Deliverables (checkable)\n\n- Band identity parameter sets for each mid band in the production world\n  data (the same data seam the WI-07 baseline uses for the five-band\n  macro world).\n- Rendering/materials work in `src/render/` to express those parameters:\n  water color grade, visibility falloff, particle profile (size, density,\n  drift), light attenuation, and background silhouette layers for each\n  mid band. Extend the existing pipeline; do not rebuild it.\n- Scene dressing of the critical-path areas inside the mid bands (debris,\n  ambient motion, silhouette composition); no obvious debug geometry\n  left in these areas - other areas remain WI-06d's job.\n- Section 15 flashlight behavior for these bands.\n- Section 16 camera polish for any select colossal encounter staged in\n  the mid bands: scale-reveal zoom where the encounter's staging calls\n  for it (the encounter itself is ST-04 content; this item only adds the\n  camera behavior).\n\n## Tests\n\n- Node: the registered band identity parameters assert the two factors\n  (minimum) that distinguish each mid band from its adjacent bands;\n  suite and build stay green.\n- Browser: inspect each mid band at 1080p in motion; record composition,\n  readability and atmosphere with screenshots; spot-check the section 34\n  budgets while inspecting.\n\n## Constraints, assumptions, non-goals\n\n- Post-processing restraint (section 14.3); readability at 1080p in\n  motion is the bar.\n- No audio (WI-06e), no juice list (WI-06d), no map or a11y work.\n- No new gameplay rules or content; no balance tuning; no encounter\n  re-authoring (ST-04 owns the encounters).\n- Spoiler rules (sections 0, 12, 68, 70): evidence uses internal band\n  and encounter ids only.\n\n## Fresh-session handoff\n\nRead ST-06/plan.md, request sections 1.1, 14, 15, 16, 34, the band data\nseam described in `understanding.md`, and `src/render/` plus the world\ndata files it reads. The visual language baseline from the WI-07 work\n(`understanding.md`) is the starting point - dress, do not redesign.\nEncounter staging slots come from ST-04; do not move encounters.\n",
+      "fingerprint": "a0b5d32de3113aa4b213b61a36fd9013e8cf8b1e7b10186a17cf835c987a17df",
+      "base_rev": "26cb56d7b9a826e6c7ca9dbbfb0242ed53ebd08e",
+      "children": [],
+      "review_path": "C:\\Temp\\hadal-v2\\agents\\tasks\\hadalv2\\planning\\reviews\\WI-06b.json"
+    }
+  },
+  "context": {
+    "inherit": false,
+    "include": [],
+    "exclude": []
+  },
+  "capabilities": {}
+}
