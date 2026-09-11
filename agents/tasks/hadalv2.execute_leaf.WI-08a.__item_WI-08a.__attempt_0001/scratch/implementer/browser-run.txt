@@ -1,0 +1,11 @@
+
+> hadal@0.1.0 test:browser
+> node tests/browser/boot.test.mjs
+
+PASS: fresh boot: canvas + HUD + debug panel present, no page exception (§70 Boot)
+PASS: keyboard input reaches the simulation and moves the player (§70 Boot)
+PASS: resize produces a usable layout (§70 Boot)
+FAIL: the storage adapter preserves state across an actual page reload (§70 Save)
+      a save was written to localStorage (hadal.save.v1)
+
+BROWSER SUITE FAIL (1 failing)
