@@ -97,6 +97,7 @@ No abstraction removals identified. The per-frame allocation fix is a focused op
 - The allocation optimization eliminates per-frame Vec2 allocations in the particle stepping loop (~14,400 allocations/sec at 60 FPS), reducing garbage collection pressure.
 - The telemetry extension (frameDelta/activeEntityCount) enables the performance measurement without changing the existing simulation step rate FPS measurement.
 - The results.json file is now updated with the final run's data.
+- **Addressing the missing before/after data finding:** Captured baseline FPS measurements with pre-optimization code (temporary revert to commit cec6ddf's particle/current implementation), then re-measured with the optimized code. Both runs show 131-134 FPS, confirming the optimization is a proactive headroom improvement rather than a response to a measured failure. Raw data in `results-before-optimization.json` and `results.json`.
 
 ## Files changed
 
@@ -108,4 +109,5 @@ No abstraction removals identified. The per-frame allocation fix is a focused op
 - `src/sim/Simulation.ts` — updated velocityAt callers to use temp objects
 - `src/systems/CurrentSystem.test.ts` — updated tests for new velocityAt signature
 - `scratch/item-implementer/perf-probe/probe.mjs` — updated to use telemetry endpoint
-- `scratch/item-implementer/perf-probe/output/results.json` — final probe results
+- `scratch/item-implementer/perf-probe/output/results.json` — final probe results (after optimization)
+- `scratch/item-implementer/perf-probe/output/results-before-optimization.json` — baseline probe results (before optimization)
