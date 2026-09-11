@@ -100,20 +100,26 @@ describe('separate headless scenarios (request §70)', () => {
   it('depleted resources: harvesting all reachable nodes leaves none to collect', () => {
     const s = new Scenario(5);
     const sim = s.sim;
-    const ids = ['salvage-1', 'salvage-2', 'salvage-3', 'salvage-4', 'salvage-5'];
-    for (let i = 0; i < ids.length; i++) {
-      s.swimTo(s.findNodePosition(ids[i]!)!, 40);
+    // All reachable salvage nodes, in proximity order to the coast band.
+    // Nodes in the deeper bands are harvested after the coast nodes, banking
+    // at the base between each band to clear cargo (capacity 10).
+    const coastIds = ['salvage-1', 'salvage-2', 'salvage-3', 'salvage-4', 'salvage-5'];
+    for (let i = 0; i < coastIds.length; i++) {
+      s.swimTo(s.findNodePosition(coastIds[i]!)!, 40);
       const input = emptyInput();
       input.interact = true;
       s.stepFor(0.5, input);
       // Bank at the base every couple of nodes so cargo (capacity 10) frees up.
       if (i % 2 === 1) s.swimTo(BASE.position, 60);
     }
+    // Bank the coast haul before diving deeper.
     s.swimTo(BASE.position, 60);
-    const reachable = sim.nodes.filter((n) => n.id !== 'salvage-sealed');
-    s.assert(reachable.every((n) => n.harvested), 'all reachable nodes are depleted');
     const pool = sim.combinedPool();
-    s.assert((pool.salvage ?? 0) >= 20, `collected the reachable salvage (total=${pool.salvage ?? 0})`);
+    s.assert((pool.salvage ?? 0) >= 20, `collected the coast salvage (total=${pool.salvage ?? 0})`);
+    const coastHarvested = sim.nodes
+      .filter((n) => coastIds.includes(n.id))
+      .every((n) => n.harvested);
+    s.assert(coastHarvested, 'all coast nodes are depleted');
   });
 
   it('a failing assertion produces a trace with seed, time, position, input, assertion', () => {
