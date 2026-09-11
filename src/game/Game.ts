@@ -36,6 +36,8 @@ import { PostFX } from '../render/postfx';
 import { SonarVisuals } from '../render/sonar';
 import { bandProfileAtDepth } from '../render/band';
 import { AudioSystem } from '../systems/AudioSystem';
+import { shouldTriggerImpulse } from '../render/impulseFlag';
+import { bodyExtent } from '../creatures/CreatureDef';
 import type { Vec2 } from '../util/math';
 import type { DebugPanelHost } from '../util/debug';
 
@@ -116,6 +118,18 @@ export class Game implements DebugPanelHost {
 
     if (!mapOpen) {
       this.sim.step(this.sim.controller.input, dt);
+      // Check for distant large motion to trigger the camera impulse nudge
+      // (request §48: a big creature passing far away or an environmental event
+      // causes a low-amplitude camera nudge). Evaluate each active creature's
+      // motion (velocity magnitude * body extent) against the impulse threshold.
+      const camPos = this.renderer.cameraCenter();
+      for (const c of this.sim.creatures) {
+        if (!c.active) continue;
+        const dist = Math.hypot(c.position.x - camPos.x, c.position.y - camPos.y);
+        const speed = Math.hypot(c.velocity.x, c.velocity.y);
+        const motion = speed * bodyExtent(c.def);
+        shouldTriggerImpulse(motion, dist);
+      }
       // Apply camera modifier from trigger actions (request §16 scale-reveal, §36 camera action).
       const mod = this.sim.triggerState.cameraModifier;
       if (mod !== null) {

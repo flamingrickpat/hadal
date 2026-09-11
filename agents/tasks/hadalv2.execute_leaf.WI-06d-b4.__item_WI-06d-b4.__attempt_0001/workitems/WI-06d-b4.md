@@ -75,3 +75,36 @@ for the shake path this flag feeds. Inspect `src/render/Renderer.ts`
 (camera follow, lag constant) and how creature/environmental motion
 is observable from the render layer. Request sections: 14.3, 16, 34,
 35, 48, 70.
+
+## Acceptance Evidence
+
+| Criterion | Evidence | Status |
+|---|---|---|
+| AC-juice-impulse | Node unit tests pass for trigger params (threshold/distance boundaries) and flag transitions | passed |
+| AC-juice-impulse | Camera nudge applied in Renderer on distant large motion | passed |
+| AC-juice-impulse | Presentation flag module exists for WI-06d-c integration | passed |
+| AC-juice-impulse | No steering or balance changes — nudge is presentation only | passed |
+| AC-art-geometry (juice-part) | Impulse nudge implemented (part of the section 48 juice list) | passed |
+
+## Files Changed
+
+- `src/render/impulseParams.ts` — new: impulse trigger parameters (distance band, motion threshold, nudge amplitude, decay time)
+- `src/render/impulseFlag.ts` — new: impulse trigger evaluation and decay logic
+- `src/render/impulse.test.ts` — new: 14 unit tests for trigger params and flag transitions
+- `src/render/Renderer.ts` — modified: apply impulse offset on top of smooth follow
+- `src/game/Game.ts` — modified: trigger impulse on distant large motion
+
+## Shrink/Flatten Report
+
+- No abstractions removed — the implementation is already minimal (3 new files, 2 modified files).
+- No pass-through wrappers, one-use interfaces, or unused extension points.
+- The impulse direction uses a deterministic angle (sin-based) to avoid RNG dependency.
+
+## Notes for Reviewer
+
+- The impulse is triggered per-creature in the game update loop, checking each creature's motion (velocity * body extent) against the threshold and distance against the trigger band.
+- The nudge is applied as a separate offset in the render method, not modifying the smooth follow target (camOffset), so the follow lag and bounds-clamping invariants are preserved.
+- The impulse flag is exposed via `isImpulseActive()` for WI-06d-c's shake gate integration.
+- The a11y reduced-flashing toggle can suppress the nudge by checking `isImpulseActive()` before applying the offset.
+- Pre-existing build errors in `src/sim/Simulation.ts` are unrelated to this work item.
+- Pre-existing test failures (2) in roster band distribution tests are unrelated to this work item.

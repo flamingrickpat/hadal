@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { CAMERA_LAG_SEC, CAMERA_VIEW_WIDTH } from '../game/constants';
 import { clamp, vec2, type Rect, type Vec2 } from '../util/math';
 import type { PostFX } from './postfx';
+import { applyImpulseDecay, getImpulseOffset } from './impulseFlag';
 
 /** Camera modifiers (request §16 scale-reveal, §36 camera trigger actions). */
 export type CameraModifier = 'wide' | 'tight' | 'pullback' | null;
@@ -51,6 +52,7 @@ export class Renderer {
   private postfx: PostFX | null = null;
   private readonly buffer = new THREE.Vector2();
   private viewWidth = CAMERA_VIEW_WIDTH;
+  private lastRenderMs: number | null = null;
 
   get gl(): THREE.WebGLRenderer {
     return this.glRenderer;
@@ -139,10 +141,22 @@ export class Renderer {
   }
 
   render(): void {
-    this.camera.left = -this.halfW + this.camOffset.x;
-    this.camera.right = this.halfW + this.camOffset.x;
-    this.camera.top = this.halfH + this.camOffset.y;
-    this.camera.bottom = -this.halfH + this.camOffset.y;
+    // Decay the distant-motion impulse each frame (request §48).
+    const now = performance.now();
+    const rawDt = this.lastRenderMs === null ? 0 : (now - this.lastRenderMs) / 1000;
+    this.lastRenderMs = now;
+    applyImpulseDecay(Math.min(rawDt, 0.1));
+
+    // Apply the distant-motion impulse nudge on top of the smooth follow
+    // (request §48). The impulse is a separate, low-amplitude, short-decay
+    // offset that does not touch the follow lag or bounds-clamping invariants.
+    const impulse = getImpulseOffset();
+    const ix = impulse ? impulse.x : 0;
+    const iy = impulse ? impulse.y : 0;
+    this.camera.left = -this.halfW + this.camOffset.x + ix;
+    this.camera.right = this.halfW + this.camOffset.x + ix;
+    this.camera.top = this.halfH + this.camOffset.y + iy;
+    this.camera.bottom = -this.halfH + this.camOffset.y + iy;
     this.camera.updateProjectionMatrix();
     if (this.postfx !== null) {
       this.postfx.render(this.scene, this.camera);
